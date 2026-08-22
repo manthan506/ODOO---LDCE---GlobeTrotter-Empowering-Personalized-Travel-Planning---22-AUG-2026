@@ -54,6 +54,7 @@ import { TravelGuides } from '@/components/trip/TravelGuides';
 import { CollaborationWorkspace } from '@/components/trip/CollaborationWorkspace';
 import { RouteOptimizerView } from '@/components/trip/RouteOptimizerView';
 import { SplitItineraryView } from '@/components/itinerary/SplitItineraryView';
+import { OfflineAccessView } from '@/components/trip/OfflineAccessView';
 
 export function ItineraryView({ tripId }: { tripId: string }) {
   const { trip, loading, refetch } = useTrip(tripId);
@@ -264,17 +265,9 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         <SplitItineraryView trip={trip} tripId={tripId} />
       )}
 
-      {/* 7. Offline access (Screenshot 7) */}
+      {/* 7. Offline access (Screenshot 7 - Phase 7) */}
       {activeTab === 'offline_access' && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4 text-center py-10">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-50 text-emerald-600 mb-2">
-            <CheckCircle2 size={32} />
-          </div>
-          <h3 className="text-lg font-bold text-slate-900">Saved Offline</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            We automatically download every trip plan you open. This trip is cached and accessible without internet.
-          </p>
-        </div>
+        <OfflineAccessView currentTripName={trip.name} />
       )}
 
       {/* 8. Reservations (Screenshot 8) */}
