@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import {
   MASTER_ACTIVITIES,
   MASTER_CALENDAR_SPANS,
+  MASTER_TRIP,
   ActivityItem,
   TripSpanItem,
 } from '@/lib/tripDataSync';
