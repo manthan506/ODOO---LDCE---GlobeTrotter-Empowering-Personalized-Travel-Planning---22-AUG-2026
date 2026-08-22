@@ -13,6 +13,7 @@ import {
   Calendar,
   Layers,
   Bell,
+  Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -37,6 +38,7 @@ export function Navbar() {
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/trips', label: 'Trips', icon: Compass },
+    { href: '/budget', label: 'Budget', icon: Wallet },
     { href: '/explore', label: 'Explore', icon: Search },
     { href: '/community', label: 'Community', icon: Globe2 },
     { href: '/profile', label: 'Profile', icon: UserIcon },

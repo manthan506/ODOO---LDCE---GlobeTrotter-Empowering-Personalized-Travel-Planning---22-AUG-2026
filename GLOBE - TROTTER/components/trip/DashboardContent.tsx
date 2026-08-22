@@ -209,6 +209,12 @@ export function DashboardContent() {
               <Plus size={15} /> Plan a new trip
             </Link>
             <Link
+              href="/budget"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-600/30 transition hover:bg-emerald-700 active:scale-95"
+            >
+              <Wallet size={15} /> Trip Budget (₹)
+            </Link>
+            <Link
               href="/explore"
               className="inline-flex items-center gap-1.5 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-xs font-bold text-white backdrop-blur-md hover:bg-white/20 transition"
             >
@@ -397,6 +403,55 @@ export function DashboardContent() {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* 3.5 BUDGET HIGHLIGHTS & FINANCIAL HEALTH CARD */}
+      <div className="mb-10 rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm hover:shadow-md transition">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-100 text-emerald-800 flex-shrink-0">
+              <Wallet size={22} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-800 uppercase tracking-wider border border-emerald-200">
+                  Financial Summary
+                </span>
+                <h3 className="text-base font-bold text-slate-900">Trip Budget & Cost Breakdown</h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Real-time expenditure tracking across flights, hotels, activities, and meals.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/budget"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition active:scale-95"
+          >
+            Open Budget Screen 📊
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Estimated Cost</span>
+            <p className="text-base sm:text-lg font-black text-slate-900 mt-0.5">₹1,52,000</p>
+            <span className="text-[10px] text-slate-500 font-medium">Planned Cap: ₹1,60,000</span>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block">Daily Average Cost</span>
+            <p className="text-base sm:text-lg font-black text-blue-600 mt-0.5">₹10,857 / day</p>
+            <span className="text-[10px] text-slate-500 font-medium">Across 14 travel days</span>
+          </div>
+
+          <div className="rounded-2xl bg-amber-50/60 p-3.5 border border-amber-200">
+            <span className="text-[10px] uppercase font-bold text-amber-800 block">Overbudget Warnings</span>
+            <p className="text-base sm:text-lg font-black text-amber-700 mt-0.5">Day 1 & Day 3 Over</p>
+            <span className="text-[10px] text-amber-600 font-medium">Glacier train & peak passes</span>
+          </div>
         </div>
       </div>
 
