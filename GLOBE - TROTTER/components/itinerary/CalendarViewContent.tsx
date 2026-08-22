@@ -25,236 +25,38 @@ import {
   Plane,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  MASTER_ACTIVITIES,
+  MASTER_CALENDAR_SPANS,
+  MASTER_DAY_SCHEDULE,
+  MASTER_TRIP,
+  ActivityItem,
+  TripSpanItem,
+} from '@/lib/tripDataSync';
 
 const formatINR = (val: number) => `₹${Math.round(val).toLocaleString('en-IN')}`;
-
-interface CalendarActivity {
-  id: string;
-  name: string;
-  time: string;
-  duration: string;
-  cost: number;
-  category: string;
-  location: string;
-  tripName: string;
-  tripColor: string;
-  description: string;
-}
-
-interface TripSpan {
-  id: string;
-  title: string;
-  color: string;
-  badgeBg: string;
-  badgeText: string;
-  startDay: number;
-  endDay: number;
-  city: string;
-}
 
 // Month: September 2026 (starts on Tuesday = col index 2)
 const SEPTEMBER_2026_DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
 
-const SAMPLE_TRIP_SPANS: TripSpan[] = [
-  {
-    id: 'ts-1',
-    title: 'PARIS TRIP',
-    color: '#2563EB',
-    badgeBg: 'bg-blue-600 text-white',
-    badgeText: 'text-blue-700 bg-blue-50 border-blue-200',
-    startDay: 10,
-    endDay: 13,
-    city: 'Paris, France',
-  },
-  {
-    id: 'ts-2',
-    title: 'SWISS ALPS TOUR',
-    color: '#7C3AED',
-    badgeBg: 'bg-purple-600 text-white',
-    badgeText: 'text-purple-700 bg-purple-50 border-purple-200',
-    startDay: 14,
-    endDay: 18,
-    city: 'Interlaken, Switzerland',
-  },
-  {
-    id: 'ts-3',
-    title: 'ROME GETAWAY',
-    color: '#059669',
-    badgeBg: 'bg-emerald-600 text-white',
-    badgeText: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-    startDay: 19,
-    endDay: 23,
-    city: 'Rome, Italy',
-  },
-  {
-    id: 'ts-4',
-    title: 'NYC GETAWAY',
-    color: '#D97706',
-    badgeBg: 'bg-amber-600 text-white',
-    badgeText: 'text-amber-700 bg-amber-50 border-amber-200',
-    startDay: 26,
-    endDay: 28,
-    city: 'New York, USA',
-  },
-];
-
-const INITIAL_DAY_ACTIVITIES: Record<number, CalendarActivity[]> = {
-  10: [
-    {
-      id: 'ca-1',
-      name: 'Airport VIP Chauffeur Transfer to Hotel',
-      time: '10:00 AM',
-      duration: '1.5 Hours',
-      cost: 4500,
-      category: 'Transfer',
-      location: 'Paris, France',
-      tripName: 'Paris Trip',
-      tripColor: '#2563EB',
-      description: 'Private Mercedes executive shuttle directly to hotel.',
-    },
-    {
-      id: 'ca-2',
-      name: 'Louvre Museum Masterpieces Guided Tour',
-      time: '02:30 PM',
-      duration: '2.5 Hours',
-      cost: 5200,
-      category: 'Museum & Art',
-      location: 'Paris, France',
-      tripName: 'Paris Trip',
-      tripColor: '#2563EB',
-      description: 'Skip-the-line entrance to see the Mona Lisa.',
-    },
-    {
-      id: 'ca-3',
-      name: 'Seine River Romantic Sunset Dinner Cruise',
-      time: '07:00 PM',
-      duration: '2.5 Hours',
-      cost: 6800,
-      category: 'Cruise & Dining',
-      location: 'Paris, France',
-      tripName: 'Paris Trip',
-      tripColor: '#2563EB',
-      description: '3-course gourmet dinner cruising past illuminated Eiffel Tower.',
-    },
-  ],
-  11: [
-    {
-      id: 'ca-4',
-      name: 'Montmartre & Sacré-Cœur Walking Tour',
-      time: '09:30 AM',
-      duration: '2.0 Hours',
-      cost: 3200,
-      category: 'Cultural Walk',
-      location: 'Paris, France',
-      tripName: 'Paris Trip',
-      tripColor: '#2563EB',
-      description: 'Cobblestone streets and panoramic hill views.',
-    },
-    {
-      id: 'ca-5',
-      name: 'Eiffel Tower Top Floor Access & Champagne',
-      time: '06:30 PM',
-      duration: '2.5 Hours',
-      cost: 5800,
-      category: 'Landmark',
-      location: 'Paris, France',
-      tripName: 'Paris Trip',
-      tripColor: '#2563EB',
-      description: 'Summit elevator pass with panoramic views over Paris.',
-    },
-  ],
-  14: [
-    {
-      id: 'ca-6',
-      name: 'Glacier Express Scenic Train to Interlaken',
-      time: '09:00 AM',
-      duration: '3.5 Hours',
-      cost: 7500,
-      category: 'Scenic Train',
-      location: 'Interlaken, Switzerland',
-      tripName: 'Swiss Alps Tour',
-      tripColor: '#7C3AED',
-      description: 'Panoramic glass dome train winding through alpine meadows.',
-    },
-    {
-      id: 'ca-7',
-      name: 'Lake Brienz Steamer & Giessbach Falls',
-      time: '02:00 PM',
-      duration: '2.5 Hours',
-      cost: 4200,
-      category: 'Lake & Nature',
-      location: 'Interlaken, Switzerland',
-      tripName: 'Swiss Alps Tour',
-      tripColor: '#7C3AED',
-      description: 'Cruise crystal turquoise waters beneath alpine peaks.',
-    },
-  ],
-  15: [
-    {
-      id: 'ca-8',
-      name: 'Jungfraujoch Top of Europe Cogwheel Train',
-      time: '08:30 AM',
-      duration: '5.0 Hours',
-      cost: 14500,
-      category: 'Summit Adventure',
-      location: 'Interlaken, Switzerland',
-      tripName: 'Swiss Alps Tour',
-      tripColor: '#7C3AED',
-      description: 'Highest railway station in Europe at 3,454 meters.',
-    },
-    {
-      id: 'ca-9',
-      name: 'Grindelwald First Cliff Walk by Tissot',
-      time: '03:00 PM',
-      duration: '2.0 Hours',
-      cost: 3800,
-      category: 'Thrill & View',
-      location: 'Interlaken, Switzerland',
-      tripName: 'Swiss Alps Tour',
-      tripColor: '#7C3AED',
-      description: 'Suspended metal walkway over Grindelwald valley.',
-    },
-  ],
-  19: [
-    {
-      id: 'ca-10',
-      name: 'Colosseum Arena Floor & Underground Gladiator Pass',
-      time: '09:30 AM',
-      duration: '3.0 Hours',
-      cost: 6500,
-      category: 'Historical Landmark',
-      location: 'Rome, Italy',
-      tripName: 'Rome Getaway',
-      tripColor: '#059669',
-      description: 'Exclusive access onto the arena floor where gladiators fought.',
-    },
-    {
-      id: 'ca-11',
-      name: 'Trastevere Foodie Walk: Handmade Pasta & Wine',
-      time: '07:00 PM',
-      duration: '3.5 Hours',
-      cost: 5400,
-      category: 'Food & Dining',
-      location: 'Rome, Italy',
-      tripName: 'Rome Getaway',
-      tripColor: '#059669',
-      description: 'Authentic 4-course dinner tasting carbonara and Chianti.',
-    },
-  ],
-};
-
 export function CalendarViewContent() {
-  const [currentMonthIndex, setCurrentMonthIndex] = useState(8); // 8 = September
+  const [currentMonthIndex, setCurrentMonthIndex] = useState(8); // 8 = September 2026
   const [selectedDay, setSelectedDay] = useState<number>(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [groupBy, setGroupBy] = useState<'month' | 'trip' | 'city'>('month');
   const [sortBy, setSortBy] = useState<'asc' | 'desc' | 'cost'>('asc');
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [selectedTripFilter, setSelectedTripFilter] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'calendar' | 'timeline'>('calendar');
 
-  // Activities state
-  const [dayActivities, setDayActivities] = useState<Record<number, CalendarActivity[]>>(INITIAL_DAY_ACTIVITIES);
+  // Dynamic Day Activities State synchronized with master data
+  const [dayActivitiesMap, setDayActivitiesMap] = useState<Record<number, ActivityItem[]>>(() => {
+    const map: Record<number, ActivityItem[]> = {};
+    Object.entries(MASTER_DAY_SCHEDULE).forEach(([day, plan]) => {
+      map[Number(day)] = [...plan.activities];
+    });
+    return map;
+  });
+
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
 
   // New activity form
@@ -263,22 +65,34 @@ export function CalendarViewContent() {
   const [newActCost, setNewActCost] = useState('3500');
   const [newActCategory, setNewActCategory] = useState('Sightseeing');
 
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
   const monthName = `${months[currentMonthIndex]} 2026`;
 
   // Selected Day activities
-  const currentDayActivities = dayActivities[selectedDay] || [];
+  const currentDayActivities = useMemo(() => {
+    let list = dayActivitiesMap[selectedDay] || [];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((a) => a.name.toLowerCase().includes(q) || a.category.toLowerCase().includes(q) || a.city.toLowerCase().includes(q));
+    }
+    return list;
+  }, [dayActivitiesMap, selectedDay, searchQuery]);
+
+  const selectedDayMeta = MASTER_DAY_SCHEDULE[selectedDay];
 
   const handleReorder = (idx: number, dir: 'up' | 'down') => {
-    if (!dayActivities[selectedDay]) return;
-    const list = [...dayActivities[selectedDay]];
+    if (!dayActivitiesMap[selectedDay]) return;
+    const list = [...dayActivitiesMap[selectedDay]];
     if (dir === 'up' && idx === 0) return;
     if (dir === 'down' && idx === list.length - 1) return;
     const target = dir === 'up' ? idx - 1 : idx + 1;
     const temp = list[idx];
     list[idx] = list[target];
     list[target] = temp;
-    setDayActivities((prev) => ({
+    setDayActivitiesMap((prev) => ({
       ...prev,
       [selectedDay]: list,
     }));
@@ -286,31 +100,40 @@ export function CalendarViewContent() {
   };
 
   const handleDeleteActivity = (actId: string) => {
-    setDayActivities((prev) => ({
+    setDayActivitiesMap((prev) => ({
       ...prev,
       [selectedDay]: (prev[selectedDay] || []).filter((a) => a.id !== actId),
     }));
-    toast.success('Activity removed from day');
+    toast.success('Activity removed from calendar schedule');
   };
 
   const handleAddActivity = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newActName.trim()) return;
 
-    const newAct: CalendarActivity = {
+    const newAct: ActivityItem = {
       id: `ca-${Date.now()}`,
       name: newActName,
+      cityId: selectedDayMeta?.city.toLowerCase() || 'custom',
+      city: selectedDayMeta?.city || 'Selected City',
+      country: selectedDayMeta?.country || 'Europe',
+      region: 'Europe',
       time: newActTime,
       duration: '2.0 Hours',
+      durationMinutes: 120,
       cost: Number(newActCost) || 3000,
+      costTier: Number(newActCost) > 7500 ? 'luxury' : Number(newActCost) > 3500 ? 'moderate' : 'budget',
+      costLabel: Number(newActCost) > 7500 ? '₹₹₹ Luxury' : Number(newActCost) > 3500 ? '₹₹ Moderate' : '₹ Budget',
       category: newActCategory,
-      location: 'Selected City',
-      tripName: 'Active Trip',
-      tripColor: '#2563EB',
+      categoryGroup: 'sightseeing',
+      popularity: 4.9,
+      reviewsCount: '1.2k',
+      imageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
       description: 'Scheduled trip activity.',
+      highlights: ['Confirmed Reservation', 'English speaking host'],
     };
 
-    setDayActivities((prev) => ({
+    setDayActivitiesMap((prev) => ({
       ...prev,
       [selectedDay]: [...(prev[selectedDay] || []), newAct],
     }));
@@ -335,7 +158,7 @@ export function CalendarViewContent() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search bar ...... (e.g. Paris, Cruise, Colosseum, Glacier Express)"
+            placeholder="Search bar ...... (e.g. Paris, Louvre, Glacier Express, Colosseum)"
             className="h-11 w-full rounded-2xl border border-slate-200 bg-white pl-10 pr-4 text-xs sm:text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-2xs transition"
           />
         </div>
@@ -393,13 +216,13 @@ export function CalendarViewContent() {
               onClick={() => setSelectedTripFilter('all')}
               className="text-xs font-bold text-blue-600 hover:underline"
             >
-              Reset
+              Reset Filters
             </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-slate-700 mr-2">Filter by Trip:</span>
-            {['all', 'PARIS TRIP', 'SWISS ALPS TOUR', 'ROME GETAWAY', 'NYC GETAWAY'].map((t) => (
+            <span className="text-xs font-bold text-slate-700 mr-2">Filter by Stop:</span>
+            {['all', 'PARIS TRIP', 'SWISS ALPS TOUR', 'ROME GETAWAY'].map((t) => (
               <button
                 key={t}
                 onClick={() => setSelectedTripFilter(t)}
@@ -409,7 +232,7 @@ export function CalendarViewContent() {
                     : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                {t === 'all' ? 'All Trips' : t}
+                {t === 'all' ? 'All Stops' : t}
               </button>
             ))}
           </div>
@@ -426,11 +249,11 @@ export function CalendarViewContent() {
             Calendar View
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Visual month timeline with trip spans and expandable daily schedules.
+            Visual month timeline with synchronized trip spans and expandable daily schedules.
           </p>
         </div>
 
-        {/* MONTH & YEAR NAVIGATOR: ← January 2024 → (or September 2026) */}
+        {/* MONTH & YEAR NAVIGATOR: ← September 2026 → */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <button
             type="button"
@@ -440,9 +263,14 @@ export function CalendarViewContent() {
             <ChevronLeft size={18} strokeWidth={2.5} />
           </button>
 
-          <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-            {monthName}
-          </h2>
+          <div className="text-center">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              {monthName}
+            </h2>
+            <span className="text-[11px] font-bold text-blue-600">
+              {MASTER_TRIP.name} (Sep 10 – Sep 28)
+            </span>
+          </div>
 
           <button
             type="button"
@@ -457,7 +285,7 @@ export function CalendarViewContent() {
         {/* INTERACTIVE CALENDAR GRID MATCHING WIREFRAME                 */}
         {/* ============================================================ */}
         <div className="overflow-hidden rounded-2xl border border-slate-200">
-          {/* Days of Week Header: SUN, MON, TUE, WED, THU, FRI, SAT */}
+          {/* Days of Week Header */}
           <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-black text-slate-600 uppercase tracking-wider py-3">
             <div>SUN</div>
             <div>MON</div>
@@ -470,7 +298,7 @@ export function CalendarViewContent() {
 
           {/* Calendar Grid Cells */}
           <div className="grid grid-cols-7 divide-x divide-y divide-slate-200 bg-white text-xs">
-            {/* Empty Offset Days (Sep 2026 starts on Tuesday -> 2 blank cells for Sun, Mon) */}
+            {/* Empty Offset Days (Sep 2026 starts on Tuesday -> 2 blank cells) */}
             <div className="h-24 sm:h-28 bg-slate-50/50 p-2 text-slate-300">
               <span className="font-semibold">30</span>
             </div>
@@ -481,8 +309,8 @@ export function CalendarViewContent() {
             {/* 30 Days of September 2026 */}
             {SEPTEMBER_2026_DAYS.map((day) => {
               const isSelected = selectedDay === day;
-              const hasActivities = !!dayActivities[day]?.length;
-              const matchingSpan = SAMPLE_TRIP_SPANS.find((s) => day >= s.startDay && day <= s.endDay);
+              const hasActivities = !!dayActivitiesMap[day]?.length;
+              const matchingSpan = MASTER_CALENDAR_SPANS.find((s) => day >= s.startDay && day <= s.endDay);
 
               return (
                 <div
@@ -511,12 +339,12 @@ export function CalendarViewContent() {
 
                     {hasActivities && (
                       <span className="text-[9px] font-bold text-blue-700 bg-blue-100/80 px-1.5 py-0.2 rounded-md hidden sm:inline-block">
-                        {dayActivities[day].length} acts
+                        {dayActivitiesMap[day].length} acts
                       </span>
                     )}
                   </div>
 
-                  {/* Trip Spans Badges matching Wireframe: PARIS TRIP, SWISS ALPS, ROME, NYC */}
+                  {/* Trip Span Badges (Paris, Swiss Alps, Rome) */}
                   {matchingSpan && (
                     <div
                       className={`mt-1 rounded-md px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black uppercase truncate shadow-2xs border ${
@@ -529,18 +357,18 @@ export function CalendarViewContent() {
                     </div>
                   )}
 
-                  {/* Day activity indicator */}
+                  {/* Synchronized First Activity Title */}
                   {hasActivities && (
                     <div className="mt-1 flex items-center gap-1 text-[9px] font-semibold text-slate-500 truncate hidden sm:flex">
                       <Clock size={10} className="text-slate-400" />
-                      <span className="truncate">{dayActivities[day][0]?.name}</span>
+                      <span className="truncate">{dayActivitiesMap[day][0]?.name}</span>
                     </div>
                   )}
                 </div>
               );
             })}
 
-            {/* 3 Trailing blank cells to complete 7-col grid */}
+            {/* Trailing blank cells */}
             <div className="h-24 sm:h-28 bg-slate-50/50 p-2 text-slate-300">
               <span className="font-semibold">1</span>
             </div>
@@ -554,7 +382,7 @@ export function CalendarViewContent() {
         </div>
 
         {/* ============================================================ */}
-        {/* EXPANDABLE DAY DETAIL DRAWER / SCHEDULE (Feature 10)         */}
+        {/* EXPANDABLE DAY DETAIL DRAWER / SCHEDULE                      */}
         {/* ============================================================ */}
         <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
@@ -564,7 +392,7 @@ export function CalendarViewContent() {
                   Sep {selectedDay}, 2026
                 </span>
                 <h3 className="text-base font-bold text-slate-900">
-                  Day Schedule & Activities
+                  {selectedDayMeta ? `${selectedDayMeta.title} (${selectedDayMeta.city}, ${selectedDayMeta.country})` : `Day Plan`}
                 </h3>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -586,10 +414,10 @@ export function CalendarViewContent() {
             </div>
           </div>
 
-          {/* Activities List for Selected Day */}
+          {/* Synchronized Activity Schedule */}
           {currentDayActivities.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400 italic">
-              No scheduled activities on Sep {selectedDay}. Click &quot;+ Add Activity&quot; to plan this day.
+              No scheduled activities on Sep {selectedDay}. Click &quot;+ Add Activity&quot; to schedule this date.
             </div>
           ) : (
             <div className="space-y-3">
