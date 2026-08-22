@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { connectDB } from '@/lib/db';
 import Trip from '@/models/Trip';
+import City from '@/models/City';
+import Stop from '@/models/Stop';
 import { getAuthUser } from '@/lib/auth';
+import { geocodeCity } from '@/lib/api/openApis';
 
 const createTripSchema = z.object({
   name: z.string().min(1, 'Trip name is required'),
@@ -65,13 +68,35 @@ export async function POST(req: Request) {
     const { name, startDate, endDate, description, coverImageUrl, budgetCap } = result.data;
     await connectDB();
 
+    // 1. Resolve city lat/lng via Nominatim Geocoding
+    const geo = await geocodeCity(name);
+
+    // 2. Find or create matching City with real geocoded coordinates
+    let city = await City.findOne({
+      name: { $regex: new RegExp(`^${name}$`, 'i') },
+    });
+
+    if (!city) {
+      city = await City.create({
+        name: geo.name || name,
+        country: geo.displayName.split(',').pop()?.trim() || 'Global',
+        region: 'Global',
+        costIndex: 2,
+        lat: geo.lat,
+        lng: geo.lng,
+        imageUrl: coverImageUrl || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80',
+        description: `Travel destination geocoded via OpenStreetMap: ${geo.displayName}`,
+      });
+    }
+
+    // 3. Create the Trip
     const trip = await Trip.create({
       userId: user._id,
       name,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       description: description || '',
-      coverImageUrl: coverImageUrl || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80',
+      coverImageUrl: coverImageUrl || city.imageUrl || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80',
       budgetCap: budgetCap || undefined,
       members: [
         {
@@ -81,6 +106,21 @@ export async function POST(req: Request) {
           color: '#3B82F6',
         },
       ],
+    });
+
+    // 4. Automatically create initial stop with geocoded city
+    await Stop.create({
+      tripId: trip._id,
+      cityId: city._id,
+      arriveDate: new Date(startDate),
+      leaveDate: new Date(endDate),
+      order: 0,
+      activities: [],
+      lodging: {
+        name: `Grand Hotel ${name}`,
+        checkIn: '14:00',
+        checkOut: '11:00',
+      },
     });
 
     const mappedTrip = {

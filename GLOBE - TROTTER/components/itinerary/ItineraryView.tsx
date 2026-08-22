@@ -53,6 +53,7 @@ import { SplitItineraryView } from '@/components/itinerary/SplitItineraryView';
 import { OfflineAccessView } from '@/components/trip/OfflineAccessView';
 import { ReservationsHub } from '@/components/itinerary/ReservationsHub';
 import { LodgingComparisonView } from '@/components/itinerary/LodgingComparisonView';
+import { WeatherStrip } from '@/components/trip/WeatherStrip';
 
 export function ItineraryView({ tripId }: { tripId: string }) {
   const { trip, loading, refetch } = useTrip(tripId);
@@ -185,6 +186,9 @@ export function ItineraryView({ tripId }: { tripId: string }) {
           </Link>
         </div>
       </div>
+
+      {/* Live Open-Meteo Weather Strip */}
+      <WeatherStrip cityName={destinationCity} />
 
       {/* 11-Icon Feature Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">

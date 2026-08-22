@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Users,
   Plus,
@@ -13,10 +13,14 @@ import {
   Sparkles,
   Compass,
   Bookmark,
+  Landmark,
+  Utensils,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TripWithDetails } from '@/types';
 import { getDestinationInfo } from '@/lib/destinationData';
+import { fetchRealNearbyPlaces, geocodeCity, RealPlace } from '@/lib/api/openApis';
 
 interface CollaborationWorkspaceProps {
   trip?: TripWithDetails | null;
@@ -34,28 +38,59 @@ export function CollaborationWorkspace({
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
+  const [loadingOverpass, setLoadingOverpass] = useState(false);
 
-  // Places from real destination
+  // Places in shared plan
   const [places, setPlaces] = useState([
     {
       id: 'p1',
       number: 1,
-      title: dest.activities[0]?.name || 'Red Fort & Chandni Chowk',
-      description: dest.activities[0]?.description || 'Explore the Mughal citadel and Old Delhi spice markets.',
+      title: dest.activities[0]?.name || `${dest.name} Historic Citadel`,
+      description: dest.activities[0]?.description || `Iconic landmark in ${dest.name}.`,
       image: dest.activities[0]?.image || dest.coverImage,
     },
   ]);
 
-  const [recommendedPlaces, setRecommendedPlaces] = useState(
-    dest.activities.slice(1).map((act, idx) => ({
-      id: `rp-${idx}`,
-      title: act.name,
-      image: act.image,
-      activeUser: idx === 0 ? 'Rose Chen' : idx === 1 ? 'Lianne Jones' : null,
-      color: idx === 0 ? '#3B82F6' : '#8B5CF6',
-      isDragging: idx === 1,
-    }))
-  );
+  const [recommendedPlaces, setRecommendedPlaces] = useState<
+    Array<{
+      id: string;
+      title: string;
+      category: string;
+      image: string;
+      activeUser: string | null;
+      color: string;
+      isDragging?: boolean;
+    }>
+  >([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadPlaces() {
+      setLoadingOverpass(true);
+      const geo = await geocodeCity(destinationCity);
+      const overpassPlaces = await fetchRealNearbyPlaces(geo.lat, geo.lng);
+
+      if (isMounted) {
+        setRecommendedPlaces(
+          overpassPlaces.slice(0, 6).map((rp, idx) => ({
+            id: rp.id,
+            title: rp.name,
+            category: rp.type,
+            image: dest.activities[idx % dest.activities.length]?.image || dest.coverImage,
+            activeUser: idx === 0 ? 'Rose Chen' : idx === 1 ? 'Lianne Jones' : null,
+            color: idx === 0 ? '#3B82F6' : '#8B5CF6',
+            isDragging: idx === 1,
+          }))
+        );
+        setLoadingOverpass(false);
+      }
+    }
+
+    loadPlaces();
+    return () => {
+      isMounted = false;
+    };
+  }, [destinationCity]);
 
   const handleAddPlace = (rec: any) => {
     setPlaces((prev) => [
@@ -64,7 +99,7 @@ export function CollaborationWorkspace({
         id: rec.id,
         number: prev.length + 1,
         title: rec.title,
-        description: `Verified place in ${dest.name} added to shared itinerary.`,
+        description: `Verified ${rec.category || 'spot'} in ${dest.name} added to shared itinerary.`,
         image: rec.image,
       },
     ]);
@@ -223,53 +258,61 @@ export function CollaborationWorkspace({
               ))}
             </div>
 
-            {/* Recommended Places with Presence Badges */}
-            {recommendedPlaces.length > 0 && (
-              <div className="pt-4 space-y-3">
+            {/* Real Recommended Places via Overpass API with Live Presence Badges */}
+            <div className="pt-4 space-y-3">
+              <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                  Recommended places in {dest.name}
+                  Real Nearby Attractions in {dest.name} (Overpass API)
                 </span>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {recommendedPlaces.map((rec) => (
-                    <div
-                      key={rec.id}
-                      className={`relative rounded-2xl border bg-white p-3 flex items-center justify-between gap-2.5 transition shadow-xs ${
-                        rec.isDragging
-                          ? 'border-red-400 ring-2 ring-red-100 translate-y-[-2px] shadow-md'
-                          : 'border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="h-10 w-10 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                          <img src={rec.image} alt={rec.title} className="h-full w-full object-cover" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-800 truncate">{rec.title}</span>
-                      </div>
-
-                      <button
-                        onClick={() => handleAddPlace(rec)}
-                        className="grid h-7 w-7 place-items-center rounded-full bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-600 transition flex-shrink-0"
-                        title="Add to trip"
-                      >
-                        <Plus size={14} />
-                      </button>
-
-                      {/* Active User Cursor Tag */}
-                      {rec.activeUser && (
-                        <div
-                          className="absolute -bottom-2.5 right-4 z-20 flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-bold text-white shadow-md animate-in fade-in"
-                          style={{ backgroundColor: rec.color || '#8B5CF6' }}
-                        >
-                          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                          {rec.activeUser}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {loadingOverpass && (
+                  <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                    <Loader2 size={12} className="animate-spin" /> Querying OpenStreetMap...
+                  </span>
+                )}
               </div>
-            )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {recommendedPlaces.map((rec) => (
+                  <div
+                    key={rec.id}
+                    className={`relative rounded-2xl border bg-white p-3 flex items-center justify-between gap-2.5 transition shadow-xs ${
+                      rec.isDragging
+                        ? 'border-red-400 ring-2 ring-red-100 translate-y-[-2px] shadow-md'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="h-10 w-10 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                        <img src={rec.image} alt={rec.title} className="h-full w-full object-cover" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-slate-800 truncate block">{rec.title}</span>
+                        <span className="text-[9px] text-slate-400 font-medium truncate block">{rec.category}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleAddPlace(rec)}
+                      className="grid h-7 w-7 place-items-center rounded-full bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-600 transition flex-shrink-0"
+                      title="Add to trip"
+                    >
+                      <Plus size={14} />
+                    </button>
+
+                    {/* Active User Cursor Tag */}
+                    {rec.activeUser && (
+                      <div
+                        className="absolute -bottom-2.5 right-4 z-20 flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-bold text-white shadow-md animate-in fade-in"
+                        style={{ backgroundColor: rec.color || '#8B5CF6' }}
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                        {rec.activeUser}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
