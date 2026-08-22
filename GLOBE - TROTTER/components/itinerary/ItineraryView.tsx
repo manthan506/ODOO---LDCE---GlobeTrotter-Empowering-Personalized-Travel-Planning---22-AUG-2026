@@ -51,6 +51,7 @@ import { TripMapView } from '@/components/trip/TripMapView';
 import { FlightStatusCard } from '@/components/trip/FlightStatusCard';
 import { PackingChecklist } from '@/components/trip/PackingChecklist';
 import { TravelGuides } from '@/components/trip/TravelGuides';
+import { CollaborationWorkspace } from '@/components/trip/CollaborationWorkspace';
 
 export function ItineraryView({ tripId }: { tripId: string }) {
   const { trip, loading, refetch } = useTrip(tripId);
@@ -237,44 +238,9 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         />
       )}
 
-      {/* 3. Collaboration (Screenshot 3) */}
+      {/* 3. Collaboration (Screenshot 3 - Phase 3) */}
       {activeTab === 'collaboration' && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-blue-50 text-blue-600">
-                <Users size={20} />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Collaborate with Friends in Real Time</h3>
-                <p className="text-xs text-slate-500">Plan along with your friends with live syncing and collaborative editing</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                fetchShare();
-                setShowShareModal(true);
-              }}
-              className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700"
-            >
-              + Invite Tripmates
-            </button>
-          </div>
-
-          <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200 flex flex-wrap items-center gap-3">
-            <span className="text-xs font-bold text-slate-700">Active Live Cursors:</span>
-            <span className="rounded-full bg-blue-500 text-white px-3 py-1 text-[11px] font-bold flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-white animate-pulse" /> Rose Chen
-            </span>
-            <span className="rounded-full bg-purple-500 text-white px-3 py-1 text-[11px] font-bold flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-white animate-pulse" /> Lianne Jones
-            </span>
-            <span className="rounded-full bg-rose-500 text-white px-3 py-1 text-[11px] font-bold flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-white animate-pulse" /> James Levi
-            </span>
-          </div>
-        </div>
+        <CollaborationWorkspace trip={trip} tripId={tripId} />
       )}
 
       {/* 4. Flight status (Screenshot 4) */}
