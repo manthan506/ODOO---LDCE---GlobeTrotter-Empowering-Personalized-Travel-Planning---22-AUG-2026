@@ -3,14 +3,29 @@ import { connectDB } from '@/lib/db';
 import City from '@/models/City';
 import { ensureSeedData } from '@/lib/seedData';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectDB();
     await ensureSeedData();
 
-    const cities = await City.find().sort({ name: 1 });
-    
-    // Map to normalized shape compatible with frontend types
+    const url = new URL(req.url);
+    const search = url.searchParams.get('search')?.toLowerCase() || '';
+    const region = url.searchParams.get('region') || '';
+
+    const filter: any = {};
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { country: { $regex: search, $options: 'i' } },
+        { region: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (region && region !== 'all' && region !== 'All') {
+      filter.region = { $regex: new RegExp(`^${region}$`, 'i') };
+    }
+
+    const cities = await City.find(filter).sort({ name: 1 });
+
     const mappedCities = cities.map((c) => ({
       id: c._id.toString(),
       name: c.name,
