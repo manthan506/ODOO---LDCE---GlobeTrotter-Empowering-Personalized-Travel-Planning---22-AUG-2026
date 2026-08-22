@@ -3,17 +3,18 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Compass, Loader2, ArrowRight, Mail, Lock, User as UserIcon } from 'lucide-react';
+import { Compass, Loader2, ArrowRight, Mail, Lock, User as UserIcon, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const router = useRouter();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, refetchUser } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   const isSignup = mode === 'signup';
 
@@ -54,35 +55,70 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
     }
   };
 
+  const handleDemoLogin = async () => {
+    setDemoLoading(true);
+    try {
+      const res = await fetch('/api/auth/demo', { method: 'POST', credentials: 'include' });
+      if (res.ok) {
+        toast.success('Logged in as Demo Traveler (Alex) with pre-loaded European Tour!');
+        await refetchUser();
+        router.push('/dashboard');
+      } else {
+        throw new Error('Could not login as demo');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Demo login failed');
+    } finally {
+      setDemoLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50/50 via-white to-slate-50 px-4 py-8">
       <div className="w-full max-w-[420px]">
         {/* Header / Brand */}
-        <Link href="/" className="mb-6 flex flex-col items-center justify-center gap-2 group">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition">
-            <Compass size={26} strokeWidth={2.2} />
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900">GlobeTrotter</span>
-          <span className="text-xs text-slate-500 font-medium -mt-1">Empowering Personalized Travel Planning</span>
-        </Link>
+        <div className="mb-6 text-center">
+          <Link href="/" className="inline-flex items-center gap-2.5 group">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition">
+              <Compass size={28} strokeWidth={2.2} />
+            </div>
+            <span className="text-2xl font-bold tracking-tight text-slate-900">
+              GlobeTrotter
+            </span>
+          </Link>
+          <h2 className="mt-4 text-xl font-bold tracking-tight text-slate-900">
+            {isSignup ? 'Create your account' : 'Welcome back, traveler'}
+          </h2>
+          <p className="mt-1 text-xs text-slate-500">
+            {isSignup
+              ? 'Start designing your personalized multi-city journey'
+              : 'Sign in to access your itineraries and budgets'}
+          </p>
+        </div>
 
-        {/* Card */}
-        <div className="rounded-3xl border border-slate-100 bg-white p-7 shadow-xl shadow-slate-200/60">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              {isSignup ? 'Create Account ✨' : 'Welcome Back! 👋'}
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              {isSignup
-                ? 'Join thousands of smart travelers worldwide.'
-                : 'Login to continue your adventures.'}
-            </p>
-          </div>
+        {/* 1-Click Instant Demo Button */}
+        <button
+          type="button"
+          onClick={handleDemoLogin}
+          disabled={demoLoading}
+          className="mb-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black shadow-md shadow-amber-500/20 transition active:scale-[0.99] disabled:opacity-60"
+        >
+          {demoLoading ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <>
+              <Zap size={16} className="fill-current text-slate-950" />
+              ⚡ Instant 1-Click Demo Login (Alex Traveler)
+            </>
+          )}
+        </button>
 
+        {/* Auth Card */}
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xl shadow-slate-200/50">
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignup && (
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-700">Full name</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Full Name</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
                     <UserIcon size={18} />
@@ -93,14 +129,14 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                    placeholder="Jane Traveler"
+                    placeholder="Alex Traveler"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-700">Email address</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Email address</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
                   <Mail size={18} />
@@ -111,7 +147,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                  placeholder="name@example.com"
+                  placeholder="alex@globetrotter.io"
                 />
               </div>
             </div>
@@ -120,7 +156,14 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-semibold text-slate-700">Password</label>
                 {!isSignup && (
-                  <a href="#forgot" onClick={(e) => { e.preventDefault(); toast.info('Password reset instructions sent to email (Demo)'); }} className="text-xs font-medium text-blue-600 hover:underline">
+                  <a
+                    href="#forgot"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toast.info('Password reset demo: enter email to receive link');
+                    }}
+                    className="text-xs font-medium text-blue-600 hover:underline"
+                  >
                     Forgot Password?
                   </a>
                 )}
@@ -162,7 +205,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
               <div className="w-full border-t border-slate-200" />
             </div>
             <div className="relative flex justify-center text-xs text-slate-400">
-              <span className="bg-white px-2">or continue with</span>
+              <span className="bg-white px-2">or prefill sample account</span>
             </div>
           </div>
 
@@ -170,10 +213,10 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             <button
               type="button"
               onClick={() => {
-                setName('Alex Nomad');
+                setName('Alex Traveler');
                 setEmail('alex@globetrotter.io');
                 setPassword('password123');
-                toast.success('Pre-filled demo traveler credentials!');
+                toast.success('Filled Alex demo credentials!');
               }}
               className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
             >
@@ -203,7 +246,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
                 setName('Sarah Traveler');
                 setEmail('sarah@globetrotter.io');
                 setPassword('password123');
-                toast.success('Pre-filled demo credentials!');
+                toast.success('Filled Sarah demo credentials!');
               }}
               className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
             >
