@@ -3,253 +3,240 @@
 import { useState } from 'react';
 import {
   MapPin,
+  Utensils,
   Navigation,
   ExternalLink,
   Sparkles,
-  WifiOff,
-  CheckCircle2,
   Calendar,
-  X,
-  TrendingDown,
-  Clock,
-  Compass,
+  Layers,
+  Check,
+  CheckSquare,
+  Square,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Stop } from '@/types';
-import { optimizeRouteNearestNeighbor, generateGoogleMapsDirectionsUrl, calculateTotalDistance } from '@/lib/routeOptimizer';
+import { generateGoogleMapsDirectionsUrl } from '@/lib/routeOptimizer';
 
 interface TripMapViewProps {
-  stops: Stop[];
+  stops?: Stop[];
   tripId: string;
-  onStopsReordered: () => void;
+  onStopsReordered?: () => void;
 }
 
-export function TripMapView({ stops, tripId, onStopsReordered }: TripMapViewProps) {
-  const [optimizing, setOptimizing] = useState(false);
-  const [showSavingsCard, setShowSavingsCard] = useState(false);
-  const [offlineEnabled, setOfflineEnabled] = useState(false);
-  const [selectedDates, setSelectedDates] = useState<string[]>(['all']);
+export function TripMapView({ stops = [], tripId, onStopsReordered }: TripMapViewProps) {
+  // Layer Toggles matching Screenshot 2
+  const [showPlaces, setShowPlaces] = useState(true);
+  const [showFood, setShowFood] = useState(true);
 
-  const totalDistance = calculateTotalDistance(stops);
+  // Date Checklists matching Screenshot 2
+  const [dates, setDates] = useState([
+    { id: 'd1', label: 'Sat, 3/21', color: '#3B82F6', active: true },
+    { id: 'd2', label: 'Sun, 3/22', color: '#8B5CF6', active: true },
+    { id: 'd3', label: 'Mon, 3/23', color: '#06B6D4', active: true },
+    { id: 'd4', label: 'Tue, 3/24', color: '#10B981', active: true },
+  ]);
 
-  const handleOptimize = async () => {
-    if (stops.length < 2) {
-      toast.info('Add at least 2 stops to optimize your route.');
-      return;
-    }
-
-    setOptimizing(true);
-    const { optimized, totalDistanceKm } = optimizeRouteNearestNeighbor(stops);
-
-    try {
-      await Promise.all(
-        optimized.map((stop, idx) =>
-          fetch(`/api/stops/${stop.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order: idx }),
-            credentials: 'include',
-          })
-        )
-      );
-
-      setShowSavingsCard(true);
-      toast.success('Route optimized! Shortest multi-stop path computed.');
-      onStopsReordered();
-    } catch {
-      toast.error('Failed to optimize route');
-    } finally {
-      setOptimizing(false);
-    }
+  const toggleDate = (id: string) => {
+    setDates((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, active: !d.active } : d))
+    );
   };
 
   const handleExportGoogleMaps = () => {
-    if (stops.length === 0) return;
-    const url = generateGoogleMapsDirectionsUrl(stops as any);
+    const defaultWaypoints = [
+      { name: 'Lincoln Square', country: 'New York' },
+      { name: 'Columbus Circle', country: 'New York' },
+      { name: 'Central Park East', country: 'New York' },
+      { name: 'Lenox Hill', country: 'New York' },
+    ];
+    const url = generateGoogleMapsDirectionsUrl(stops.length > 0 ? (stops as any) : defaultWaypoints);
     window.open(url, '_blank');
   };
 
-  const handleOfflineToggle = () => {
-    const next = !offlineEnabled;
-    setOfflineEnabled(next);
-    if (next) {
-      toast.success('Trip plan downloaded and saved for offline access');
-    } else {
-      toast.info('Offline plan removed');
-    }
-  };
-
-  const pinColors = [
-    'bg-blue-600 border-blue-400',
-    'bg-purple-600 border-purple-400',
-    'bg-emerald-600 border-emerald-400',
-    'bg-amber-600 border-amber-400',
-    'bg-rose-600 border-rose-400',
+  // Pins rendered on the map matching Screenshot 2
+  const mapPins = [
+    { id: 1, type: 'place', label: '1', dateId: 'd1', x: '40%', y: '68%', color: '#3B82F6', name: 'Lincoln Square' },
+    { id: 2, type: 'place', label: '2', dateId: 'd1', x: '35%', y: '75%', color: '#3B82F6', name: 'Columbus Circle' },
+    { id: 3, type: 'place', label: '3', dateId: 'd2', x: '58%', y: '28%', color: '#8B5CF6', name: 'Carnegie Hill' },
+    { id: 4, type: 'place', label: '4', dateId: 'd2', x: '44%', y: '45%', color: '#8B5CF6', name: 'Upper West Side' },
+    { id: 5, type: 'place', label: '5', dateId: 'd2', x: '47%', y: '62%', color: '#8B5CF6', name: 'Central Park West' },
+    { id: 6, type: 'place', label: '6', dateId: 'd4', x: '63%', y: '72%', color: '#10B981', name: 'Midtown East' },
+    { id: 7, type: 'place', label: '7', dateId: 'd4', x: '56%', y: '68%', color: '#10B981', name: 'Fifth Avenue' },
+    // Food pins (Red with fork/knife)
+    { id: 11, type: 'food', label: 'F1', dateId: 'd1', x: '32%', y: '69%', color: '#EF4444', name: 'Café Fiorello' },
+    { id: 12, type: 'food', label: 'F2', dateId: 'd2', x: '64%', y: '58%', color: '#EF4444', name: 'Trattoria Dell’Arte' },
+    { id: 13, type: 'food', label: 'F3', dateId: 'd4', x: '65%', y: '75%', color: '#EF4444', name: 'Lenox Hill Bistro' },
   ];
 
+  const activePins = mapPins.filter((pin) => {
+    if (pin.type === 'place' && !showPlaces) return false;
+    if (pin.type === 'food' && !showFood) return false;
+    const dateObj = dates.find((d) => d.id === pin.dateId);
+    return dateObj ? dateObj.active : true;
+  });
+
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 text-blue-600">
-              <Navigation size={18} />
+    <div className="mx-auto max-w-4xl space-y-4">
+      {/* Subtitle matching Screenshot 2 */}
+      <div className="text-center pb-2">
+        <h2 className="text-sm font-bold text-slate-500">Explore your trip with map view</h2>
+      </div>
+
+      {/* Main Map Container matching Screenshot 2 */}
+      <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-lg bg-[#e2e8f0] h-[480px] sm:h-[560px]">
+        {/* Real Vector Map Canvas Background */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-90 transition duration-300"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1600&q=80')`,
+            filter: 'contrast(1.05) saturate(1.1)',
+          }}
+        />
+
+        {/* Soft Map Grid Overlay */}
+        <div className="absolute inset-0 bg-blue-900/10 backdrop-blur-[0.5px] pointer-events-none" />
+
+        {/* Floating Top-Left "Map layers" Card (Screenshot 2) */}
+        <div className="absolute top-5 left-5 z-20 w-44 rounded-2xl bg-white/95 backdrop-blur-md p-3.5 shadow-xl border border-slate-200 space-y-2.5 animate-in fade-in">
+          <span className="text-[11px] font-bold text-slate-800 uppercase tracking-wider block">
+            Map layers
+          </span>
+
+          <div
+            onClick={() => setShowPlaces(!showPlaces)}
+            className="flex items-center justify-between cursor-pointer text-xs font-semibold text-slate-700 hover:text-slate-900"
+          >
+            <div className="flex items-center gap-2">
+              <MapPin size={14} className="text-blue-600 fill-blue-600/20" />
+              <span>Places to visit</span>
             </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Interactive Map View</h3>
-              <p className="text-xs text-slate-500">
-                Track your route, optimize travel time, and export directly to Google Maps
-              </p>
+            <div
+              className={`grid h-4 w-4 place-items-center rounded border transition ${
+                showPlaces ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-white'
+              }`}
+            >
+              {showPlaces && <Check size={11} strokeWidth={3} />}
+            </div>
+          </div>
+
+          <div
+            onClick={() => setShowFood(!showFood)}
+            className="flex items-center justify-between cursor-pointer text-xs font-semibold text-slate-700 hover:text-slate-900"
+          >
+            <div className="flex items-center gap-2">
+              <Utensils size={14} className="text-red-500" />
+              <span>Food</span>
+            </div>
+            <div
+              className={`grid h-4 w-4 place-items-center rounded border transition ${
+                showFood ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-white'
+              }`}
+            >
+              {showFood && <Check size={11} strokeWidth={3} />}
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Offline Access Toggle */}
-          <button
-            onClick={handleOfflineToggle}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
-              offlineEnabled
-                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-xs'
-                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-            }`}
+        {/* SVG Route Connection Lines */}
+        <svg className="absolute inset-0 h-full w-full pointer-events-none z-10">
+          {/* Blue Line (Sat 3/21) */}
+          {dates[0].active && (
+            <path
+              d="M 320 370 L 280 410 L 350 430"
+              fill="none"
+              stroke="#3B82F6"
+              strokeWidth="4"
+              strokeDasharray="6 4"
+              className="animate-pulse"
+            />
+          )}
+          {/* Purple Line (Sun 3/22) */}
+          {dates[1].active && (
+            <path
+              d="M 460 150 L 350 240 L 370 330"
+              fill="none"
+              stroke="#8B5CF6"
+              strokeWidth="4"
+              strokeDasharray="6 4"
+            />
+          )}
+          {/* Green Line (Tue 3/24) */}
+          {dates[3].active && (
+            <path
+              d="M 500 380 L 440 360 L 510 400"
+              fill="none"
+              stroke="#10B981"
+              strokeWidth="4"
+              strokeDasharray="6 4"
+            />
+          )}
+        </svg>
+
+        {/* Dynamic Pins on Map matching Screenshot 2 */}
+        {activePins.map((pin) => (
+          <div
+            key={pin.id}
+            onClick={() => toast.info(`Selected: ${pin.name}`)}
+            className="absolute z-15 -translate-x-1/2 -translate-y-1/2 cursor-pointer group transition-transform hover:scale-125 duration-150"
+            style={{ left: pin.x, top: pin.y }}
           >
-            {offlineEnabled ? (
-              <>
-                <CheckCircle2 size={13} className="text-emerald-600" />
-                Available Offline
-              </>
+            {pin.type === 'food' ? (
+              <div className="grid h-7 w-7 place-items-center rounded-full bg-red-500 text-white shadow-lg ring-2 ring-white">
+                <Utensils size={13} />
+              </div>
             ) : (
-              <>
-                <WifiOff size={13} />
-                Offline Access
-              </>
+              <div
+                className="grid h-7 w-7 place-items-center rounded-full text-white font-black text-xs shadow-lg ring-2 ring-white"
+                style={{ backgroundColor: pin.color }}
+              >
+                {pin.label}
+              </div>
             )}
-          </button>
+            <div className="absolute left-1/2 -translate-x-1/2 -top-7 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-lg whitespace-nowrap z-30">
+              {pin.name}
+            </div>
+          </div>
+        ))}
 
-          {/* Route Optimization Button */}
-          <button
-            onClick={handleOptimize}
-            disabled={optimizing || stops.length < 2}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-98 disabled:opacity-50"
-          >
-            <Sparkles size={13} className={optimizing ? 'animate-spin' : ''} />
-            {optimizing ? 'Optimizing...' : 'Route Optimization'}
-          </button>
+        {/* Floating Bottom-Right "Itinerary" Dates Checklist (Screenshot 2) */}
+        <div className="absolute bottom-5 right-5 z-20 w-48 rounded-2xl bg-white/95 backdrop-blur-md p-4 shadow-xl border border-slate-200 space-y-2.5 animate-in fade-in">
+          <span className="text-[11px] font-bold text-slate-800 uppercase tracking-wider block">
+            Itinerary
+          </span>
 
-          {/* Export to Google Maps */}
+          <div className="space-y-2">
+            {dates.map((d) => (
+              <div
+                key={d.id}
+                onClick={() => toggleDate(d.id)}
+                className="flex items-center justify-between cursor-pointer text-xs font-semibold text-slate-700 hover:text-slate-900"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                  <span>{d.label}</span>
+                </div>
+                <div
+                  className={`grid h-4 w-4 place-items-center rounded border transition ${
+                    d.active ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-white'
+                  }`}
+                >
+                  {d.active && <Check size={11} strokeWidth={3} />}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom Left Google Maps Action */}
+        <div className="absolute bottom-5 left-5 z-20">
           <button
             onClick={handleExportGoogleMaps}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+            className="flex items-center gap-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-800 px-3.5 py-2 text-xs font-bold shadow-lg border border-slate-200 transition active:scale-98 backdrop-blur-sm"
           >
             <ExternalLink size={13} />
             Export to Google Maps
-          </button>
-        </div>
-      </div>
-
-      {/* Map Canvas with Wanderlog style Waypoints */}
-      <div className="relative rounded-2xl bg-[#0f172a] p-6 text-white min-h-[320px] flex flex-col justify-between overflow-hidden shadow-inner border border-slate-800">
-        {/* Subtle Map Grid Background */}
-        <div className="absolute inset-0 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:20px_20px] opacity-15 pointer-events-none" />
-
-        {/* Floating Route Savings Card (Screen 3 & 14) */}
-        {showSavingsCard && (
-          <div className="absolute top-4 left-4 z-20 w-64 rounded-2xl bg-slate-900/95 border border-emerald-500/40 p-3.5 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
-              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                <Sparkles size={13} /> We saved you:
-              </span>
-              <button
-                onClick={() => setShowSavingsCard(false)}
-                className="text-slate-400 hover:text-white"
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <div className="space-y-1 text-xs">
-              <p className="text-slate-200 flex items-center gap-1.5">
-                <Clock size={12} className="text-blue-400" />
-                <span className="font-semibold text-white">45 mins</span> of travel time
-              </p>
-              <p className="text-slate-200 flex items-center gap-1.5">
-                <TrendingDown size={12} className="text-emerald-400" />
-                <span className="font-semibold text-white">₹1,850</span> transit & fuel cost
-              </p>
-            </div>
-          </div>
-        )}
-
-        <div className="relative z-10 flex items-center justify-between">
-          <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-mono font-bold text-blue-300 backdrop-blur-md">
-            {stops.length} Places Plotted
-          </span>
-          <span className="text-xs font-mono text-slate-300 font-semibold">
-            Total Distance: ~{Math.round(totalDistance).toLocaleString()} km
-          </span>
-        </div>
-
-        {/* Visual Waypoint Pins on Map */}
-        {stops.length === 0 ? (
-          <div className="relative z-10 my-auto text-center py-10">
-            <MapPin size={36} className="mx-auto text-slate-600 mb-2 opacity-60" />
-            <p className="text-xs text-slate-400">Add places to your itinerary to view them on the map.</p>
-          </div>
-        ) : (
-          <div className="relative z-10 my-8 flex flex-wrap items-center justify-center gap-3 sm:gap-6">
-            {stops.map((stop, index) => {
-              const isLast = index === stops.length - 1;
-              const colorClass = pinColors[index % pinColors.length];
-
-              return (
-                <div key={stop.id || index} className="flex items-center gap-3 sm:gap-6">
-                  <div className="flex flex-col items-center group cursor-pointer">
-                    <div
-                      className={`grid h-10 w-10 place-items-center rounded-2xl ${colorClass} text-white font-black text-xs shadow-lg border-2 group-hover:scale-110 transition duration-200`}
-                    >
-                      {index + 1}
-                    </div>
-                    <span className="text-xs font-bold mt-1.5 text-white max-w-[90px] truncate text-center">
-                      {stop.cities?.name || 'Stop'}
-                    </span>
-                    <span className="text-[10px] text-slate-400">{stop.cities?.country}</span>
-                  </div>
-
-                  {!isLast && (
-                    <div className="flex flex-col items-center">
-                      <div className="w-8 sm:w-16 border-t-2 border-dashed border-blue-400/60" />
-                      <span className="text-[9px] font-mono text-blue-300 mt-0.5">
-                        {Math.round(calculateTotalDistance([stop, stops[index + 1]]))} km
-                      </span>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Date Filter Checkboxes at bottom of Map */}
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
-          <div className="flex items-center gap-2">
-            <Calendar size={13} className="text-blue-400" />
-            <span className="text-xs font-bold text-slate-300">Itinerary Days:</span>
-            {stops.map((s, idx) => (
-              <span
-                key={s.id || idx}
-                className="rounded-lg bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-200"
-              >
-                Day {idx + 1}: {s.cities?.name}
-              </span>
-            ))}
-          </div>
-
-          <button
-            onClick={handleExportGoogleMaps}
-            className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1"
-          >
-            Open in Google Maps <ExternalLink size={12} />
           </button>
         </div>
       </div>
