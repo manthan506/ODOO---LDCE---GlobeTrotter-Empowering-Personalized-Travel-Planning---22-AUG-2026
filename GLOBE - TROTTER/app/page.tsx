@@ -1,9 +1,20 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { Compass, ArrowRight, Sparkles, MapPin, Shield, Users, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function WelcomePage() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
   return (
     <main className="min-h-screen bg-slate-900 text-white flex flex-col justify-between relative overflow-hidden">
       {/* Background Hero Image matching Screen 1 artwork */}
