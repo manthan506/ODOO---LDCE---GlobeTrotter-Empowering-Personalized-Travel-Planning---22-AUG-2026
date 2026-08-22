@@ -42,6 +42,20 @@ const STORAGE_KEY = 'gt_auth_user';
 
 // Pre-seeded demo accounts — always work, no backend needed
 const DEMO_ACCOUNTS: Record<string, UserProfile & { password: string }> = {
+  'manthan@globetrotter.io': {
+    id: 'demo-manthan',
+    name: 'Manthan Saraiya',
+    firstName: 'Manthan',
+    lastName: 'Saraiya',
+    email: 'manthan@globetrotter.io',
+    phone: '+91 98765 12345',
+    city: 'Ahmedabad',
+    country: 'India',
+    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
+    additionalInfo: 'Love mountain trekking, street food tours, and budget travel.',
+    role: 'user',
+    password: 'password123',
+  },
   'alex@globetrotter.io': {
     id: 'demo-alex',
     name: 'Alex Nomad',
