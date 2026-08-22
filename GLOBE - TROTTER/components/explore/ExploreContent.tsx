@@ -1,19 +1,13 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCities, useTrips } from '@/hooks/useTrips';
+import { useTrips } from '@/hooks/useTrips';
 import { toast } from 'sonner';
 import {
   Search,
   MapPin,
   Plus,
   X,
-  Sparkles,
-  Clock,
-  Heart,
-  SlidersHorizontal,
-  DollarSign,
-  Compass,
   Star,
   CheckCircle2,
   ShieldCheck,
@@ -21,18 +15,17 @@ import {
   ArrowUpDown,
   Layers,
   ChevronRight,
-  UserCheck,
   MousePointer2,
-  Globe,
-  Share2,
+  Compass,
+  Wallet,
 } from 'lucide-react';
-import Link from 'next/link';
-import type { City } from '@/types';
 
 const FALLBACK_IMG =
   'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80';
 
 const formatINR = (val: number) => `₹${Math.round(val).toLocaleString('en-IN')}`;
+
+type CostTier = 'budget' | 'moderate' | 'luxury';
 
 interface SearchOptionItem {
   id: string;
@@ -43,7 +36,8 @@ interface SearchOptionItem {
   region: string;
   category: string;
   cost: number;
-  costIndex: '$$' | '$$$' | '$$$$';
+  costTier: CostTier;
+  costLabel: string;
   popularity: number;
   reviewsCount: string;
   imageUrl: string;
@@ -68,7 +62,8 @@ const SEARCH_DATA: SearchOptionItem[] = [
     region: 'Europe',
     category: 'Paragliding & Adventure',
     cost: 8500,
-    costIndex: '$$$',
+    costTier: 'luxury',
+    costLabel: '₹₹₹ Luxury',
     popularity: 4.9,
     reviewsCount: '2.8k',
     imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
@@ -91,7 +86,8 @@ const SEARCH_DATA: SearchOptionItem[] = [
     region: 'Europe',
     category: 'Cruise & Dining',
     cost: 5800,
-    costIndex: '$$$',
+    costTier: 'moderate',
+    costLabel: '₹₹ Moderate',
     popularity: 4.8,
     reviewsCount: '4.1k',
     imageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
@@ -109,7 +105,8 @@ const SEARCH_DATA: SearchOptionItem[] = [
     region: 'Europe',
     category: 'Historical Landmark',
     cost: 6500,
-    costIndex: '$$$',
+    costTier: 'moderate',
+    costLabel: '₹₹ Moderate',
     popularity: 4.9,
     reviewsCount: '5.6k',
     imageUrl: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&q=80',
@@ -127,7 +124,8 @@ const SEARCH_DATA: SearchOptionItem[] = [
     region: 'Europe',
     category: 'Summit Mountain Express',
     cost: 14500,
-    costIndex: '$$$$',
+    costTier: 'luxury',
+    costLabel: '₹₹₹ Luxury',
     popularity: 4.9,
     reviewsCount: '3.4k',
     imageUrl: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=800&q=80',
@@ -150,7 +148,8 @@ const SEARCH_DATA: SearchOptionItem[] = [
     region: 'Asia',
     category: 'Scenic Sightseeing',
     cost: 7200,
-    costIndex: '$$$',
+    costTier: 'moderate',
+    costLabel: '₹₹ Moderate',
     popularity: 4.9,
     reviewsCount: '6.2k',
     imageUrl: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80',
@@ -173,7 +172,8 @@ const SEARCH_DATA: SearchOptionItem[] = [
     region: 'Asia',
     category: 'Nature & Wildlife',
     cost: 3200,
-    costIndex: '$$',
+    costTier: 'budget',
+    costLabel: '₹ Budget',
     popularity: 4.8,
     reviewsCount: '4.8k',
     imageUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
@@ -196,7 +196,8 @@ const SEARCH_DATA: SearchOptionItem[] = [
     region: 'Europe',
     category: 'Architecture & Culture',
     cost: 4600,
-    costIndex: '$$$',
+    costTier: 'moderate',
+    costLabel: '₹₹ Moderate',
     popularity: 4.9,
     reviewsCount: '5.1k',
     imageUrl: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
@@ -204,6 +205,25 @@ const SEARCH_DATA: SearchOptionItem[] = [
     bestTime: 'All Year Round',
     description: 'Skip the massive lines to explore Antoni Gaudí’s masterpiece basilica with Nativity facade tower access.',
     highlights: ['Skip-the-line entrance', 'Tower panoramic elevator', 'Gaudí museum access'],
+  },
+  {
+    id: 'opt-8',
+    name: 'Santorini Sunset Catamaran Sailing & Greek BBQ Feast',
+    type: 'activity',
+    city: 'Santorini',
+    country: 'Greece',
+    region: 'Europe',
+    category: 'Sailing & Gastronomy',
+    cost: 9200,
+    costTier: 'luxury',
+    costLabel: '₹₹₹ Luxury',
+    popularity: 4.9,
+    reviewsCount: '3.1k',
+    imageUrl: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&q=80',
+    duration: '5.0 Hours',
+    bestTime: 'May – October',
+    description: 'Sail into the caldera hot springs and volcanic red beach followed by an onboard fresh Greek seafood BBQ and Oia sunset.',
+    highlights: ['Caldera volcanic swim', 'Unlimited Greek wine & beer', 'Fresh grilled shrimp & souvlaki BBQ'],
   },
 ];
 
@@ -216,7 +236,7 @@ export function ExploreContent() {
   const [sortBy, setSortBy] = useState<'popularity' | 'costLow' | 'costHigh' | 'name'>('popularity');
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<string>('All');
-  const [selectedCostIndex, setSelectedCostIndex] = useState<string>('All');
+  const [selectedCostTier, setSelectedCostTier] = useState<string>('All');
   const [maxPrice, setMaxPrice] = useState<number>(20000);
 
   // Selected option for Canva/Figma detail modal preview
@@ -241,8 +261,10 @@ export function ExploreContent() {
         return false;
       }
 
-      if (selectedCostIndex !== 'All' && item.costIndex !== selectedCostIndex) {
-        return false;
+      if (selectedCostTier !== 'All') {
+        if (selectedCostTier === 'budget' && item.costTier !== 'budget') return false;
+        if (selectedCostTier === 'moderate' && item.costTier !== 'moderate') return false;
+        if (selectedCostTier === 'luxury' && item.costTier !== 'luxury') return false;
       }
 
       if (item.cost > maxPrice) {
@@ -263,7 +285,44 @@ export function ExploreContent() {
     }
 
     return items;
-  }, [searchQuery, selectedRegion, selectedCostIndex, maxPrice, sortBy]);
+  }, [searchQuery, selectedRegion, selectedCostTier, maxPrice, sortBy]);
+
+  // Grouped Results
+  const groupedSections = useMemo(() => {
+    if (groupBy === 'none') {
+      return [{ title: null, items: filteredResults }];
+    }
+    if (groupBy === 'region') {
+      const map: Record<string, SearchOptionItem[]> = {};
+      filteredResults.forEach((item) => {
+        if (!map[item.region]) map[item.region] = [];
+        map[item.region].push(item);
+      });
+      return Object.entries(map).map(([reg, items]) => ({
+        title: `📍 ${reg} Region (${items.length} options)`,
+        items,
+      }));
+    }
+    if (groupBy === 'cost') {
+      const tiers: Record<string, { label: string; items: SearchOptionItem[] }> = {
+        budget: { label: '💰 ₹ Budget Friendly (< ₹4,000)', items: [] },
+        moderate: { label: '✨ ₹₹ Moderate Value (₹4,000 – ₹7,500)', items: [] },
+        luxury: { label: '💎 ₹₹₹ Luxury & Premium (> ₹7,500)', items: [] },
+      };
+      filteredResults.forEach((item) => {
+        if (tiers[item.costTier]) {
+          tiers[item.costTier].items.push(item);
+        }
+      });
+      return Object.values(tiers)
+        .filter((g) => g.items.length > 0)
+        .map((g) => ({
+          title: `${g.label} • ${g.items.length} options`,
+          items: g.items,
+        }));
+    }
+    return [{ title: null, items: filteredResults }];
+  }, [filteredResults, groupBy]);
 
   const handleConfirmAddToTrip = (tripName: string) => {
     if (showAddToTripModal) {
@@ -285,7 +344,7 @@ export function ExploreContent() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search activities or cities (e.g. Paragliding, Paris, Rome, Kyoto)..."
+            placeholder="Search activities or cities (e.g. Paragliding, Paris, Rome, Tokyo)..."
             className="h-11 w-full rounded-2xl border border-slate-200 bg-white pl-10 pr-9 text-xs sm:text-sm text-slate-900 font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-2xs transition"
           />
           {searchQuery && (
@@ -306,8 +365,8 @@ export function ExploreContent() {
             className="h-11 appearance-none rounded-2xl border border-slate-200 bg-white px-4 pr-9 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 cursor-pointer outline-none transition"
           >
             <option value="none">Group by: None</option>
+            <option value="cost">Group by: Cost Index (₹)</option>
             <option value="region">Group by: Region</option>
-            <option value="cost">Group by: Cost Index</option>
           </select>
           <Layers size={14} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
         </div>
@@ -342,7 +401,7 @@ export function ExploreContent() {
       </div>
 
       {/* ============================================================ */}
-      {/* FILTER DRAWER EXPANDABLE                                     */}
+      {/* FILTER DRAWER EXPANDABLE (WITH RUPEES ₹ COST INDEX RANGES)     */}
       {/* ============================================================ */}
       {showFilterDrawer && (
         <div className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 animate-in slide-in-from-top-2">
@@ -353,7 +412,7 @@ export function ExploreContent() {
             <button
               onClick={() => {
                 setSelectedRegion('All');
-                setSelectedCostIndex('All');
+                setSelectedCostTier('All');
                 setMaxPrice(20000);
               }}
               className="text-xs font-bold text-blue-600 hover:underline"
@@ -363,17 +422,44 @@ export function ExploreContent() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Cost Index Filter in Rupees (₹) */}
+            <div>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center gap-1">
+                <Wallet size={13} className="text-emerald-600" /> Cost Index (₹ INR):
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { id: 'All', label: 'All Ranges' },
+                  { id: 'budget', label: '₹ Budget (< ₹4k)' },
+                  { id: 'moderate', label: '₹₹ Mid (₹4k–₹7.5k)' },
+                  { id: 'luxury', label: '₹₹₹ Luxury (> ₹7.5k)' },
+                ].map((tier) => (
+                  <button
+                    key={tier.id}
+                    onClick={() => setSelectedCostTier(tier.id)}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-bold border transition cursor-pointer ${
+                      selectedCostTier === tier.id
+                        ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs'
+                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {tier.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Region Filter */}
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5">Region:</label>
               <div className="flex flex-wrap gap-1.5">
-                {['All', 'Europe', 'Asia', 'Americas'].map((reg) => (
+                {['All', 'Europe', 'Asia'].map((reg) => (
                   <button
                     key={reg}
                     onClick={() => setSelectedRegion(reg)}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-bold border transition ${
+                    className={`rounded-xl px-3 py-1.5 text-xs font-bold border transition cursor-pointer ${
                       selectedRegion === reg
-                        ? 'border-blue-600 bg-blue-600 text-white'
+                        ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
                         : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -383,27 +469,7 @@ export function ExploreContent() {
               </div>
             </div>
 
-            {/* Cost Index Filter */}
-            <div>
-              <label className="block text-xs font-bold text-slate-800 mb-1.5">Cost Index:</label>
-              <div className="flex flex-wrap gap-1.5">
-                {['All', '$$', '$$$', '$$$$'].map((ci) => (
-                  <button
-                    key={ci}
-                    onClick={() => setSelectedCostIndex(ci)}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-bold border transition ${
-                      selectedCostIndex === ci
-                        ? 'border-blue-600 bg-blue-600 text-white'
-                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    {ci}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Price Slider */}
+            {/* Max Cost Price Slider in ₹ INR */}
             <div>
               <div className="flex items-center justify-between text-xs font-bold text-slate-800 mb-1">
                 <span>Max Cost:</span>
@@ -453,19 +519,20 @@ export function ExploreContent() {
       {/* ============================================================ */}
       {/* STACK OF WIDE OPTION CARDS MATCHING SCREEN 8 WIREFRAME       */}
       {/* ============================================================ */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {filteredResults.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-xs">
             <Compass size={36} className="mx-auto text-blue-500 mb-3" />
             <h3 className="text-base font-bold text-slate-900">No matching options found</h3>
             <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-              Try searching for different terms like &quot;Paragliding&quot;, &quot;Paris&quot;, &quot;Rome&quot;, or reset your filters.
+              Try searching for different terms like &quot;Paragliding&quot;, &quot;Paris&quot;, &quot;Rome&quot;, or reset your Cost Index filter.
             </p>
             <button
               onClick={() => {
                 setSearchQuery('');
                 setSelectedRegion('All');
-                setSelectedCostIndex('All');
+                setSelectedCostTier('All');
+                setMaxPrice(20000);
               }}
               className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700"
             >
@@ -473,91 +540,106 @@ export function ExploreContent() {
             </button>
           </div>
         ) : (
-          filteredResults.map((opt) => (
-            <div
-              key={opt.id}
-              className="group relative rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer"
-              onClick={() => setSelectedOption(opt)}
-            >
-              {/* Optional Multiplayer Collaborator Cursor Badge (from Wireframe) */}
-              {opt.activeCollaborator && (
-                <div
-                  className={`absolute -top-3 right-6 z-10 flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-black shadow-xs ${opt.activeCollaborator.bg} ${opt.activeCollaborator.color}`}
-                >
-                  <MousePointer2 size={11} className="fill-current" />
-                  <span>{opt.activeCollaborator.name} is viewing</span>
+          groupedSections.map((group, groupIdx) => (
+            <div key={groupIdx} className="space-y-3">
+              {group.title && (
+                <div className="flex items-center gap-2 pt-2">
+                  <h3 className="text-xs sm:text-sm font-black text-slate-700 uppercase tracking-wider">
+                    {group.title}
+                  </h3>
+                  <div className="h-px flex-1 bg-slate-200" />
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                {/* Left Side: Thumbnail & Title Info */}
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="relative h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-2xl bg-slate-100 flex-shrink-0 border border-slate-100">
-                    <img
-                      src={opt.imageUrl}
-                      alt={opt.name}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = FALLBACK_IMG;
-                      }}
-                      className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 uppercase tracking-wider">
-                        {opt.category}
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                        <MapPin size={12} className="text-slate-400" />
-                        {opt.city}, {opt.country}
-                      </span>
-                    </div>
-
-                    <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
-                      {opt.name}
-                    </h3>
-
-                    <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-500">
-                      <span className="flex items-center gap-1 text-amber-600 font-bold">
-                        <Star size={13} className="fill-amber-400 text-amber-400" />
-                        {opt.popularity} ({opt.reviewsCount})
-                      </span>
-                      <span>•</span>
-                      <span className="font-semibold text-slate-600">
-                        {opt.duration}
-                      </span>
-                      <span>•</span>
-                      <span className="font-mono font-bold text-slate-500">
-                        Cost Index: <strong className="text-slate-900">{opt.costIndex}</strong>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Side: Cost and Action Button */}
-                <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 flex-shrink-0">
-                  <div className="text-left sm:text-right">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Estimated Cost
-                    </span>
-                    <p className="text-base sm:text-lg font-black text-emerald-700">
-                      {formatINR(opt.cost)}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowAddToTripModal(opt);
-                    }}
-                    className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition active:scale-95 cursor-pointer"
+              <div className="space-y-3.5">
+                {group.items.map((opt) => (
+                  <div
+                    key={opt.id}
+                    className="group relative rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer"
+                    onClick={() => setSelectedOption(opt)}
                   >
-                    <Plus size={15} strokeWidth={2.5} />
-                    Add to Trip
-                  </button>
-                </div>
+                    {/* Optional Multiplayer Collaborator Cursor Badge (from Wireframe) */}
+                    {opt.activeCollaborator && (
+                      <div
+                        className={`absolute -top-3 right-6 z-10 flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-black shadow-xs ${opt.activeCollaborator.bg} ${opt.activeCollaborator.color}`}
+                      >
+                        <MousePointer2 size={11} className="fill-current" />
+                        <span>{opt.activeCollaborator.name} is viewing</span>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      {/* Left Side: Thumbnail & Title Info */}
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="relative h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-2xl bg-slate-100 flex-shrink-0 border border-slate-100">
+                          <img
+                            src={opt.imageUrl}
+                            alt={opt.name}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = FALLBACK_IMG;
+                            }}
+                            className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                          />
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 uppercase tracking-wider">
+                              {opt.category}
+                            </span>
+                            <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                              <MapPin size={12} className="text-slate-400" />
+                              {opt.city}, {opt.country}
+                            </span>
+                          </div>
+
+                          <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
+                            {opt.name}
+                          </h3>
+
+                          <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-500">
+                            <span className="flex items-center gap-1 text-amber-600 font-bold">
+                              <Star size={13} className="fill-amber-400 text-amber-400" />
+                              {opt.popularity} ({opt.reviewsCount})
+                            </span>
+                            <span>•</span>
+                            <span className="font-semibold text-slate-600">
+                              {opt.duration}
+                            </span>
+                            <span>•</span>
+                            <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-800 border border-emerald-200">
+                              Cost Index: {opt.costLabel} ({formatINR(opt.cost)})
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Side: Cost and Action Button */}
+                      <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 flex-shrink-0">
+                        <div className="text-left sm:text-right">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                            Estimated Cost
+                          </span>
+                          <p className="text-base sm:text-lg font-black text-emerald-700">
+                            {formatINR(opt.cost)}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowAddToTripModal(opt);
+                          }}
+                          className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition active:scale-95 cursor-pointer"
+                        >
+                          <Plus size={15} strokeWidth={2.5} />
+                          Add to Trip
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))
@@ -609,10 +691,10 @@ export function ExploreContent() {
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    Popularity
+                    Cost Tier (₹)
                   </span>
-                  <p className="text-xs font-bold text-slate-900 mt-0.5 flex items-center justify-center gap-1">
-                    <Star size={12} className="fill-amber-400 text-amber-400" /> {selectedOption.popularity}
+                  <p className="text-xs font-bold text-emerald-800 mt-0.5">
+                    {selectedOption.costLabel}
                   </p>
                 </div>
                 <div>
