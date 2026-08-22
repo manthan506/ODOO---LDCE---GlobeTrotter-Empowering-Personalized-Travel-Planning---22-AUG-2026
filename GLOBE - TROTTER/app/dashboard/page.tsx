@@ -1,14 +1,13 @@
 'use client';
 
-import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { Navbar } from '@/components/layout/Navbar';
 import { DashboardContent } from '@/components/trip/DashboardContent';
 
 export default function DashboardPage() {
   return (
-    <ProtectedRoute>
+    <main className="min-h-screen bg-slate-50">
       <Navbar />
       <DashboardContent />
-    </ProtectedRoute>
+    </main>
   );
 }
