@@ -38,6 +38,7 @@ export function Navbar() {
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/trips', label: 'Trips', icon: Compass },
+    { href: '/calendar', label: 'Calendar', icon: Calendar },
     { href: '/budget', label: 'Budget', icon: Wallet },
     { href: '/explore', label: 'Explore', icon: Search },
     { href: '/community', label: 'Community', icon: Globe2 },
@@ -158,9 +159,9 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation Bar matching Screen 3, 5, 12 */}
+      {/* Mobile Bottom Navigation Bar */}
       <div className="fixed bottom-0 inset-x-0 z-40 sm:hidden border-t border-slate-200 bg-white/95 backdrop-blur-lg px-2 py-2">
-        <div className="grid grid-cols-5 gap-1">
+        <div className="grid grid-cols-6 gap-1">
           {navItems.map((item) => {
             const isActive =
               item.href === '/dashboard'
