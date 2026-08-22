@@ -28,11 +28,10 @@ import { toast } from 'sonner';
 import {
   MASTER_ACTIVITIES,
   MASTER_CALENDAR_SPANS,
-  MASTER_DAY_SCHEDULE,
-  MASTER_TRIP,
   ActivityItem,
   TripSpanItem,
 } from '@/lib/tripDataSync';
+import { useTripSync } from '@/context/TripSyncContext';
 
 const formatINR = (val: number) => `₹${Math.round(val).toLocaleString('en-IN')}`;
 
@@ -40,6 +39,8 @@ const formatINR = (val: number) => `₹${Math.round(val).toLocaleString('en-IN')
 const SEPTEMBER_2026_DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
 
 export function CalendarViewContent() {
+  const { masterTrip, daySchedule, addActivityToDay, removeActivityFromDay, reorderActivitiesInDay } = useTripSync();
+
   const [currentMonthIndex, setCurrentMonthIndex] = useState(8); // 8 = September 2026
   const [selectedDay, setSelectedDay] = useState<number>(10);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,16 +48,6 @@ export function CalendarViewContent() {
   const [sortBy, setSortBy] = useState<'asc' | 'desc' | 'cost'>('asc');
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [selectedTripFilter, setSelectedTripFilter] = useState<string>('all');
-
-  // Dynamic Day Activities State synchronized with master data
-  const [dayActivitiesMap, setDayActivitiesMap] = useState<Record<number, ActivityItem[]>>(() => {
-    const map: Record<number, ActivityItem[]> = {};
-    Object.entries(MASTER_DAY_SCHEDULE).forEach(([day, plan]) => {
-      map[Number(day)] = [...plan.activities];
-    });
-    return map;
-  });
-
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
 
   // New activity form
@@ -73,38 +64,28 @@ export function CalendarViewContent() {
 
   // Selected Day activities
   const currentDayActivities = useMemo(() => {
-    let list = dayActivitiesMap[selectedDay] || [];
+    let list = daySchedule[selectedDay]?.activities || [];
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter((a) => a.name.toLowerCase().includes(q) || a.category.toLowerCase().includes(q) || a.city.toLowerCase().includes(q));
     }
     return list;
-  }, [dayActivitiesMap, selectedDay, searchQuery]);
+  }, [daySchedule, selectedDay, searchQuery]);
 
-  const selectedDayMeta = MASTER_DAY_SCHEDULE[selectedDay];
+  const selectedDayMeta = daySchedule[selectedDay];
 
   const handleReorder = (idx: number, dir: 'up' | 'down') => {
-    if (!dayActivitiesMap[selectedDay]) return;
-    const list = [...dayActivitiesMap[selectedDay]];
+    if (!daySchedule[selectedDay]) return;
+    const acts = daySchedule[selectedDay].activities;
     if (dir === 'up' && idx === 0) return;
-    if (dir === 'down' && idx === list.length - 1) return;
+    if (dir === 'down' && idx === acts.length - 1) return;
     const target = dir === 'up' ? idx - 1 : idx + 1;
-    const temp = list[idx];
-    list[idx] = list[target];
-    list[target] = temp;
-    setDayActivitiesMap((prev) => ({
-      ...prev,
-      [selectedDay]: list,
-    }));
+    reorderActivitiesInDay(selectedDay, idx, target);
     toast.success('Activity reordered');
   };
 
   const handleDeleteActivity = (actId: string) => {
-    setDayActivitiesMap((prev) => ({
-      ...prev,
-      [selectedDay]: (prev[selectedDay] || []).filter((a) => a.id !== actId),
-    }));
-    toast.success('Activity removed from calendar schedule');
+    removeActivityFromDay(selectedDay, actId);
   };
 
   const handleAddActivity = (e: React.FormEvent) => {
@@ -133,14 +114,9 @@ export function CalendarViewContent() {
       highlights: ['Confirmed Reservation', 'English speaking host'],
     };
 
-    setDayActivitiesMap((prev) => ({
-      ...prev,
-      [selectedDay]: [...(prev[selectedDay] || []), newAct],
-    }));
-
+    addActivityToDay(selectedDay, newAct);
     setNewActName('');
     setShowAddActivityModal(false);
-    toast.success(`Activity added to Sep ${selectedDay}!`);
   };
 
   const totalSelectedDayCost = currentDayActivities.reduce((sum, a) => sum + a.cost, 0);
@@ -309,7 +285,7 @@ export function CalendarViewContent() {
             {/* 30 Days of September 2026 */}
             {SEPTEMBER_2026_DAYS.map((day) => {
               const isSelected = selectedDay === day;
-              const hasActivities = !!dayActivitiesMap[day]?.length;
+              const hasActivities = !!daySchedule[day]?.activities?.length;
               const matchingSpan = MASTER_CALENDAR_SPANS.find((s) => day >= s.startDay && day <= s.endDay);
 
               return (
@@ -339,7 +315,7 @@ export function CalendarViewContent() {
 
                     {hasActivities && (
                       <span className="text-[9px] font-bold text-blue-700 bg-blue-100/80 px-1.5 py-0.2 rounded-md hidden sm:inline-block">
-                        {dayActivitiesMap[day].length} acts
+                        {daySchedule[day].activities.length} acts
                       </span>
                     )}
                   </div>
@@ -361,7 +337,7 @@ export function CalendarViewContent() {
                   {hasActivities && (
                     <div className="mt-1 flex items-center gap-1 text-[9px] font-semibold text-slate-500 truncate hidden sm:flex">
                       <Clock size={10} className="text-slate-400" />
-                      <span className="truncate">{dayActivitiesMap[day][0]?.name}</span>
+                      <span className="truncate">{daySchedule[day].activities[0]?.name}</span>
                     </div>
                   )}
                 </div>

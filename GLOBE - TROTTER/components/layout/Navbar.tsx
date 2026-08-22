@@ -18,10 +18,12 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useTripSync } from '@/context/TripSyncContext';
 import { useState } from 'react';
 
 export function Navbar() {
   const { user, signOut } = useAuth();
+  const { userProfile } = useTripSync();
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -106,10 +108,10 @@ export function Navbar() {
                     className="flex items-center gap-2 rounded-xl p-1 pr-2 hover:bg-slate-50 transition border border-transparent hover:border-slate-200"
                   >
                     <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-bold text-white shadow-xs">
-                      {(user.name || user.email || 'U')[0].toUpperCase()}
+                      {(userProfile.name || user.name || user.email || 'M')[0].toUpperCase()}
                     </span>
                     <span className="hidden text-xs font-bold text-slate-700 md:block">
-                      {user.name || user.email?.split('@')[0]}
+                      {userProfile.name || user.name || user.email?.split('@')[0]}
                     </span>
                   </button>
 

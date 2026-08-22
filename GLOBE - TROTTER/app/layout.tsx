@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter, Fraunces } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
+import { TripSyncProvider } from '@/context/TripSyncContext';
 import { Toaster } from '@/components/ui/sonner';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -24,8 +25,10 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} font-sans antialiased`}>
         <AuthProvider>
-          {children}
-          <Toaster />
+          <TripSyncProvider>
+            {children}
+            <Toaster />
+          </TripSyncProvider>
         </AuthProvider>
       </body>
     </html>

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useTripSync } from '@/context/TripSyncContext';
 
 const REGIONS = [
   {
@@ -114,7 +115,7 @@ const SAMPLE_PREVIOUS_TRIPS: DashboardTripItem[] = [
 ];
 
 export function DashboardContent() {
-  const { user } = useAuth();
+  const { masterTrip, totalCalculatedCost, totalBudgetCap, avgDailyCost, userProfile } = useTripSync();
   const { trips, loading } = useTrips();
 
   // Wireframe Filter & Control States
@@ -125,11 +126,7 @@ export function DashboardContent() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [maxBudgetFilter, setMaxBudgetFilter] = useState(100000);
 
-  const userName =
-    user?.firstName ||
-    user?.name?.split(' ')[0] ||
-    user?.email?.split('@')[0] ||
-    'Traveler';
+  const userName = userProfile.name.split(' ')[0] || 'Traveler';
 
   // Normalize user trips and combine with sample trips if empty
   const displayedTrips = useMemo(() => {
@@ -437,20 +434,24 @@ export function DashboardContent() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Estimated Cost</span>
-            <p className="text-base sm:text-lg font-black text-slate-900 mt-0.5">₹1,52,000</p>
-            <span className="text-[10px] text-slate-500 font-medium">Planned Cap: ₹1,60,000</span>
+            <p className="text-base sm:text-lg font-black text-slate-900 mt-0.5">₹{Math.round(totalCalculatedCost).toLocaleString('en-IN')}</p>
+            <span className="text-[10px] text-slate-500 font-medium">Planned Cap: ₹{Math.round(totalBudgetCap).toLocaleString('en-IN')}</span>
           </div>
 
           <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">Daily Average Cost</span>
-            <p className="text-base sm:text-lg font-black text-blue-600 mt-0.5">₹10,857 / day</p>
-            <span className="text-[10px] text-slate-500 font-medium">Across 14 travel days</span>
+            <p className="text-base sm:text-lg font-black text-blue-600 mt-0.5">₹{Math.round(avgDailyCost).toLocaleString('en-IN')} / day</p>
+            <span className="text-[10px] text-slate-500 font-medium">Across {masterTrip.daysCount || 14} travel days</span>
           </div>
 
           <div className="rounded-2xl bg-amber-50/60 p-3.5 border border-amber-200">
-            <span className="text-[10px] uppercase font-bold text-amber-800 block">Overbudget Warnings</span>
-            <p className="text-base sm:text-lg font-black text-amber-700 mt-0.5">Day 1 & Day 3 Over</p>
-            <span className="text-[10px] text-amber-600 font-medium">Glacier train & peak passes</span>
+            <span className="text-[10px] uppercase font-bold text-amber-800 block">Financial Health</span>
+            <p className="text-base sm:text-lg font-black text-amber-700 mt-0.5">
+              {totalCalculatedCost > totalBudgetCap ? 'Over Budget' : 'Safe Balance'}
+            </p>
+            <span className="text-[10px] text-amber-600 font-medium">
+              ₹{Math.round(Math.max(0, totalBudgetCap - totalCalculatedCost)).toLocaleString('en-IN')} remaining
+            </span>
           </div>
         </div>
       </div>

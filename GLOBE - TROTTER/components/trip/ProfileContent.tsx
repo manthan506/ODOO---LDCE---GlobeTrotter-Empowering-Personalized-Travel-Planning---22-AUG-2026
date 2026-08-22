@@ -128,42 +128,38 @@ const SAVED_DESTINATIONS = [
   { id: 'sd-6', name: 'Barcelona', country: 'Spain', img: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80' },
 ];
 
+import { useTripSync } from '@/context/TripSyncContext';
+
 export function ProfileContent() {
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
+  const { userProfile, updateUserProfile, savedDestinations, removeSavedDestination } = useTripSync();
 
   // Profile Form state
   const [isEditing, setIsEditing] = useState(false);
-  const [userName, setUserName] = useState(
-    user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Manthan Saraiya'
-  );
-  const [userEmail, setUserEmail] = useState(user?.email || 'manthan@globetrotter.io');
-  const [userLocation, setUserLocation] = useState(
-    [user?.city, user?.country].filter(Boolean).join(', ') || 'Ahmedabad, India'
-  );
-  const [userBio, setUserBio] = useState(
-    user?.additionalInfo || 'Passionate global explorer, mountaineer, and digital nomad crafting high-altitude adventures.'
-  );
-  const [userAvatar, setUserAvatar] = useState(
-    user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&q=80'
-  );
-  const [language, setLanguage] = useState('English (US)');
-  const [currency, setCurrency] = useState('₹ INR (Indian Rupee)');
-
-  // Saved destinations state
-  const [savedDests, setSavedDests] = useState(SAVED_DESTINATIONS);
-
-  // Delete modal
+  const [name, setName] = useState(userProfile.name);
+  const [email, setEmail] = useState(userProfile.email);
+  const [location, setLocation] = useState(userProfile.location);
+  const [bio, setBio] = useState(userProfile.bio);
+  const [language, setLanguage] = useState(userProfile.language);
+  const [currency, setCurrency] = useState(userProfile.currency);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
+    updateUserProfile({
+      name,
+      email,
+      location,
+      bio,
+      language,
+      currency,
+    });
     setIsEditing(false);
-    toast.success('Profile details updated successfully!');
   };
 
-  const handleRemoveSavedDest = (id: string, name: string) => {
-    setSavedDests((prev) => prev.filter((d) => d.id !== id));
-    toast.success(`Removed ${name} from saved destinations`);
+  const handleRemoveSavedDest = (id: string, destName: string) => {
+    removeSavedDestination(id);
+    toast.success(`Removed ${destName} from wishlist`);
   };
 
   const handleDeleteAccount = () => {
@@ -184,16 +180,16 @@ export function ProfileContent() {
           <div className="flex flex-col items-center flex-shrink-0">
             <div className="relative h-32 w-32 sm:h-36 sm:w-36">
               <img
-                src={userAvatar}
-                alt={userName}
+                src={userProfile.avatar}
+                alt={userProfile.name}
                 className="h-full w-full rounded-full border-4 border-slate-100 object-cover shadow-md ring-4 ring-blue-50"
               />
               <button
                 type="button"
                 onClick={() => {
-                  const newImg = prompt('Enter new avatar image URL:', userAvatar);
+                  const newImg = prompt('Enter new avatar image URL:', userProfile.avatar);
                   if (newImg) {
-                    setUserAvatar(newImg);
+                    updateUserProfile({ avatar: newImg });
                     toast.success('Avatar updated!');
                   }
                 }}
@@ -221,16 +217,24 @@ export function ProfileContent() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                      {userName}
+                      {userProfile.name}
                     </h1>
                     <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-                      {userEmail} • 📍 {userLocation}
+                      {userProfile.email} • 📍 {userProfile.location}
                     </p>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setIsEditing(true)}
+                    onClick={() => {
+                      setName(userProfile.name);
+                      setEmail(userProfile.email);
+                      setLocation(userProfile.location);
+                      setBio(userProfile.bio);
+                      setLanguage(userProfile.language);
+                      setCurrency(userProfile.currency);
+                      setIsEditing(true);
+                    }}
                     className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95 cursor-pointer"
                   >
                     <Edit3 size={14} /> Edit Profile
@@ -239,7 +243,7 @@ export function ProfileContent() {
 
                 {/* Bio */}
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-                  "{userBio}"
+                  "{userProfile.bio}"
                 </p>
 
                 {/* Preferences Strip: Language, Currency */}
@@ -520,7 +524,7 @@ export function ProfileContent() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
-          {savedDests.map((dest) => (
+          {savedDestinations.map((dest) => (
             <div
               key={dest.id}
               className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-2 hover:border-blue-300 hover:bg-white transition"

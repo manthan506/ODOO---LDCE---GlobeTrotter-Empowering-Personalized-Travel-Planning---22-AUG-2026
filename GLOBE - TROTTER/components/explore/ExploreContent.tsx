@@ -28,6 +28,8 @@ import {
   BookmarkCheck,
 } from 'lucide-react';
 
+import { useTripSync } from '@/context/TripSyncContext';
+
 const FALLBACK_IMG =
   'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80';
 
@@ -388,11 +390,7 @@ export function ExploreContent() {
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [maxPrice, setMaxPrice] = useState<number>(20000);
 
-  // Added Activities State Map: { [activityId]: boolean }
-  const [addedActivities, setAddedActivities] = useState<Record<string, boolean>>({
-    'act-1': true,
-    'act-4': true,
-  });
+  const { addedActivityIds, toggleAddActivity, addSavedDestination } = useTripSync();
 
   // Selected for quick preview modal
   const [previewActivity, setPreviewActivity] = useState<ActivityItem | null>(null);
@@ -401,16 +399,7 @@ export function ExploreContent() {
   // Toggle add/remove
   const handleToggleActivity = (act: ActivityItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    const isCurrentlyAdded = !!addedActivities[act.id];
-    setAddedActivities((prev) => ({
-      ...prev,
-      [act.id]: !isCurrentlyAdded,
-    }));
-    if (isCurrentlyAdded) {
-      toast.info(`Removed "${act.name}" from your stop.`);
-    } else {
-      toast.success(`Added "${act.name}" (${formatINR(act.cost)}) to your stop!`);
-    }
+    toggleAddActivity(act);
   };
 
   // Filtered Activities
@@ -466,9 +455,9 @@ export function ExploreContent() {
     });
   }, [searchQuery]);
 
-  const totalSelectedActivities = Object.values(addedActivities).filter(Boolean).length;
+  const totalSelectedActivities = addedActivityIds.length;
   const totalSelectedCost = ACTIVITIES_DATA.reduce((sum, act) => {
-    return addedActivities[act.id] ? sum + act.cost : sum;
+    return addedActivityIds.includes(act.id) ? sum + act.cost : sum;
   }, 0);
 
   return (
@@ -763,7 +752,7 @@ export function ExploreContent() {
             </div>
           ) : (
             filteredActivities.map((act) => {
-              const isAdded = !!addedActivities[act.id];
+              const isAdded = addedActivityIds.includes(act.id);
 
               return (
                 <div
@@ -1038,12 +1027,12 @@ export function ExploreContent() {
                     setPreviewActivity(null);
                   }}
                   className={`flex-1 flex items-center justify-center gap-2 rounded-2xl py-3 text-xs font-bold text-white shadow-sm transition active:scale-98 cursor-pointer ${
-                    addedActivities[previewActivity.id]
+                    addedActivityIds.includes(previewActivity.id)
                       ? 'bg-red-600 hover:bg-red-700'
                       : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
-                  {addedActivities[previewActivity.id] ? (
+                  {addedActivityIds.includes(previewActivity.id) ? (
                     <>
                       <X size={16} /> Remove from Stop
                     </>

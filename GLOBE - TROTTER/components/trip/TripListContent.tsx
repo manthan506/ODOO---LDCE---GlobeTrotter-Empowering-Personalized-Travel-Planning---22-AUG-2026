@@ -36,14 +36,15 @@ import {
 const FALLBACK_IMG =
   'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80';
 
+import { useTripSync } from '@/context/TripSyncContext';
+
 const formatINR = (val: number) => `₹${Math.round(val).toLocaleString('en-IN')}`;
 
 export function TripListContent() {
+  const { masterTrip, sections, addSection, removeSection, reorderSections, daySchedule } = useTripSync();
+
   // Mode switcher: 'view' (Screen 6 / 7) vs 'builder' (Screen 5)
   const [activeScreen, setActiveScreen] = useState<'view' | 'builder'>('view');
-
-  // Screen 5 Builder State (Synchronized with MASTER_SECTIONS)
-  const [sections, setSections] = useState<SectionItem[]>(MASTER_SECTIONS);
   const [showAddModal, setShowAddModal] = useState(false);
 
   // Screen 6/7 View State
@@ -63,23 +64,16 @@ export function TripListContent() {
     if (dir === 'up' && idx === 0) return;
     if (dir === 'down' && idx === sections.length - 1) return;
     const targetIdx = dir === 'up' ? idx - 1 : idx + 1;
-    const updated = [...sections];
-    const temp = updated[idx];
-    updated[idx] = updated[targetIdx];
-    updated[targetIdx] = temp;
-    setSections(updated);
-    toast.success(`Section shifted ${dir === 'up' ? 'upwards' : 'downwards'}`);
+    reorderSections(idx, targetIdx);
   };
 
   const handleDeleteSection = (id: string) => {
-    setSections((prev) => prev.filter((s) => s.id !== id));
-    toast.success('Section deleted');
+    removeSection(id);
   };
 
   const handleAddSection = (newSec: SectionItem) => {
-    setSections((prev) => [...prev, newSec]);
+    addSection(newSec);
     setShowAddModal(false);
-    toast.success(`Section ${sections.length + 1} added successfully!`);
   };
 
   const totalSectionsBudget = sections.reduce((sum, s) => sum + s.budget, 0);

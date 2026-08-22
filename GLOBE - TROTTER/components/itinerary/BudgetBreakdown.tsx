@@ -23,91 +23,12 @@ import {
   ShieldCheck,
   X,
   CreditCard,
+  RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Expense, TripWithDetails } from '@/types';
-
-interface BudgetBreakdownProps {
-  tripId?: string;
-  trip?: TripWithDetails | null;
-  onExpenseAdded?: () => void;
-}
+import { useTripSync } from '@/context/TripSyncContext';
 
 const formatINR = (val: number) => `₹${Math.round(val).toLocaleString('en-IN')}`;
-
-interface DayExpense {
-  dayNumber: number;
-  date: string;
-  location: string;
-  cost: number;
-  dailyCap: number;
-  isOverbudget: boolean;
-  overAmount: number;
-  items: string[];
-}
-
-const INITIAL_DAY_EXPENSES: DayExpense[] = [
-  {
-    dayNumber: 1,
-    date: 'Sep 10, 2026',
-    location: 'Paris Arrival',
-    cost: 18500,
-    dailyCap: 12000,
-    isOverbudget: true,
-    overAmount: 6500,
-    items: ['International Flight Shuttle (₹4,500)', 'Boutique Hotel Deposit (₹10,500)', 'Bistro Welcome Dinner (₹3,500)'],
-  },
-  {
-    dayNumber: 2,
-    date: 'Sep 11, 2026',
-    location: 'Paris Sightseeing',
-    cost: 10200,
-    dailyCap: 12000,
-    isOverbudget: false,
-    overAmount: 0,
-    items: ['Louvre VIP Guided Tour (₹4,200)', 'Seine Sunset Cruise (₹3,800)', 'Café Lunch & Gelato (₹2,200)'],
-  },
-  {
-    dayNumber: 3,
-    date: 'Sep 14, 2026',
-    location: 'Interlaken Transfer',
-    cost: 21500,
-    dailyCap: 14000,
-    isOverbudget: true,
-    overAmount: 7500,
-    items: ['Glacier Express 1st Class Train (₹7,500)', 'Swiss Mountain Chalet Lodge (₹11,000)', 'Fondue Dinner (₹3,000)'],
-  },
-  {
-    dayNumber: 4,
-    date: 'Sep 15, 2026',
-    location: 'Swiss Alps Excursion',
-    cost: 19700,
-    dailyCap: 14000,
-    isOverbudget: true,
-    overAmount: 5700,
-    items: ['Jungfraujoch Top of Europe (₹14,500)', 'First Cliff Walk (₹3,800)', 'Alpine Snack & Souvenirs (₹1,400)'],
-  },
-  {
-    dayNumber: 5,
-    date: 'Sep 19, 2026',
-    location: 'Rome Arrival & Colosseum',
-    cost: 11400,
-    dailyCap: 12000,
-    isOverbudget: false,
-    overAmount: 0,
-    items: ['Colosseum Arena Floor (₹6,500)', 'Pantheon Walk (₹1,500)', 'Trastevere Pasta Tasting (₹3,400)'],
-  },
-  {
-    dayNumber: 6,
-    date: 'Sep 20, 2026',
-    location: 'Vatican Treasures',
-    cost: 9800,
-    dailyCap: 12000,
-    isOverbudget: false,
-    overAmount: 0,
-    items: ['Vatican Early Access (₹6,800)', 'Castel Sant’Angelo (₹1,800)', 'Aperitivo & Pizza (₹1,200)'],
-  },
-];
 
 interface CategorySummary {
   category: 'transport' | 'stay' | 'activities' | 'meals' | 'other';
@@ -118,38 +39,30 @@ interface CategorySummary {
   icon: any;
 }
 
-export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdownProps) {
+export function BudgetBreakdown() {
+  const {
+    masterTrip,
+    expenses,
+    addExpense,
+    removeExpense,
+    totalCalculatedCost,
+    totalBudgetCap,
+    remainingBalance,
+    avgDailyCost,
+    daySchedule,
+    resetAllToDemoDefaults,
+  } = useTripSync();
+
   const [activeTab, setActiveTab] = useState<'overview' | 'daily' | 'itemized'>('overview');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
-
-  // Budget settings
-  const budgetCap = trip?.budget_cap || 160000;
-
-  // Custom added expenses
-  const [customExpenses, setCustomExpenses] = useState<Expense[]>([
-    { id: 'exp-1', trip_id: tripId || '1', category: 'transport', amount: 54000, description: 'Return International & Train Passes', paid_by_member_id: 'Manthan Saraiya', created_at: '2026-08-20' },
-    { id: 'exp-2', trip_id: tripId || '1', category: 'accommodation', amount: 49000, description: '4-Star Boutique Hotels & Alpine Chalets', paid_by_member_id: 'Manthan Saraiya', created_at: '2026-08-21' },
-    { id: 'exp-3', trip_id: tripId || '1', category: 'activities', amount: 29000, description: 'Museum, Summit & Cruise Tickets', paid_by_member_id: 'Manthan Saraiya', created_at: '2026-08-22' },
-    { id: 'exp-4', trip_id: tripId || '1', category: 'food', amount: 12000, description: 'Traditional Trattoria Dinners & Wine Tastings', paid_by_member_id: 'Manthan Saraiya', created_at: '2026-08-22' },
-    { id: 'exp-5', trip_id: tripId || '1', category: 'other', amount: 8000, description: 'Luggage Insurance & Alpine Souvenirs', paid_by_member_id: 'Manthan Saraiya', created_at: '2026-08-22' },
-  ]);
 
   // Form State
   const [formAmount, setFormAmount] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formCategory, setFormCategory] = useState<'transport' | 'accommodation' | 'activities' | 'food' | 'other'>('activities');
 
-  // Total Estimated Cost
-  const totalCost = useMemo(() => {
-    return customExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
-  }, [customExpenses]);
-
-  // Average Daily Cost (across 14 travel days)
-  const totalTripDays = 14;
-  const avgCostPerDay = Math.round(totalCost / totalTripDays);
-
-  // Category Breakdown
+  // Category Breakdown dynamically calculated from synchronized expenses
   const categories: CategorySummary[] = useMemo(() => {
     const map: Record<string, number> = {
       transport: 0,
@@ -158,7 +71,8 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
       food: 0,
       other: 0,
     };
-    customExpenses.forEach((e) => {
+
+    expenses.forEach((e) => {
       const cat = e.category.toLowerCase();
       if (map[cat] !== undefined) {
         map[cat] += Number(e.amount);
@@ -167,17 +81,36 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
       }
     });
 
-    return [
-      { category: 'transport', label: 'Transport & Flights', amount: map.transport, percentage: Math.round((map.transport / totalCost) * 100) || 0, color: '#3B82F6', icon: Plane },
-      { category: 'stay', label: 'Stay & Accommodation', amount: map.accommodation, percentage: Math.round((map.accommodation / totalCost) * 100) || 0, color: '#6366F1', icon: Hotel },
-      { category: 'activities', label: 'Activities & Tours', amount: map.activities, percentage: Math.round((map.activities / totalCost) * 100) || 0, color: '#F97316', icon: Sparkles },
-      { category: 'meals', label: 'Meals & Dining', amount: map.food, percentage: Math.round((map.food / totalCost) * 100) || 0, color: '#10B981', icon: Utensils },
-      { category: 'other', label: 'Shopping & Miscellaneous', amount: map.other, percentage: Math.round((map.other / totalCost) * 100) || 0, color: '#8B5CF6', icon: Wallet },
-    ];
-  }, [customExpenses, totalCost]);
+    const tot = totalCalculatedCost || 1;
 
-  // Overbudget days
-  const overbudgetDays = INITIAL_DAY_EXPENSES.filter((d) => d.isOverbudget);
+    return [
+      { category: 'transport', label: 'Transport & Flights', amount: map.transport, percentage: Math.round((map.transport / tot) * 100) || 0, color: '#3B82F6', icon: Plane },
+      { category: 'stay', label: 'Stay & Accommodation', amount: map.accommodation, percentage: Math.round((map.accommodation / tot) * 100) || 0, color: '#6366F1', icon: Hotel },
+      { category: 'activities', label: 'Activities & Tours', amount: map.activities, percentage: Math.round((map.activities / tot) * 100) || 0, color: '#F97316', icon: Sparkles },
+      { category: 'meals', label: 'Meals & Dining', amount: map.food, percentage: Math.round((map.food / tot) * 100) || 0, color: '#10B981', icon: Utensils },
+      { category: 'other', label: 'Shopping & Misc', amount: map.other, percentage: Math.round((map.other / tot) * 100) || 0, color: '#8B5CF6', icon: Wallet },
+    ];
+  }, [expenses, totalCalculatedCost]);
+
+  // Day-wise calculation from daySchedule
+  const dayTimeline = useMemo(() => {
+    return Object.entries(daySchedule).map(([dayKey, plan]) => {
+      const dayCost = plan.activities.reduce((s, a) => s + a.cost, 0);
+      const isOver = dayCost > plan.dailyCap;
+      return {
+        dayNumber: Number(dayKey),
+        date: plan.date,
+        location: `${plan.city} (${plan.title})`,
+        cost: dayCost,
+        dailyCap: plan.dailyCap,
+        isOverbudget: isOver,
+        overAmount: Math.max(0, dayCost - plan.dailyCap),
+        items: plan.activities.map((a) => `${a.name} (${formatINR(a.cost)})`),
+      };
+    });
+  }, [daySchedule]);
+
+  const overbudgetDays = dayTimeline.filter((d) => d.isOverbudget);
 
   const handleAddExpenseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,33 +119,23 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
       return;
     }
 
-    const newExp: Expense = {
-      id: `exp-${Date.now()}`,
-      trip_id: tripId || '1',
+    addExpense({
       amount: Number(formAmount),
       description: formDesc || `${formCategory.charAt(0).toUpperCase() + formCategory.slice(1)} expense`,
       category: formCategory,
-      paid_by_member_id: 'Manthan Saraiya',
-      created_at: new Date().toISOString().split('T')[0],
-    };
+      paidBy: 'Manthan Saraiya',
+      date: new Date().toISOString().split('T')[0],
+    });
 
-    setCustomExpenses((prev) => [newExp, ...prev]);
     setFormAmount('');
     setFormDesc('');
     setShowAddModal(false);
-    toast.success('Expense recorded successfully!');
-    if (onExpenseAdded) onExpenseAdded();
-  };
-
-  const handleDeleteExpense = (id: string) => {
-    setCustomExpenses((prev) => prev.filter((e) => e.id !== id));
-    toast.success('Expense removed');
   };
 
   const filteredExpenses = useMemo(() => {
-    if (selectedCategoryFilter === 'all') return customExpenses;
-    return customExpenses.filter((e) => e.category.toLowerCase() === selectedCategoryFilter.toLowerCase());
-  }, [customExpenses, selectedCategoryFilter]);
+    if (selectedCategoryFilter === 'all') return expenses;
+    return expenses.filter((e) => e.category.toLowerCase() === selectedCategoryFilter.toLowerCase());
+  }, [expenses, selectedCategoryFilter]);
 
   return (
     <div className="space-y-6">
@@ -223,22 +146,22 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-400/20 mb-2">
-              <ShieldCheck size={13} /> Real-Time Financial Tracker
+              <ShieldCheck size={13} /> Synchronized Financial Tracker
             </div>
             <span className="text-xs uppercase font-bold text-slate-400 block tracking-wider">
-              Total Estimated Trip Cost
+              {masterTrip.name} • Total Cost
             </span>
             <div className="flex items-baseline gap-3 mt-1">
               <h1 className="text-3xl sm:text-4xl font-black text-white">
-                {formatINR(totalCost)}
+                {formatINR(totalCalculatedCost)}
               </h1>
               <span className="text-xs sm:text-sm text-slate-400 font-semibold">
-                / Planned Cap: <strong className="text-white">{formatINR(budgetCap)}</strong>
+                / Planned Cap: <strong className="text-white">{formatINR(totalBudgetCap)}</strong>
               </span>
             </div>
             <p className="text-xs text-slate-300 mt-2">
-              Remaining Safe Balance: <strong className="text-emerald-400">{formatINR(Math.max(0, budgetCap - totalCost))}</strong> (
-              {Math.round(((budgetCap - totalCost) / budgetCap) * 100)}% remaining)
+              Remaining Safe Balance: <strong className="text-emerald-400">{formatINR(remainingBalance)}</strong> (
+              {Math.round((remainingBalance / totalBudgetCap) * 100)}% remaining)
             </p>
           </div>
 
@@ -249,10 +172,10 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                 Avg. Cost Per Day
               </span>
               <p className="text-base sm:text-lg font-black text-blue-400 mt-0.5">
-                {formatINR(avgCostPerDay)}
+                {formatINR(avgDailyCost)}
                 <span className="text-[11px] font-normal text-slate-400"> / day</span>
               </p>
-              <span className="text-[10px] text-slate-400 mt-1 block">Across {totalTripDays} travel days</span>
+              <span className="text-[10px] text-slate-400 mt-1 block">Across {masterTrip.daysCount || 14} days</span>
             </div>
 
             <div className="rounded-2xl bg-slate-800/90 p-4 border border-slate-700">
@@ -271,22 +194,20 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         <div className="mt-6 pt-5 border-t border-slate-800">
           <div className="flex items-center justify-between text-xs text-slate-300 font-semibold mb-1.5">
             <span>Overall Budget Consumption</span>
-            <span>{Math.round((totalCost / budgetCap) * 100)}% Used</span>
+            <span>{Math.round((totalCalculatedCost / totalBudgetCap) * 100)}% Used</span>
           </div>
           <div className="h-3 w-full overflow-hidden rounded-full bg-slate-800 border border-slate-700">
             <div
               className={`h-full transition-all duration-500 ${
-                totalCost > budgetCap ? 'bg-red-500' : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400'
+                totalCalculatedCost > totalBudgetCap ? 'bg-red-500' : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400'
               }`}
-              style={{ width: `${Math.min(100, (totalCost / budgetCap) * 100)}%` }}
+              style={{ width: `${Math.min(100, (totalCalculatedCost / totalBudgetCap) * 100)}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* OVERBUDGET DAYS ALERT NOTIFICATION BAR (Feature 9)           */}
-      {/* ============================================================ */}
+      {/* OVERBUDGET DAYS ALERT BAR */}
       {overbudgetDays.length > 0 && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 px-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900">
           <div className="flex items-center gap-3">
@@ -295,10 +216,10 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
             </div>
             <div>
               <h4 className="text-xs sm:text-sm font-bold">
-                ⚠️ Budget Alert: {overbudgetDays.length} travel days exceeded daily spending caps
+                ⚠️ Budget Alert: {overbudgetDays.length} travel days exceeded daily caps
               </h4>
               <p className="text-xs text-amber-700 mt-0.5">
-                Day 1 (Paris Arrival) & Day 3, 4 (Swiss Alps) exceeded the daily cap due to premium train & peak excursions.
+                Excursions and pass bookings exceeded the standard daily cap.
               </p>
             </div>
           </div>
@@ -308,14 +229,12 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
             onClick={() => setActiveTab('daily')}
             className="rounded-xl bg-amber-900 hover:bg-amber-950 px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs transition flex-shrink-0"
           >
-            Review Days →
+            Review Timeline →
           </button>
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* VIEW MODE TABS: OVERVIEW (CHARTS) vs DAILY BREAKDOWN vs ITEMS */}
-      {/* ============================================================ */}
+      {/* VIEW MODE TABS */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="flex gap-2">
           <button
@@ -346,21 +265,18 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            <CreditCard size={14} /> Itemized Receipts ({customExpenses.length})
+            <CreditCard size={14} /> Itemized Expenses ({expenses.length})
           </button>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              const text = `Trip Budget Summary:\nTotal: ${formatINR(totalCost)}\nDaily Avg: ${formatINR(avgCostPerDay)}\nTransport: ₹54k, Stay: ₹49k, Activities: ₹29k`;
-              navigator.clipboard.writeText(text);
-              toast.success('Budget summary copied to clipboard!');
-            }}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+            onClick={resetAllToDemoDefaults}
+            className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 transition"
+            title="Reset to Demo Defaults"
           >
-            <Share2 size={13} /> Share Budget
+            <RotateCcw size={13} /> Reset Demo
           </button>
           <button
             type="button"
@@ -372,12 +288,9 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* TAB 1: CATEGORY BREAKDOWN (Transport, Stay, Activities, Food) */}
-      {/* ============================================================ */}
+      {/* TAB 1: CATEGORIES */}
       {activeTab === 'overview' && (
         <div className="space-y-6 animate-in fade-in">
-          {/* Category Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {categories.map((cat, idx) => {
               const IconComponent = cat.icon;
@@ -394,7 +307,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                       <IconComponent size={20} />
                     </div>
                     <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-black text-slate-700 font-mono">
-                      {cat.percentage}% of total
+                      {cat.percentage}%
                     </span>
                   </div>
 
@@ -417,38 +330,13 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
               );
             })}
           </div>
-
-          {/* Comparative Summary Card */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-slate-900">Expense Allocation Insights</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Your largest expenditure is <strong>Transport & Flights (35%)</strong> and <strong>Accommodation (32%)</strong>, followed by experiences & sightseeing tours (19%). Dining and local activities remain comfortably within planned thresholds.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-              <div className="rounded-2xl bg-blue-50/60 p-3.5 border border-blue-100 text-xs">
-                <span className="font-bold text-blue-900 block">✈️ Long-Haul Flights</span>
-                <p className="text-slate-600 mt-0.5">₹54,000 locked in early with luggage allowance included.</p>
-              </div>
-              <div className="rounded-2xl bg-indigo-50/60 p-3.5 border border-indigo-100 text-xs">
-                <span className="font-bold text-indigo-900 block">🏨 4-Star Stays</span>
-                <p className="text-slate-600 mt-0.5">Average ₹3,500/night across boutique hotels & alpine chalets.</p>
-              </div>
-              <div className="rounded-2xl bg-emerald-50/60 p-3.5 border border-emerald-100 text-xs">
-                <span className="font-bold text-emerald-900 block">🍷 Culinary & Food</span>
-                <p className="text-slate-600 mt-0.5">₹850/meal budget per traveler with gourmet wine pairings.</p>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* TAB 2: DAY-BY-DAY COST TIMELINE & OVERBUDGET HIGHLIGHTS      */}
-      {/* ============================================================ */}
+      {/* TAB 2: DAILY TIMELINE */}
       {activeTab === 'daily' && (
         <div className="space-y-4 animate-in fade-in">
-          {INITIAL_DAY_EXPENSES.map((day) => (
+          {dayTimeline.map((day) => (
             <div
               key={day.dayNumber}
               className={`rounded-2xl border p-5 shadow-sm transition ${
@@ -485,26 +373,25 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                 </div>
               </div>
 
-              {/* Day item list */}
-              <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                  Day Schedule Expenses:
-                </span>
-                {day.items.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs text-slate-700">
-                    <CheckCircle2 size={13} className="text-blue-600 flex-shrink-0" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
+              {day.items.length > 0 && (
+                <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                    Day Schedule Experiences:
+                  </span>
+                  {day.items.map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-slate-700">
+                      <CheckCircle2 size={13} className="text-blue-600 flex-shrink-0" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* TAB 3: ITEMIZED RECEIPTS & EXPENSE LOGGER                    */}
-      {/* ============================================================ */}
+      {/* TAB 3: ITEMIZED EXPENSES */}
       {activeTab === 'itemized' && (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5 animate-in fade-in">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
@@ -538,7 +425,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                       {exp.description}
                     </h4>
                     <span className="text-[10px] text-slate-400 capitalize">
-                      {exp.category} • Logged on {exp.created_at} by {exp.paid_by_member_id}
+                      {exp.category} • Logged on {exp.date} by {exp.paidBy}
                     </span>
                   </div>
                 </div>
@@ -549,7 +436,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                   </span>
                   <button
                     type="button"
-                    onClick={() => handleDeleteExpense(exp.id)}
+                    onClick={() => removeExpense(exp.id)}
                     className="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
                     title="Delete receipt"
                   >
@@ -562,9 +449,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* ADD EXPENSE MODAL POPUP                                      */}
-      {/* ============================================================ */}
+      {/* ADD EXPENSE MODAL */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md animate-in fade-in">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 sm:p-7 shadow-2xl space-y-4 animate-in zoom-in-95">
@@ -575,7 +460,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
               </div>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
               >
                 <X size={18} />
               </button>
