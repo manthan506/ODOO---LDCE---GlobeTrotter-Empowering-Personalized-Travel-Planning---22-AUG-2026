@@ -2,8 +2,18 @@
 
 import Link from 'next/link';
 import { ArrowRight, Sparkles, Compass } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
-export function LandingCTA() {
+export function LandingCTA({ onOpenAuth }: { onOpenAuth?: (mode?: 'signin' | 'signup') => void }) {
+  const { user } = useAuth();
+
+  const handleCtaClick = (e: React.MouseEvent) => {
+    if (!user && onOpenAuth) {
+      e.preventDefault();
+      onOpenAuth('signup');
+    }
+  };
+
   return (
     <section className="py-16 sm:py-24 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -36,6 +46,7 @@ export function LandingCTA() {
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/signup"
+                onClick={handleCtaClick}
                 className="flex items-center justify-center gap-2.5 rounded-2xl bg-white hover:bg-blue-50 px-8 py-4 text-sm font-black text-slate-900 shadow-xl shadow-black/20 hover:scale-105 transition active:scale-95 cursor-pointer w-full sm:w-auto"
               >
                 <span>Start Planning Now</span>
