@@ -1,381 +1,643 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Plane, Hotel, Sparkles, Car, Utensils, MoreHorizontal, Plus, Trash2, Calendar, TrendingUp, AlertTriangle } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import {
+  Plane,
+  Hotel,
+  Sparkles,
+  Car,
+  Utensils,
+  Plus,
+  Trash2,
+  Calendar,
+  TrendingUp,
+  AlertTriangle,
+  Wallet,
+  PieChart as PieIcon,
+  BarChart3,
+  DollarSign,
+  Download,
+  Share2,
+  CheckCircle2,
+  ArrowUpRight,
+  ShieldCheck,
+  X,
+  CreditCard,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { Expense, TripWithDetails } from '@/types';
 
 interface BudgetBreakdownProps {
-  tripId: string;
+  tripId?: string;
   trip?: TripWithDetails | null;
   onExpenseAdded?: () => void;
 }
 
-interface BudgetData {
-  totalCost: number;
-  budgetCap: number | null;
-  remainingBudget: number | null;
-  isOverBudget: boolean;
-  breakdown: Array<{
-    category: string;
-    amount: number;
-    percentage: number;
-    color: string;
-  }>;
+const formatINR = (val: number) => `₹${Math.round(val).toLocaleString('en-IN')}`;
+
+interface DayExpense {
+  dayNumber: number;
+  date: string;
+  location: string;
+  cost: number;
+  dailyCap: number;
+  isOverbudget: boolean;
+  overAmount: number;
+  items: string[];
+}
+
+const INITIAL_DAY_EXPENSES: DayExpense[] = [
+  {
+    dayNumber: 1,
+    date: 'Sep 10, 2026',
+    location: 'Paris Arrival',
+    cost: 18500,
+    dailyCap: 12000,
+    isOverbudget: true,
+    overAmount: 6500,
+    items: ['International Flight Shuttle (₹4,500)', 'Boutique Hotel Deposit (₹10,500)', 'Bistro Welcome Dinner (₹3,500)'],
+  },
+  {
+    dayNumber: 2,
+    date: 'Sep 11, 2026',
+    location: 'Paris Sightseeing',
+    cost: 10200,
+    dailyCap: 12000,
+    isOverbudget: false,
+    overAmount: 0,
+    items: ['Louvre VIP Guided Tour (₹4,200)', 'Seine Sunset Cruise (₹3,800)', 'Café Lunch & Gelato (₹2,200)'],
+  },
+  {
+    dayNumber: 3,
+    date: 'Sep 14, 2026',
+    location: 'Interlaken Transfer',
+    cost: 21500,
+    dailyCap: 14000,
+    isOverbudget: true,
+    overAmount: 7500,
+    items: ['Glacier Express 1st Class Train (₹7,500)', 'Swiss Mountain Chalet Lodge (₹11,000)', 'Fondue Dinner (₹3,000)'],
+  },
+  {
+    dayNumber: 4,
+    date: 'Sep 15, 2026',
+    location: 'Swiss Alps Excursion',
+    cost: 19700,
+    dailyCap: 14000,
+    isOverbudget: true,
+    overAmount: 5700,
+    items: ['Jungfraujoch Top of Europe (₹14,500)', 'First Cliff Walk (₹3,800)', 'Alpine Snack & Souvenirs (₹1,400)'],
+  },
+  {
+    dayNumber: 5,
+    date: 'Sep 19, 2026',
+    location: 'Rome Arrival & Colosseum',
+    cost: 11400,
+    dailyCap: 12000,
+    isOverbudget: false,
+    overAmount: 0,
+    items: ['Colosseum Arena Floor (₹6,500)', 'Pantheon Walk (₹1,500)', 'Trastevere Pasta Tasting (₹3,400)'],
+  },
+  {
+    dayNumber: 6,
+    date: 'Sep 20, 2026',
+    location: 'Vatican Treasures',
+    cost: 9800,
+    dailyCap: 12000,
+    isOverbudget: false,
+    overAmount: 0,
+    items: ['Vatican Early Access (₹6,800)', 'Castel Sant’Angelo (₹1,800)', 'Aperitivo & Pizza (₹1,200)'],
+  },
+];
+
+interface CategorySummary {
+  category: 'transport' | 'stay' | 'activities' | 'meals' | 'other';
+  label: string;
+  amount: number;
+  percentage: number;
+  color: string;
+  icon: any;
 }
 
 export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdownProps) {
-  const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'daily' | 'itemized'>('overview');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showDayCostModal, setShowDayCostModal] = useState(false);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
 
-  // New expense form state
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<'flights' | 'accommodation' | 'activities' | 'transport' | 'food' | 'other'>('activities');
-  const [submitting, setSubmitting] = useState(false);
+  // Budget settings
+  const budgetCap = trip?.budget_cap || 160000;
 
-  const fetchBudget = async () => {
-    try {
-      const [budgetRes, expensesRes] = await Promise.all([
-        fetch(`/api/trips/${tripId}/budget`, { credentials: 'include' }),
-        fetch(`/api/trips/${tripId}/expenses`, { credentials: 'include' }),
-      ]);
+  // Custom added expenses
+  const [customExpenses, setCustomExpenses] = useState<Expense[]>([
+    { id: 'exp-1', trip_id: tripId || '1', category: 'transport', amount: 54000, description: 'Return International & Train Passes', paid_by_member_id: 'Manthan Saraiya', created_at: '2026-08-20' },
+    { id: 'exp-2', trip_id: tripId || '1', category: 'accommodation', amount: 49000, description: '4-Star Boutique Hotels & Alpine Chalets', paid_by_member_id: 'Manthan Saraiya', created_at: '2026-08-21' },
+    { id: 'exp-3', trip_id: tripId || '1', category: 'activities', amount: 29000, description: 'Museum, Summit & Cruise Tickets', paid_by_member_id: 'Manthan Saraiya', created_at: '2026-08-22' },
+    { id: 'exp-4', trip_id: tripId || '1', category: 'food', amount: 12000, description: 'Traditional Trattoria Dinners & Wine Tastings', paid_by_member_id: 'Manthan Saraiya', created_at: '2026-08-22' },
+    { id: 'exp-5', trip_id: tripId || '1', category: 'other', amount: 8000, description: 'Luggage Insurance & Alpine Souvenirs', paid_by_member_id: 'Manthan Saraiya', created_at: '2026-08-22' },
+  ]);
 
-      if (budgetRes.ok) {
-        const bData = await budgetRes.json();
-        setBudgetData(bData);
+  // Form State
+  const [formAmount, setFormAmount] = useState('');
+  const [formDesc, setFormDesc] = useState('');
+  const [formCategory, setFormCategory] = useState<'transport' | 'accommodation' | 'activities' | 'food' | 'other'>('activities');
+
+  // Total Estimated Cost
+  const totalCost = useMemo(() => {
+    return customExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  }, [customExpenses]);
+
+  // Average Daily Cost (across 14 travel days)
+  const totalTripDays = 14;
+  const avgCostPerDay = Math.round(totalCost / totalTripDays);
+
+  // Category Breakdown
+  const categories: CategorySummary[] = useMemo(() => {
+    const map: Record<string, number> = {
+      transport: 0,
+      accommodation: 0,
+      activities: 0,
+      food: 0,
+      other: 0,
+    };
+    customExpenses.forEach((e) => {
+      const cat = e.category.toLowerCase();
+      if (map[cat] !== undefined) {
+        map[cat] += Number(e.amount);
+      } else {
+        map.other += Number(e.amount);
       }
-      if (expensesRes.ok) {
-        const eData = await expensesRes.json();
-        setExpenses(eData);
-      }
-    } catch (err) {
-      console.error('Error loading budget:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
-  useEffect(() => {
-    if (tripId) fetchBudget();
-  }, [tripId]);
+    return [
+      { category: 'transport', label: 'Transport & Flights', amount: map.transport, percentage: Math.round((map.transport / totalCost) * 100) || 0, color: '#3B82F6', icon: Plane },
+      { category: 'stay', label: 'Stay & Accommodation', amount: map.accommodation, percentage: Math.round((map.accommodation / totalCost) * 100) || 0, color: '#6366F1', icon: Hotel },
+      { category: 'activities', label: 'Activities & Tours', amount: map.activities, percentage: Math.round((map.activities / totalCost) * 100) || 0, color: '#F97316', icon: Sparkles },
+      { category: 'meals', label: 'Meals & Dining', amount: map.food, percentage: Math.round((map.food / totalCost) * 100) || 0, color: '#10B981', icon: Utensils },
+      { category: 'other', label: 'Shopping & Miscellaneous', amount: map.other, percentage: Math.round((map.other / totalCost) * 100) || 0, color: '#8B5CF6', icon: Wallet },
+    ];
+  }, [customExpenses, totalCost]);
 
-  const handleAddExpense = async (e: React.FormEvent) => {
+  // Overbudget days
+  const overbudgetDays = INITIAL_DAY_EXPENSES.filter((d) => d.isOverbudget);
+
+  const handleAddExpenseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || Number(amount) <= 0) {
+    if (!formAmount || Number(formAmount) <= 0) {
       toast.error('Please enter a valid amount');
       return;
     }
-    setSubmitting(true);
-    try {
-      const res = await fetch(`/api/trips/${tripId}/expenses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: Number(amount),
-          description: description || `${category.charAt(0).toUpperCase() + category.slice(1)} expense`,
-          category,
-        }),
-        credentials: 'include',
-      });
 
-      if (!res.ok) throw new Error('Failed to add expense');
+    const newExp: Expense = {
+      id: `exp-${Date.now()}`,
+      trip_id: tripId || '1',
+      amount: Number(formAmount),
+      description: formDesc || `${formCategory.charAt(0).toUpperCase() + formCategory.slice(1)} expense`,
+      category: formCategory,
+      paid_by_member_id: 'Manthan Saraiya',
+      created_at: new Date().toISOString().split('T')[0],
+    };
 
-      toast.success('Expense added successfully');
-      setAmount('');
-      setDescription('');
-      setShowAddModal(false);
-      fetchBudget();
-      if (onExpenseAdded) onExpenseAdded();
-    } catch (err) {
-      toast.error('Error adding expense');
-    } finally {
-      setSubmitting(false);
-    }
+    setCustomExpenses((prev) => [newExp, ...prev]);
+    setFormAmount('');
+    setFormDesc('');
+    setShowAddModal(false);
+    toast.success('Expense recorded successfully!');
+    if (onExpenseAdded) onExpenseAdded();
   };
 
-  const handleDeleteExpense = async (id: string) => {
-    try {
-      const res = await fetch(`/api/trips/${tripId}/expenses?id=${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        toast.success('Expense removed');
-        fetchBudget();
-        if (onExpenseAdded) onExpenseAdded();
-      }
-    } catch {
-      toast.error('Failed to delete expense');
-    }
+  const handleDeleteExpense = (id: string) => {
+    setCustomExpenses((prev) => prev.filter((e) => e.id !== id));
+    toast.success('Expense removed');
   };
 
-  const getCategoryIcon = (cat: string) => {
-    switch (cat.toLowerCase()) {
-      case 'flights':
-        return <Plane size={18} className="text-blue-500" />;
-      case 'accommodation':
-        return <Hotel size={18} className="text-indigo-500" />;
-      case 'activities':
-        return <Sparkles size={18} className="text-orange-500" />;
-      case 'transport':
-        return <Car size={18} className="text-emerald-500" />;
-      case 'food':
-        return <Utensils size={18} className="text-amber-500" />;
-      default:
-        return <MoreHorizontal size={18} className="text-purple-500" />;
-    }
-  };
-
-  // Format currency in Indian Rupees ₹
-  const formatINR = (val: number) => {
-    return '₹' + val.toLocaleString('en-IN');
-  };
-
-  const chartData = (budgetData?.breakdown && budgetData.breakdown.length > 0)
-    ? budgetData.breakdown
-    : [
-        { category: 'Flights', amount: 54000, percentage: 35, color: '#3B82F6' },
-        { category: 'Accommodation', amount: 49000, percentage: 32, color: '#6366F1' },
-        { category: 'Activities', amount: 29000, percentage: 19, color: '#F97316' },
-        { category: 'Transport', amount: 12000, percentage: 8, color: '#10B981' },
-        { category: 'Food', amount: 8000, percentage: 6, color: '#F59E0B' },
-      ];
-
-  const totalCost = budgetData?.totalCost || chartData.reduce((a, b) => a + b.amount, 0);
+  const filteredExpenses = useMemo(() => {
+    if (selectedCategoryFilter === 'all') return customExpenses;
+    return customExpenses.filter((e) => e.category.toLowerCase() === selectedCategoryFilter.toLowerCase());
+  }, [customExpenses, selectedCategoryFilter]);
 
   return (
     <div className="space-y-6">
-      {/* Header Info */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
+      {/* ============================================================ */}
+      {/* TOP STATS BANNER: ESTIMATED COST, BUDGET CAP & DAILY AVG     */}
+      {/* ============================================================ */}
+      <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-6 sm:p-8 text-white shadow-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Estimated Cost</span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <h2 className="text-3xl font-extrabold text-slate-900">{formatINR(totalCost)}</h2>
-              {trip?.budget_cap && (
-                <span className="text-xs text-slate-500 font-medium">
-                  / Cap: {formatINR(trip.budget_cap)}
-                </span>
-              )}
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-400/20 mb-2">
+              <ShieldCheck size={13} /> Real-Time Financial Tracker
+            </div>
+            <span className="text-xs uppercase font-bold text-slate-400 block tracking-wider">
+              Total Estimated Trip Cost
+            </span>
+            <div className="flex items-baseline gap-3 mt-1">
+              <h1 className="text-3xl sm:text-4xl font-black text-white">
+                {formatINR(totalCost)}
+              </h1>
+              <span className="text-xs sm:text-sm text-slate-400 font-semibold">
+                / Planned Cap: <strong className="text-white">{formatINR(budgetCap)}</strong>
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 mt-2">
+              Remaining Safe Balance: <strong className="text-emerald-400">{formatINR(Math.max(0, budgetCap - totalCost))}</strong> (
+              {Math.round(((budgetCap - totalCost) / budgetCap) * 100)}% remaining)
+            </p>
+          </div>
+
+          {/* Quick Metrics Grid */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 flex-shrink-0">
+            <div className="rounded-2xl bg-slate-800/90 p-4 border border-slate-700">
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                Avg. Cost Per Day
+              </span>
+              <p className="text-base sm:text-lg font-black text-blue-400 mt-0.5">
+                {formatINR(avgCostPerDay)}
+                <span className="text-[11px] font-normal text-slate-400"> / day</span>
+              </p>
+              <span className="text-[10px] text-slate-400 mt-1 block">Across {totalTripDays} travel days</span>
+            </div>
+
+            <div className="rounded-2xl bg-slate-800/90 p-4 border border-slate-700">
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                Overbudget Alerts
+              </span>
+              <p className={`text-base sm:text-lg font-black mt-0.5 ${overbudgetDays.length > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                {overbudgetDays.length} Days Exceeded
+              </p>
+              <span className="text-[10px] text-slate-400 mt-1 block">Daily limit: ₹12k – ₹14k</span>
             </div>
           </div>
+        </div>
+
+        {/* Global Progress Bar */}
+        <div className="mt-6 pt-5 border-t border-slate-800">
+          <div className="flex items-center justify-between text-xs text-slate-300 font-semibold mb-1.5">
+            <span>Overall Budget Consumption</span>
+            <span>{Math.round((totalCost / budgetCap) * 100)}% Used</span>
+          </div>
+          <div className="h-3 w-full overflow-hidden rounded-full bg-slate-800 border border-slate-700">
+            <div
+              className={`h-full transition-all duration-500 ${
+                totalCost > budgetCap ? 'bg-red-500' : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400'
+              }`}
+              style={{ width: `${Math.min(100, (totalCost / budgetCap) * 100)}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* OVERBUDGET DAYS ALERT NOTIFICATION BAR (Feature 9)           */}
+      {/* ============================================================ */}
+      {overbudgetDays.length > 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 px-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900">
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-amber-200 text-amber-900 flex-shrink-0">
+              <AlertTriangle size={18} />
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-bold">
+                ⚠️ Budget Alert: {overbudgetDays.length} travel days exceeded daily spending caps
+              </h4>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Day 1 (Paris Arrival) & Day 3, 4 (Swiss Alps) exceeded the daily cap due to premium train & peak excursions.
+              </p>
+            </div>
+          </div>
+
           <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
+            type="button"
+            onClick={() => setActiveTab('daily')}
+            className="rounded-xl bg-amber-900 hover:bg-amber-950 px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs transition flex-shrink-0"
           >
-            <Plus size={16} /> Add Expense
+            Review Days →
+          </button>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* VIEW MODE TABS: OVERVIEW (CHARTS) vs DAILY BREAKDOWN vs ITEMS */}
+      {/* ============================================================ */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+              activeTab === 'overview'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <PieIcon size={14} /> Category Breakdown
+          </button>
+          <button
+            onClick={() => setActiveTab('daily')}
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+              activeTab === 'daily'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <BarChart3 size={14} /> Day-by-Day Timeline
+          </button>
+          <button
+            onClick={() => setActiveTab('itemized')}
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+              activeTab === 'itemized'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <CreditCard size={14} /> Itemized Receipts ({customExpenses.length})
           </button>
         </div>
 
-        {/* Over budget alert */}
-        {trip?.budget_cap && totalCost > trip.budget_cap && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-amber-50 p-3 text-xs font-medium text-amber-800 border border-amber-200">
-            <AlertTriangle size={16} className="text-amber-600 flex-shrink-0" />
-            <span>You have exceeded your budgeted cap of {formatINR(trip.budget_cap)}.</span>
-          </div>
-        )}
-
-        {/* Donut Chart and Breakdown */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-          {/* Donut Chart */}
-          <div className="relative h-56 w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={85}
-                  paddingAngle={4}
-                  dataKey="amount"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: number) => [formatINR(value), 'Cost']}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-xs text-slate-400 font-medium">Total</span>
-              <span className="text-sm font-bold text-slate-800">{formatINR(totalCost)}</span>
-            </div>
-          </div>
-
-          {/* Legend with amounts & % */}
-          <div className="space-y-3">
-            {chartData.map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2.5">
-                  <span
-                    className="h-3 w-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="font-semibold text-slate-700 capitalize">
-                    {item.category}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 font-mono">
-                  <span className="font-bold text-slate-900">{formatINR(item.amount)}</span>
-                  <span className="text-slate-400 w-10 text-right">({item.percentage}%)</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* View Cost by Day Action Button (Screen 11) */}
-        <div className="mt-6 pt-4 border-t border-slate-100">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setShowDayCostModal(true)}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-3 transition"
+            onClick={() => {
+              const text = `Trip Budget Summary:\nTotal: ${formatINR(totalCost)}\nDaily Avg: ${formatINR(avgCostPerDay)}\nTransport: ₹54k, Stay: ₹49k, Activities: ₹29k`;
+              navigator.clipboard.writeText(text);
+              toast.success('Budget summary copied to clipboard!');
+            }}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
           >
-            <Calendar size={16} /> View Cost by Day
+            <Share2 size={13} /> Share Budget
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95 cursor-pointer"
+          >
+            <Plus size={15} /> + Add Expense
           </button>
         </div>
       </div>
 
-      {/* Itemized Expenses List */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-base font-bold text-slate-900 mb-4">Itemized Expenses</h3>
-        {expenses.length === 0 ? (
-          <p className="text-xs text-slate-400 py-4 text-center">No individual expenses logged yet.</p>
-        ) : (
-          <div className="divide-y divide-slate-100">
-            {expenses.map((expense) => (
-              <div key={expense.id} className="py-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100">
-                    {getCategoryIcon(expense.category)}
+      {/* ============================================================ */}
+      {/* TAB 1: CATEGORY BREAKDOWN (Transport, Stay, Activities, Food) */}
+      {/* ============================================================ */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* Category Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {categories.map((cat, idx) => {
+              const IconComponent = cat.icon;
+              return (
+                <div
+                  key={idx}
+                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div
+                      className="grid h-10 w-10 place-items-center rounded-2xl text-white shadow-2xs"
+                      style={{ backgroundColor: cat.color }}
+                    >
+                      <IconComponent size={20} />
+                    </div>
+                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-black text-slate-700 font-mono">
+                      {cat.percentage}% of total
+                    </span>
                   </div>
+
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">{expense.description}</h4>
-                    <span className="text-[10px] text-slate-400 capitalize">{expense.category} • Paid by {expense.paid_by_member_id}</span>
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      {cat.label}
+                    </h3>
+                    <p className="text-xl font-black text-slate-900 mt-0.5">
+                      {formatINR(cat.amount)}
+                    </p>
+                  </div>
+
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${cat.percentage}%`, backgroundColor: cat.color }}
+                    />
                   </div>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Comparative Summary Card */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm space-y-4">
+            <h3 className="text-base font-bold text-slate-900">Expense Allocation Insights</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Your largest expenditure is <strong>Transport & Flights (35%)</strong> and <strong>Accommodation (32%)</strong>, followed by experiences & sightseeing tours (19%). Dining and local activities remain comfortably within planned thresholds.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <div className="rounded-2xl bg-blue-50/60 p-3.5 border border-blue-100 text-xs">
+                <span className="font-bold text-blue-900 block">✈️ Long-Haul Flights</span>
+                <p className="text-slate-600 mt-0.5">₹54,000 locked in early with luggage allowance included.</p>
+              </div>
+              <div className="rounded-2xl bg-indigo-50/60 p-3.5 border border-indigo-100 text-xs">
+                <span className="font-bold text-indigo-900 block">🏨 4-Star Stays</span>
+                <p className="text-slate-600 mt-0.5">Average ₹3,500/night across boutique hotels & alpine chalets.</p>
+              </div>
+              <div className="rounded-2xl bg-emerald-50/60 p-3.5 border border-emerald-100 text-xs">
+                <span className="font-bold text-emerald-900 block">🍷 Culinary & Food</span>
+                <p className="text-slate-600 mt-0.5">₹850/meal budget per traveler with gourmet wine pairings.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* TAB 2: DAY-BY-DAY COST TIMELINE & OVERBUDGET HIGHLIGHTS      */}
+      {/* ============================================================ */}
+      {activeTab === 'daily' && (
+        <div className="space-y-4 animate-in fade-in">
+          {INITIAL_DAY_EXPENSES.map((day) => (
+            <div
+              key={day.dayNumber}
+              className={`rounded-2xl border p-5 shadow-sm transition ${
+                day.isOverbudget
+                  ? 'border-amber-300 bg-amber-50/20 hover:border-amber-400'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-slate-900">{formatINR(expense.amount)}</span>
+                  <div className="grid h-8 w-8 place-items-center rounded-xl bg-slate-900 text-white font-black text-xs">
+                    D{day.dayNumber}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">
+                      Day {day.dayNumber}: {day.location}
+                    </h4>
+                    <span className="text-[11px] text-slate-400 font-semibold">{day.date}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {day.isOverbudget && (
+                    <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-black text-amber-800 border border-amber-200">
+                      ⚠️ Over by {formatINR(day.overAmount)}
+                    </span>
+                  )}
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Day Total</span>
+                    <p className={`text-base font-black ${day.isOverbudget ? 'text-amber-700' : 'text-slate-900'}`}>
+                      {formatINR(day.cost)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Day item list */}
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  Day Schedule Expenses:
+                </span>
+                {day.items.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs text-slate-700">
+                    <CheckCircle2 size={13} className="text-blue-600 flex-shrink-0" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* TAB 3: ITEMIZED RECEIPTS & EXPENSE LOGGER                    */}
+      {/* ============================================================ */}
+      {activeTab === 'itemized' && (
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5 animate-in fade-in">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <h3 className="text-base font-bold text-slate-900">Itemized Expense Log</h3>
+            <div className="flex items-center gap-1.5">
+              {['all', 'transport', 'accommodation', 'activities', 'food', 'other'].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategoryFilter(cat)}
+                  className={`rounded-xl px-2.5 py-1 text-xs font-bold capitalize transition cursor-pointer ${
+                    selectedCategoryFilter === cat
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {filteredExpenses.map((exp) => (
+              <div key={exp.id} className="py-3.5 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="grid h-10 w-10 place-items-center rounded-2xl bg-blue-50 text-blue-600 flex-shrink-0">
+                    <CreditCard size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                      {exp.description}
+                    </h4>
+                    <span className="text-[10px] text-slate-400 capitalize">
+                      {exp.category} • Logged on {exp.created_at} by {exp.paid_by_member_id}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <span className="text-xs sm:text-sm font-black text-slate-900 font-mono">
+                    {formatINR(exp.amount)}
+                  </span>
                   <button
-                    onClick={() => handleDeleteExpense(expense.id)}
-                    className="text-slate-400 hover:text-red-600 transition"
-                    title="Delete expense"
+                    type="button"
+                    onClick={() => handleDeleteExpense(exp.id)}
+                    className="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                    title="Delete receipt"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={15} />
                   </button>
                 </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Add Expense Modal */}
+      {/* ============================================================ */}
+      {/* ADD EXPENSE MODAL POPUP                                      */}
+      {/* ============================================================ */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Add New Expense</h3>
-            <form onSubmit={handleAddExpense} className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 sm:p-7 shadow-2xl space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Amount (₹)</label>
+                <h3 className="text-base font-bold text-slate-900">Log New Expense</h3>
+                <p className="text-xs text-slate-500">Add an expenditure in ₹ INR with category</p>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddExpenseSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">Expense Amount (₹):</label>
                 <input
-                  required
                   type="number"
-                  min="1"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm outline-none focus:border-blue-500 focus:bg-white"
-                  placeholder="e.g. 3500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
-                <input
                   required
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm outline-none focus:border-blue-500 focus:bg-white"
-                  placeholder="e.g. Flight ticket, Museum entry"
+                  min="1"
+                  value={formAmount}
+                  onChange={(e) => setFormAmount(e.target.value)}
+                  placeholder="e.g. 4500"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
+                <label className="block text-xs font-bold text-slate-800 mb-1">Description / Item:</label>
+                <input
+                  type="text"
+                  required
+                  value={formDesc}
+                  onChange={(e) => setFormDesc(e.target.value)}
+                  placeholder="e.g. Glacier Express Train pass or Colosseum tour"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-800 mb-1">Category:</label>
                 <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as any)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm outline-none focus:border-blue-500 focus:bg-white capitalize"
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value as any)}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 capitalize outline-none focus:border-blue-500"
                 >
-                  <option value="flights">Flights</option>
-                  <option value="accommodation">Accommodation</option>
-                  <option value="activities">Activities</option>
-                  <option value="transport">Transport</option>
-                  <option value="food">Food</option>
-                  <option value="other">Other</option>
+                  <option value="transport">Transport & Flights</option>
+                  <option value="accommodation">Stay & Accommodation</option>
+                  <option value="activities">Activities & Sightseeing</option>
+                  <option value="food">Meals & Dining</option>
+                  <option value="other">Shopping & Miscellaneous</option>
                 </select>
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
-                  className="flex-1 rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+                  className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
                 >
-                  {submitting ? 'Saving...' : 'Save Expense'}
+                  + Save Expense
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Day by Day Cost Modal */}
-      {showDayCostModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Cost by Day Breakdown</h3>
-              <button
-                onClick={() => setShowDayCostModal(false)}
-                className="text-xs font-bold text-slate-500 hover:text-slate-900"
-              >
-                Close
-              </button>
-            </div>
-            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-              {[
-                { day: 'Day 1 (Arrival & Paris)', cost: 18500, desc: 'Flight + Airport Taxi + Dinner' },
-                { day: 'Day 2 (Paris Sightseeing)', cost: 7700, desc: 'Louvre Museum + Seine Cruise' },
-                { day: 'Day 3 (Swiss Alps Transfer)', cost: 22000, desc: 'High-speed Train + Swiss Hotel' },
-                { day: 'Day 4 (Jungfraujoch Peak)', cost: 16500, desc: 'Top of Europe Excursion' },
-                { day: 'Day 5 (Rome Exploration)', cost: 11200, desc: 'Colosseum VIP + Trastevere Walk' },
-              ].map((row, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs">
-                  <div>
-                    <h5 className="font-bold text-slate-900">{row.day}</h5>
-                    <p className="text-[10px] text-slate-500">{row.desc}</p>
-                  </div>
-                  <span className="font-bold text-blue-700">{formatINR(row.cost)}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       )}
