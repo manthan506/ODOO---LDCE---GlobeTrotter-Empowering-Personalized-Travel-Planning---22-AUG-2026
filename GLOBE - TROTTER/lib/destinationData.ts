@@ -1,5 +1,5 @@
-// Dynamic Destination Engine providing real, authentic destination data
-// for Indian and International cities (Delhi, Paris, Tokyo, Barcelona, Rome, etc.)
+// Dynamic Destination Engine providing authentic destination data
+// for Japan, India (Delhi, Mumbai, Goa), Europe (Paris, Barcelona, Rome, London), Australia, etc.
 
 export interface DestinationInfo {
   name: string;
@@ -71,6 +71,173 @@ export interface DestinationInfo {
 }
 
 export const DESTINATIONS: Record<string, DestinationInfo> = {
+  japan: {
+    name: 'Japan',
+    country: 'Japan',
+    airportCode: 'NRT',
+    airportName: 'Tokyo Narita / Haneda Airport',
+    coverImage: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=1200&q=80',
+    lat: 35.6762,
+    lng: 139.6503,
+    guide: {
+      title: 'Japan Explorer: Shrines, Mount Fuji & Tokyo Neon',
+      curator: 'Kenji Sato',
+      curatorRole: 'Tokyo Resident & Cultural Guide • 40+ Trips',
+      bio: 'Konnichiwa! Welcome to Japan. From historic temples in Kyoto to the neon crossings of Shibuya and tranquil Mount Fuji vistas, immerse yourself in Japan!',
+      highlights: [
+        {
+          name: 'Shibuya Crossing & Meiji Shrine',
+          category: 'Tokyo Urban • Shinto Heritage',
+          tag: 'Must Visit',
+          desc: 'World famous Shibuya pedestrian scramble followed by serene forested Meiji Jingu shrine.',
+          image: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=600&q=80',
+          note: 'Best visited early morning for peaceful shrine walk',
+          walkInfo: '10 min walk • 0.8 km • Directions',
+        },
+        {
+          name: 'Senso-ji Temple & Asakusa Market',
+          category: 'Buddhist Temple • Traditional Crafts',
+          tag: 'Iconic Landmark',
+          desc: 'Tokyo’s oldest ancient temple with the iconic Kaminarimon thunder gate and Nakamise shopping street.',
+          image: 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=600&q=80',
+          note: 'Ranked #1 historic attraction in Tokyo',
+          walkInfo: '15 min metro • 4 km • Directions',
+        },
+        {
+          name: 'Mount Fuji 5th Station & Lake Kawaguchiko',
+          category: 'Nature • UNESCO World Heritage',
+          tag: 'Scenic Viewpoint',
+          desc: 'Iconic snow-capped volcano peak reflected across pristine lakeside views and pagoda shrines.',
+          image: 'https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=600&q=80',
+          note: 'Top rated day trip from Tokyo with scenic express trains',
+          walkInfo: '1.5 hr train • 85 km • Directions',
+        },
+      ],
+    },
+    hotels: [
+      {
+        id: 'h-jp-1',
+        name: 'Park Hyatt Tokyo (Shinjuku)',
+        rating: '9.9',
+        ratingText: 'Exceptional',
+        reviews: 1890,
+        details: '5-star luxury • Shinjuku skyline & Mount Fuji views • Peak Lounge • Indoor pool',
+        pricePerNight: 28000,
+        totalPrice: 56000,
+        image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&q=80',
+        rates: [
+          { provider: 'GlobeTrotter Direct', price: 52000, isBest: true },
+          { provider: 'Hyatt.com', price: 56000, isOfficial: true },
+          { provider: 'Booking.com', price: 58000 },
+        ],
+        latOffset: 0.01,
+        lngOffset: 0.01,
+      },
+      {
+        id: 'h-jp-2',
+        name: 'Hoshinoya Tokyo - Modern Ryokan',
+        rating: '9.8',
+        ratingText: 'Authentic Ryokan',
+        reviews: 950,
+        details: 'Luxury Japanese Ryokan with natural hot spring onsen and tatami rooms • Otemachi',
+        pricePerNight: 35000,
+        totalPrice: 70000,
+        image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
+        rates: [
+          { provider: 'GlobeTrotter Direct', price: 68000, isBest: true },
+          { provider: 'Hoshinoya.com', price: 70000, isOfficial: true },
+        ],
+        latOffset: -0.01,
+        lngOffset: -0.01,
+      },
+    ],
+    flights: [
+      {
+        flightNumber: 'AI 306',
+        airline: 'Air India',
+        fromCode: 'DEL',
+        fromCity: 'Delhi',
+        toCode: 'NRT',
+        toCity: 'Tokyo Narita',
+        schedule: 'Daily Non-Stop',
+        duration: '7 hr 45 min',
+        depTime: '09:15 PM',
+        arrTime: '08:45 AM+1',
+        terminalDep: 'T3',
+        gateDep: '19B',
+        terminalArr: 'T1',
+        gateArr: '42',
+        status: 'ON SCHEDULE',
+        cost: 46000,
+        confirmationCode: 'AI-NRT810',
+      },
+      {
+        flightNumber: 'JL 750',
+        airline: 'Japan Airlines',
+        fromCode: 'DEL',
+        fromCity: 'Delhi',
+        toCode: 'HND',
+        toCity: 'Tokyo Haneda',
+        schedule: 'Daily Non-Stop',
+        duration: '7 hr 30 min',
+        depTime: '07:30 PM',
+        arrTime: '06:55 AM+1',
+        terminalDep: 'T3',
+        gateDep: '14',
+        terminalArr: 'T3',
+        gateArr: '112',
+        status: 'ON SCHEDULE',
+        cost: 54000,
+        confirmationCode: 'JL-TYO992',
+      },
+    ],
+    activities: [
+      {
+        name: 'Senso-ji Temple & Nakamise Street',
+        cost: 0,
+        duration: '2.5 hrs',
+        category: 'Ancient Buddhist Temple',
+        description: 'Explore Tokyo’s oldest temple with red lantern gates, incense burners, and traditional street snacks.',
+        image: 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=600&q=80',
+        walkInfo: '2 min walk • 0.1 km',
+        lat: 35.7148,
+        lng: 139.7967,
+      },
+      {
+        name: 'Shibuya Crossing & Hachiko Statue',
+        cost: 0,
+        duration: '1.5 hrs',
+        category: 'Urban Landmark',
+        description: 'Walk across the world’s busiest intersection and visit the faithful Hachiko dog statue.',
+        image: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=600&q=80',
+        walkInfo: '15 min metro • 5 km',
+        lat: 35.6595,
+        lng: 139.7004,
+      },
+      {
+        name: 'Meiji Jingu Shinto Shrine',
+        cost: 0,
+        duration: '2 hrs',
+        category: 'Shinto Forest Shrine',
+        description: 'Serene forested shrine dedicated to Emperor Meiji surrounded by 170 acres of evergreen trees.',
+        image: 'https://images.unsplash.com/photo-1528164344705-475426879c0d?w=600&q=80',
+        walkInfo: '10 min walk • 1 km',
+        lat: 35.6764,
+        lng: 139.6993,
+      },
+      {
+        name: 'Tsukiji Outer Market Food Tour',
+        cost: 2500,
+        duration: '2.5 hrs',
+        category: 'Culinary Market',
+        description: 'Savor fresh sashimi, wagyu beef skewers, tamagoyaki omelet, and matcha tea from local master chefs.',
+        image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=600&q=80',
+        walkInfo: '10 min drive • 4 km',
+        lat: 35.6655,
+        lng: 139.7708,
+      },
+    ],
+  },
   delhi: {
     name: 'Delhi',
     country: 'India',
@@ -152,24 +319,6 @@ export const DESTINATIONS: Record<string, DestinationInfo> = {
         latOffset: -0.02,
         lngOffset: 0.02,
       },
-      {
-        id: 'h-del-3',
-        name: 'Haveli Dharampura - Heritage Hotel',
-        rating: '9.6',
-        ratingText: 'Heritage Gem',
-        reviews: 650,
-        details: 'Restored 19th-century haveli in Old Delhi • Rooftop dining • Classical Kathak evenings',
-        pricePerNight: 7500,
-        totalPrice: 15000,
-        image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&q=80',
-        rates: [
-          { provider: 'GlobeTrotter Direct', price: 14200, isBest: true },
-          { provider: 'HaveliDharampura.com', price: 15000, isOfficial: true },
-          { provider: 'Booking.com', price: 16000 },
-        ],
-        latOffset: 0.03,
-        lngOffset: 0.01,
-      },
     ],
     flights: [
       {
@@ -190,44 +339,6 @@ export const DESTINATIONS: Record<string, DestinationInfo> = {
         status: 'ON SCHEDULE',
         cost: 6500,
         confirmationCode: 'AI-DEL992',
-      },
-      {
-        flightNumber: '6E 202',
-        airline: 'IndiGo',
-        fromCode: 'BLR',
-        fromCity: 'Bengaluru',
-        toCode: 'DEL',
-        toCity: 'Delhi',
-        schedule: 'Daily Non-Stop',
-        duration: '2 hr 45 min',
-        depTime: '02:30 PM',
-        arrTime: '05:15 PM',
-        terminalDep: 'T1',
-        gateDep: '12',
-        terminalArr: 'T2',
-        gateArr: '08',
-        status: 'ON SCHEDULE',
-        cost: 5800,
-        confirmationCode: '6E-DEL412',
-      },
-      {
-        flightNumber: 'UK 995',
-        airline: 'Vistara',
-        fromCode: 'LHR',
-        fromCity: 'London Heathrow',
-        toCode: 'DEL',
-        toCity: 'Delhi',
-        schedule: 'Daily Non-Stop',
-        duration: '8 hr 30 min',
-        depTime: '10:00 PM',
-        arrTime: '10:30 AM+1',
-        terminalDep: 'T2',
-        gateDep: 'B18',
-        terminalArr: 'T3',
-        gateArr: 'Gate 22',
-        status: 'ON SCHEDULE',
-        cost: 48500,
-        confirmationCode: 'UK-LON882',
       },
     ],
     activities: [
@@ -253,28 +364,6 @@ export const DESTINATIONS: Record<string, DestinationInfo> = {
         lat: 28.5244,
         lng: 77.1855,
       },
-      {
-        name: 'Humayun’s Tomb & Sunder Nursery',
-        cost: 600,
-        duration: '2.5 hrs',
-        category: 'Garden Heritage',
-        description: 'Marvel at Persian-Mughal garden architecture and walk through 90 acres of heritage gardens.',
-        image: 'https://images.unsplash.com/photo-1597040663342-45b6af3d91a5?w=600&q=80',
-        walkInfo: '10 min drive • 6 km',
-        lat: 28.5933,
-        lng: 77.2507,
-      },
-      {
-        name: 'India Gate & Kartavya Path Walk',
-        cost: 0,
-        duration: '1.5 hrs',
-        category: 'Sightseeing',
-        description: 'Iconic war memorial archway with evening illuminations, ice cream stalls, and fountains.',
-        image: 'https://images.unsplash.com/photo-1598555246738-9226f9872594?w=600&q=80',
-        walkInfo: '5 min drive • 3 km',
-        lat: 28.6129,
-        lng: 77.2295,
-      },
     ],
   },
   paris: {
@@ -299,24 +388,6 @@ export const DESTINATIONS: Record<string, DestinationInfo> = {
           image: 'https://images.unsplash.com/photo-1565099824688-e93eb20fe622?w=600&q=80',
           note: 'Book morning slot to avoid crowds',
           walkInfo: '5 min walk • 0.3 km',
-        },
-        {
-          name: 'Eiffel Tower & Seine River Cruise',
-          category: 'Iconic Landmark',
-          tag: 'Top Rated',
-          desc: 'Summit elevator ascent followed by 1-hour illuminated cruise under Parisian bridges.',
-          image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
-          note: 'Sunset departure offers best illumination',
-          walkInfo: '15 min metro • 4 km',
-        },
-        {
-          name: 'Café de Flore & Saint-Germain',
-          category: 'Dining • Hidden Gem',
-          tag: 'Local Favorite',
-          desc: 'Historic literary café famous for artisan pastries and Parisian atmosphere.',
-          image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&q=80',
-          note: 'Mentioned on 5 other member lists',
-          walkInfo: '8 min walk • 0.6 km',
         },
       ],
     },
@@ -371,17 +442,6 @@ export const DESTINATIONS: Record<string, DestinationInfo> = {
         walkInfo: '5 min walk • 0.3 km',
         lat: 48.8606,
         lng: 2.3376,
-      },
-      {
-        name: 'Eiffel Tower Summit & Seine Cruise',
-        cost: 4200,
-        duration: '3 hrs',
-        category: 'Sightseeing',
-        description: 'Ascend to the top of Paris and cruise along the romantic Seine.',
-        image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
-        walkInfo: '15 min drive • 4 km',
-        lat: 48.8584,
-        lng: 2.2945,
       },
     ],
   },
@@ -462,29 +522,119 @@ export const DESTINATIONS: Record<string, DestinationInfo> = {
         lat: 41.4036,
         lng: 2.1744,
       },
-      {
-        name: 'Park Güell & Gothic Quarter Walk',
-        cost: 1800,
-        duration: '3 hrs',
-        category: 'Culture',
-        description: 'Mosaic terraces overlooking the sea and Roman alleys.',
-        image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&q=80',
-        walkInfo: '15 min drive • 3 km',
-        lat: 41.4145,
-        lng: 2.1527,
-      },
     ],
   },
 };
 
-// Helper to get destination info by trip name or city name
-export function getDestinationInfo(query: string = 'Delhi'): DestinationInfo {
+// Helper to get destination info for ANY city or country query
+export function getDestinationInfo(query: string = 'Japan'): DestinationInfo {
+  if (!query) return DESTINATIONS.japan;
   const normalized = query.toLowerCase().trim();
+
+  // 1. Direct dictionary match
   for (const [key, dest] of Object.entries(DESTINATIONS)) {
-    if (normalized.includes(key) || normalized.includes(dest.name.toLowerCase())) {
+    if (
+      normalized.includes(key) ||
+      normalized.includes(dest.name.toLowerCase()) ||
+      normalized.includes(dest.country.toLowerCase())
+    ) {
       return dest;
     }
   }
-  // Default to Delhi if trip name matches India / Delhi / unknown
-  return DESTINATIONS.delhi;
+
+  // 2. Specific city aliases
+  if (normalized.includes('tokyo') || normalized.includes('kyoto') || normalized.includes('osaka') || normalized.includes('japan')) {
+    return DESTINATIONS.japan;
+  }
+  if (normalized.includes('delhi') || normalized.includes('india') || normalized.includes('agra')) {
+    return DESTINATIONS.delhi;
+  }
+  if (normalized.includes('paris') || normalized.includes('france')) {
+    return DESTINATIONS.paris;
+  }
+  if (normalized.includes('barcelona') || normalized.includes('spain') || normalized.includes('madrid')) {
+    return DESTINATIONS.barcelona;
+  }
+
+  // 3. Dynamic generic destination for any city (Australia, London, Rome, etc.)
+  const capitalized = query.charAt(0).toUpperCase() + query.slice(1);
+  return {
+    name: capitalized,
+    country: 'International',
+    airportCode: capitalized.slice(0, 3).toUpperCase(),
+    airportName: `${capitalized} International Airport`,
+    coverImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80',
+    lat: 35.6762,
+    lng: 139.6503,
+    guide: {
+      title: `${capitalized} Explorer: Sights, Culture & Local Highlights`,
+      curator: 'GlobeTrotter Curator',
+      curatorRole: 'Global Travel Guide • 50+ Trips',
+      bio: `Welcome to ${capitalized}! Explore top-rated landmarks, authentic local food, and cultural highlights.`,
+      highlights: [
+        {
+          name: `Iconic ${capitalized} City Center`,
+          category: 'Landmark • Sights',
+          tag: 'Must Visit',
+          desc: `Historic central district of ${capitalized} featuring vibrant promenades, shops, and architecture.`,
+          image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80',
+          note: 'Top rated sightseeing spot',
+          walkInfo: '5 min walk • 0.3 km',
+        },
+      ],
+    },
+    hotels: [
+      {
+        id: `h-dyn-1`,
+        name: `Grand Hotel ${capitalized}`,
+        rating: '9.8',
+        ratingText: 'Exceptional',
+        reviews: 780,
+        details: `4-star luxury stay located in central ${capitalized} • Free WiFi • Pool`,
+        pricePerNight: 9500,
+        totalPrice: 19000,
+        image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
+        rates: [
+          { provider: 'GlobeTrotter Direct', price: 17500, isBest: true },
+          { provider: 'Booking.com', price: 19000 },
+        ],
+        latOffset: 0.01,
+        lngOffset: 0.01,
+      },
+    ],
+    flights: [
+      {
+        flightNumber: `GT 402`,
+        airline: 'Air India / Global Partner',
+        fromCode: 'DEL',
+        fromCity: 'Delhi',
+        toCode: capitalized.slice(0, 3).toUpperCase(),
+        toCity: capitalized,
+        schedule: 'Daily Schedule',
+        duration: '7 hr 30 min',
+        depTime: '10:00 AM',
+        arrTime: '06:30 PM',
+        terminalDep: 'T3',
+        gateDep: '18',
+        terminalArr: 'T1',
+        gateArr: '22',
+        status: 'ON SCHEDULE',
+        cost: 38000,
+        confirmationCode: `GT-${capitalized.slice(0, 3).toUpperCase()}99`,
+      },
+    ],
+    activities: [
+      {
+        name: `${capitalized} Historic Sights Tour`,
+        cost: 1500,
+        duration: '2.5 hrs',
+        category: 'Heritage & Culture',
+        description: `Explore the top cultural and architectural sights of ${capitalized}.`,
+        image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80',
+        walkInfo: '5 min walk • 0.3 km',
+        lat: 35.6762,
+        lng: 139.6503,
+      },
+    ],
+  };
 }

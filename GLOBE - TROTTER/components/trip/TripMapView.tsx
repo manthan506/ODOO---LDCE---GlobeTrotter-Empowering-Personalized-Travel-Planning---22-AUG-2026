@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   MapPin,
   Utensils,
@@ -10,15 +10,18 @@ import {
   Calendar,
   Layers,
   Check,
-  CheckSquare,
-  Square,
   ZoomIn,
   ZoomOut,
+  Landmark,
+  Compass,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Stop } from '@/types';
 import { generateGoogleMapsDirectionsUrl } from '@/lib/routeOptimizer';
 import { getDestinationInfo } from '@/lib/destinationData';
+import { geocodeCity, fetchRealNearbyPlaces, RealPlace } from '@/lib/api/openApis';
 
 interface TripMapViewProps {
   stops?: Stop[];
@@ -30,19 +33,47 @@ interface TripMapViewProps {
 export function TripMapView({
   stops = [],
   tripId,
-  tripName = 'Delhi',
+  tripName = 'Japan',
   onStopsReordered,
 }: TripMapViewProps) {
   const dest = getDestinationInfo(tripName);
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>({
+    lat: dest.lat,
+    lng: dest.lng,
+  });
   const [showPlaces, setShowPlaces] = useState(true);
   const [showFood, setShowFood] = useState(true);
+  const [realPlaces, setRealPlaces] = useState<RealPlace[]>([]);
+  const [loadingMap, setLoadingMap] = useState(true);
 
   // Date Checklists
   const [dates, setDates] = useState([
     { id: 'd1', label: 'Day 1', color: '#3B82F6', active: true },
     { id: 'd2', label: 'Day 2', color: '#8B5CF6', active: true },
-    { id: 'd3', label: 'Day 3', color: '#06B6D4', active: true },
+    { id: 'd3', label: 'Day 3', color: '#10B981', active: true },
   ]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function initMapData() {
+      setLoadingMap(true);
+      const geo = await geocodeCity(tripName || dest.name);
+      if (isMounted) {
+        setCoords({ lat: geo.lat, lng: geo.lng });
+      }
+
+      const places = await fetchRealNearbyPlaces(geo.lat, geo.lng);
+      if (isMounted) {
+        setRealPlaces(places);
+        setLoadingMap(false);
+      }
+    }
+
+    initMapData();
+    return () => {
+      isMounted = false;
+    };
+  }, [tripName, dest.name]);
 
   const toggleDate = (id: string) => {
     setDates((prev) =>
@@ -51,98 +82,42 @@ export function TripMapView({
   };
 
   const handleExportGoogleMaps = () => {
-    const defaultWaypoints = dest.activities.map((act) => ({
-      name: `${act.name}, ${dest.name}`,
-      country: dest.country,
-    }));
-    const url = generateGoogleMapsDirectionsUrl(defaultWaypoints as any);
+    const waypoints =
+      realPlaces.length > 0
+        ? realPlaces.slice(0, 5).map((p) => ({ name: p.name, country: dest.country }))
+        : dest.activities.map((act) => ({ name: act.name, country: dest.country }));
+
+    const url = generateGoogleMapsDirectionsUrl(waypoints as any);
     window.open(url, '_blank');
   };
 
-  // Pins rendered dynamically based on destination sights
-  const mapPins = [
-    {
-      id: 1,
-      type: 'place',
-      label: '1',
-      dateId: 'd1',
-      x: '36%',
-      y: '60%',
-      color: '#3B82F6',
-      name: dest.activities[0]?.name || 'Old Delhi Heritage',
-    },
-    {
-      id: 2,
-      type: 'place',
-      label: '2',
-      dateId: 'd1',
-      x: '42%',
-      y: '68%',
-      color: '#3B82F6',
-      name: dest.activities[1]?.name || 'Central Monument',
-    },
-    {
-      id: 3,
-      type: 'place',
-      label: '3',
-      dateId: 'd2',
-      x: '62%',
-      y: '32%',
-      color: '#8B5CF6',
-      name: dest.activities[2]?.name || 'Garden Oasis',
-    },
-    {
-      id: 4,
-      type: 'place',
-      label: '4',
-      dateId: 'd2',
-      x: '52%',
-      y: '48%',
-      color: '#8B5CF6',
-      name: dest.activities[3]?.name || 'Iconic Memorial Walk',
-    },
-    // Food pin
-    {
-      id: 11,
-      type: 'food',
-      label: 'F1',
-      dateId: 'd1',
-      x: '38%',
-      y: '52%',
-      color: '#EF4444',
-      name: `Local Food Bazaar (${dest.name})`,
-    },
-  ];
-
-  const activePins = mapPins.filter((pin) => {
-    if (pin.type === 'place' && !showPlaces) return false;
-    if (pin.type === 'food' && !showFood) return false;
-    const dateObj = dates.find((d) => d.id === pin.dateId);
-    return dateObj ? dateObj.active : true;
+  const filteredPlaces = realPlaces.filter((p) => {
+    if (p.category === 'food' && !showFood) return false;
+    if (p.category !== 'food' && !showPlaces) return false;
+    return true;
   });
 
+  const bbox = `${coords.lng - 0.08}%2C${coords.lat - 0.05}%2C${coords.lng + 0.08}%2C${coords.lat + 0.05}`;
+  const osmEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${coords.lat}%2C${coords.lng}`;
+
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
+    <div className="mx-auto max-w-5xl space-y-4">
       {/* Subtitle with dynamic destination */}
       <div className="text-center pb-2">
         <h2 className="text-sm font-bold text-slate-500">
-          Interactive Map & Itinerary Waypoints for {dest.name}, {dest.country}
+          Live OpenStreetMap & Itinerary Waypoints for {dest.name}, {dest.country}
         </h2>
       </div>
 
-      {/* Main Map Container */}
-      <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-lg bg-[#e2e8f0] h-[480px] sm:h-[560px]">
-        {/* Destination Photo Background */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-90 transition duration-300"
-          style={{
-            backgroundImage: `url('${dest.coverImage}')`,
-            filter: 'contrast(1.05) saturate(1.1)',
-          }}
+      {/* Main Map Container with Real OpenStreetMap Embed */}
+      <div className="relative rounded-3xl overflow-hidden border border-slate-200 shadow-xl bg-slate-100 h-[500px] sm:h-[580px]">
+        {/* Real OpenStreetMap Live Tile Engine */}
+        <iframe
+          title={`OpenStreetMap for ${dest.name}`}
+          src={osmEmbedUrl}
+          className="absolute inset-0 h-full w-full border-0"
+          loading="lazy"
         />
-
-        {/* Soft Grid Overlay */}
-        <div className="absolute inset-0 bg-blue-900/10 backdrop-blur-[0.5px] pointer-events-none" />
 
         {/* Floating Top-Left "Map layers" Card */}
         <div className="absolute top-5 left-5 z-20 w-44 rounded-2xl bg-white/95 backdrop-blur-md p-3.5 shadow-xl border border-slate-200 space-y-2.5 animate-in fade-in">
@@ -214,44 +189,11 @@ export function TripMapView({
           </div>
         </div>
 
-        {/* Dynamic Route Trails */}
-        <svg className="absolute inset-0 h-full w-full pointer-events-none z-10">
-          <path
-            d="M 180 340 L 210 380 L 310 180 L 260 270"
-            fill="none"
-            stroke="#3B82F6"
-            strokeWidth="3.5"
-            strokeDasharray="6 4"
-          />
-        </svg>
-
-        {/* Numbered & Food Pins on the Map */}
-        {activePins.map((pin) => (
-          <div
-            key={pin.id}
-            onClick={() => toast.info(`Waypoint: ${pin.name}`)}
-            className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer transition transform hover:scale-125 group"
-            style={{ left: pin.x, top: pin.y }}
-          >
-            {pin.type === 'food' ? (
-              <div className="grid h-6 w-6 place-items-center rounded-full bg-rose-600 text-white shadow-md ring-2 ring-white">
-                <Utensils size={11} />
-              </div>
-            ) : (
-              <div
-                className="grid h-6 w-6 place-items-center rounded-full text-white font-black text-xs shadow-md ring-2 ring-white"
-                style={{ backgroundColor: pin.color }}
-              >
-                {pin.label}
-              </div>
-            )}
-
-            {/* Hover Tooltip Label */}
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-7 hidden group-hover:block whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-bold text-white shadow-md z-30 pointer-events-none">
-              {pin.name}
-            </div>
-          </div>
-        ))}
+        {/* Bottom Destination Info Badge */}
+        <div className="absolute bottom-5 left-5 z-20 flex items-center gap-2 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200 shadow-md">
+          <Compass size={16} className="text-blue-600" />
+          <span className="text-xs font-bold text-slate-800">{dest.name} ({coords.lat.toFixed(3)}°, {coords.lng.toFixed(3)}°)</span>
+        </div>
 
         {/* Floating Bottom-Right Google Maps Export Button */}
         <div className="absolute bottom-5 right-5 z-20 flex items-center gap-2">

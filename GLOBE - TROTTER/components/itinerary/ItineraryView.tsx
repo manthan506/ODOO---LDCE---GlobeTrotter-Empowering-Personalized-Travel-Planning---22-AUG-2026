@@ -139,7 +139,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
   }
 
   const sortedStops = [...(trip.stops ?? [])].sort((a, b) => a.order - b.order);
-  const destinationCity = sortedStops[0]?.cities?.name || trip.name || 'Delhi';
+  const destinationCity = trip.name || sortedStops[0]?.cities?.name || 'Japan';
 
   // 11 Real Features
   const topTabs = [
