@@ -24,86 +24,89 @@ interface LodgingComparisonViewProps {
 }
 
 export function LodgingComparisonView({ trip, tripId }: LodgingComparisonViewProps) {
-  const [destination, setDestination] = useState('Oahu');
-  const [dates, setDates] = useState('3/21 - 3/23');
+  const [destination, setDestination] = useState('Paris');
+  const [dates, setDates] = useState('Feb 15 - Feb 17');
   const [guests, setGuests] = useState('1 room, 2 guests');
   const [activeHotelId, setActiveHotelId] = useState<string>('h1');
   const [showPricePopup, setShowPricePopup] = useState(true);
 
-  // Hotel Cards matching Screenshot 9
+  const formatINR = (val: number) =>
+    '₹' + Math.round(val).toLocaleString('en-IN');
+
+  // Hotel Cards in INR matching Screenshot 9
   const hotels = [
     {
       id: 'h1',
-      name: 'Pacific Paradise Resort',
+      name: 'Grand Hotel Central Paris',
       badge: null,
       rating: '10.0',
       ratingText: 'Exceptional',
       reviewCount: 787,
-      details: '3-star hotel • Free WiFi • Free parking • Free breakfast • Pool',
-      pricePerNight: 205,
-      totalPrice: 410,
+      details: '4-star hotel • Free WiFi • Free breakfast • Eiffel Tower view • Spa',
+      pricePerNight: 8500,
+      totalPrice: 17000,
       image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&q=80',
-      mapPin: '$410',
+      mapPin: '₹17,000',
       x: '38%',
       y: '58%',
       rates: [
-        { provider: 'Wanderlog', price: 192, isBest: true, isOfficial: false },
-        { provider: 'Pacific.Paradise.com', price: 198, isBest: false, isOfficial: true },
-        { provider: 'Booking.com', price: 220, isBest: false, isOfficial: false },
-        { provider: 'Expedia.com', price: 232, isBest: false, isOfficial: false },
+        { provider: 'GlobeTrotter Direct', price: 15800, isBest: true, isOfficial: false },
+        { provider: 'GrandHotelParis.com', price: 16200, isBest: false, isOfficial: true },
+        { provider: 'Booking.com', price: 17500, isBest: false, isOfficial: false },
+        { provider: 'Expedia.co.in', price: 18200, isBest: false, isOfficial: false },
       ],
     },
     {
       id: 'h2',
-      name: 'Tropical Haven Hotel',
+      name: 'Le Marais Boutique Hotel',
       badge: null,
       rating: '10.0',
       ratingText: 'Exceptional',
       reviewCount: 234,
-      details: '4-star hotel • Free WiFi • Free parking • Free breakfast',
-      pricePerNight: 186,
-      totalPrice: 372,
+      details: '4-star boutique hotel • Free WiFi • Organic breakfast • Central Paris',
+      pricePerNight: 7200,
+      totalPrice: 14400,
       image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
-      mapPin: '$372',
+      mapPin: '₹14,400',
       x: '75%',
       y: '42%',
       rates: [
-        { provider: 'Wanderlog', price: 186, isBest: true, isOfficial: false },
-        { provider: 'Booking.com', price: 199, isBest: false, isOfficial: false },
+        { provider: 'GlobeTrotter Direct', price: 14400, isBest: true, isOfficial: false },
+        { provider: 'Booking.com', price: 15900, isBest: false, isOfficial: false },
       ],
     },
     {
       id: 'h3',
-      name: 'Island Breeze Inn',
+      name: 'Montmartre Artists Loft',
       badge: 'AIRBNB',
       rating: '10.0',
       ratingText: 'Exceptional',
       reviewCount: 963,
-      details: '3-star hotel • Free WiFi • Free parking • Free breakfast • Private lanai',
-      pricePerNight: 107,
-      totalPrice: 214,
+      details: 'Luxury studio • Free WiFi • Kitchenette • Sacré-Cœur views',
+      pricePerNight: 4800,
+      totalPrice: 9600,
       image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&q=80',
-      mapPin: '$214',
+      mapPin: '₹9,600',
       x: '82%',
       y: '32%',
       rates: [
-        { provider: 'Airbnb', price: 214, isBest: true, isOfficial: true },
-        { provider: 'Vrbo', price: 230, isBest: false, isOfficial: false },
+        { provider: 'Airbnb', price: 9600, isBest: true, isOfficial: true },
+        { provider: 'Vrbo', price: 10800, isBest: false, isOfficial: false },
       ],
     },
   ];
 
-  // Map Price Pins matching Screenshot 9
+  // Map Price Pins in INR matching Screenshot 9
   const mapPins = [
-    { id: 'p1', hotelId: 'h1', label: '$410', x: '38%', y: '58%', isSelected: true },
-    { id: 'p2', hotelId: 'h3', label: '$214', x: '82%', y: '32%', isSelected: false },
-    { id: 'p3', hotelId: 'h2', label: '$372', x: '75%', y: '42%', isSelected: false },
-    { id: 'p4', hotelId: null, label: '$813', x: '72%', y: '22%', isSelected: false },
-    { id: 'p5', hotelId: null, label: '$658', x: '45%', y: '72%', isSelected: false },
-    { id: 'p6', hotelId: null, label: '$428', x: '58%', y: '74%', isSelected: false },
-    { id: 'p7', hotelId: null, label: '$1236', x: '68%', y: '82%', isSelected: false },
-    { id: 'p8', hotelId: null, label: '$528', x: '85%', y: '76%', isSelected: false },
-    { id: 'p9', hotelId: null, label: '$383', x: '60%', y: '90%', isSelected: false },
+    { id: 'p1', hotelId: 'h1', label: '₹17,000', x: '38%', y: '58%', isSelected: true },
+    { id: 'p2', hotelId: 'h3', label: '₹9,600', x: '82%', y: '32%', isSelected: false },
+    { id: 'p3', hotelId: 'h2', label: '₹14,400', x: '75%', y: '42%', isSelected: false },
+    { id: 'p4', hotelId: null, label: '₹35,000', x: '72%', y: '22%', isSelected: false },
+    { id: 'p5', hotelId: null, label: '₹26,500', x: '45%', y: '72%', isSelected: false },
+    { id: 'p6', hotelId: null, label: '₹18,200', x: '58%', y: '74%', isSelected: false },
+    { id: 'p7', hotelId: null, label: '₹52,000', x: '68%', y: '82%', isSelected: false },
+    { id: 'p8', hotelId: null, label: '₹22,500', x: '85%', y: '76%', isSelected: false },
+    { id: 'p9', hotelId: null, label: '₹15,000', x: '60%', y: '90%', isSelected: false },
   ];
 
   const activeHotel = hotels.find((h) => h.id === activeHotelId) || hotels[0];
@@ -118,7 +121,7 @@ export function LodgingComparisonView({ trip, tripId }: LodgingComparisonViewPro
         </h2>
       </div>
 
-      {/* Main Lodging Browser Frame matching Screenshot 9 */}
+      {/* Main Lodging Browser Frame in INR */}
       <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-12 min-h-[580px]">
         {/* LEFT COLUMN: Hotel Cards & Search Bar (7 cols) */}
         <div className="lg:col-span-7 p-6 sm:p-8 space-y-5 border-b lg:border-b-0 lg:border-r border-slate-200 overflow-y-auto max-h-[660px]">
@@ -128,7 +131,7 @@ export function LodgingComparisonView({ trip, tripId }: LodgingComparisonViewPro
             <h3 className="text-lg font-black text-slate-900">Hotels and lodging</h3>
           </div>
 
-          {/* Search Filter Bar matching Screenshot 9 (Where, When, Rooms & Guests) */}
+          {/* Search Filter Bar in INR */}
           <div className="rounded-2xl border border-slate-200 bg-[#fbfcfd] p-3 grid grid-cols-3 gap-2 text-xs">
             <div>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -154,7 +157,7 @@ export function LodgingComparisonView({ trip, tripId }: LodgingComparisonViewPro
             </div>
           </div>
 
-          {/* Hotel List */}
+          {/* Hotel List in INR */}
           <div className="space-y-4">
             {hotels.map((hotel) => (
               <div
@@ -192,22 +195,22 @@ export function LodgingComparisonView({ trip, tripId }: LodgingComparisonViewPro
                   </p>
                 </div>
 
-                {/* Price & CTA */}
+                {/* Price in INR & CTA */}
                 <div className="flex sm:flex-col justify-between sm:justify-center items-end sm:items-end flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                   <div className="text-right">
                     <span className="text-base font-black text-slate-900 font-mono">
-                      ${hotel.pricePerNight}
+                      {formatINR(hotel.pricePerNight)}
                     </span>
                     <span className="text-[10px] text-slate-400 block">/night</span>
                     <span className="text-[10px] text-slate-500 font-semibold block">
-                      ${hotel.totalPrice} total
+                      {formatINR(hotel.totalPrice)} total
                     </span>
                   </div>
 
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      toast.success(`Booking ${hotel.name} for $${hotel.totalPrice}`);
+                      toast.success(`Booking ${hotel.name} for ${formatINR(hotel.totalPrice)}`);
                     }}
                     className="mt-2 rounded-xl bg-[#ff5a36] hover:bg-[#e04826] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95"
                   >
@@ -219,7 +222,7 @@ export function LodgingComparisonView({ trip, tripId }: LodgingComparisonViewPro
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Interactive Map with Live Price Pins & Price Popup (5 cols) */}
+        {/* RIGHT COLUMN: Interactive Map with Live INR Price Pins & Price Popup (5 cols) */}
         <div className="lg:col-span-5 relative bg-[#e2e8f0] h-[400px] lg:h-auto overflow-hidden">
           {/* Map Image Background */}
           <div
@@ -230,7 +233,7 @@ export function LodgingComparisonView({ trip, tripId }: LodgingComparisonViewPro
           />
           <div className="absolute inset-0 bg-blue-900/10 backdrop-blur-[0.5px] pointer-events-none" />
 
-          {/* Interactive Price Pins matching Screenshot 9 ($813, $214, $372, $410, $658, etc.) */}
+          {/* Interactive Price Pins in INR */}
           {mapPins.map((pin) => {
             const isSelected = activeHotel.mapPin === pin.label;
             return (
@@ -254,14 +257,14 @@ export function LodgingComparisonView({ trip, tripId }: LodgingComparisonViewPro
             );
           })}
 
-          {/* Floating Rate Comparison Popup matching Screenshot 9 */}
+          {/* Floating Rate Comparison Popup in INR */}
           {showPricePopup && activeHotel && (
             <div className="absolute bottom-6 left-6 right-6 z-30 rounded-2xl bg-white/98 backdrop-blur-md p-4 shadow-2xl border border-slate-200 space-y-2.5 animate-in fade-in slide-in-from-bottom duration-200">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h5 className="text-xs font-black text-slate-900 truncate">
                   {activeHotel.name}
                 </h5>
-                <span className="text-[10px] font-bold text-slate-400">Live Rates</span>
+                <span className="text-[10px] font-bold text-slate-400">Live Rates (INR)</span>
               </div>
 
               <div className="space-y-1.5 text-xs">
@@ -280,7 +283,7 @@ export function LodgingComparisonView({ trip, tripId }: LodgingComparisonViewPro
                         </span>
                       )}
                     </div>
-                    <span className="font-mono font-bold text-slate-900">${rate.price}</span>
+                    <span className="font-mono font-bold text-slate-900">{formatINR(rate.price)}</span>
                   </div>
                 ))}
               </div>

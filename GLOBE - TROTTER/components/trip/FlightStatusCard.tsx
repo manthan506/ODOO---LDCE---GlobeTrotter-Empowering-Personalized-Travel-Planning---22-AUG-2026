@@ -73,7 +73,7 @@ export function FlightStatusCard({
       gateArr: '-',
       status: 'DELAYED',
       confirmationCode: 'XYZ123',
-      cost: 123.45,
+      cost: 10250,
       notes: 'Carry-on luggage included. Seat 14B aisle.',
     },
     {
@@ -94,7 +94,7 @@ export function FlightStatusCard({
       gateArr: '22',
       status: 'ON SCHEDULE',
       confirmationCode: 'KI8724',
-      cost: 1290.75,
+      cost: 54000,
       notes: 'In-flight meals & entertainment confirmed. Seat 22K window.',
     },
   ]);
@@ -341,7 +341,7 @@ export function FlightStatusCard({
               </div>
 
               <span className="font-mono font-black text-slate-900 text-sm">
-                ${currentFlight.cost.toFixed(2)}
+                ₹{Math.round(currentFlight.cost).toLocaleString('en-IN')}
               </span>
             </div>
 

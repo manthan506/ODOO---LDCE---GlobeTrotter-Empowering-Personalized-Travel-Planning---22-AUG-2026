@@ -33,32 +33,32 @@ export function ReservationsHub({ trip, tripId }: ReservationsHubProps) {
   const [hotelsExpanded, setHotelsExpanded] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Reservation items matching Screenshot 8
+  // Reservation items in INR matching Screenshot 8
   const [flights, setFlights] = useState([
     {
       id: 'f1',
-      fromCode: 'SFO',
-      fromCity: 'San Francisco',
-      toCode: 'NRT',
-      toCity: 'Tokyo',
+      fromCode: 'DEL',
+      fromCity: 'New Delhi',
+      toCode: 'CDG',
+      toCity: 'Paris',
       schedule: 'Sat, Jan 20 9:30am — 5:45pm+1',
-      airline: 'UNITED AIRLINES UA 321',
+      airline: 'AIR INDIA AI 202',
       confirmationCode: 'KI8724',
       notes: 'For Rose Chen',
-      cost: 1290.75,
+      cost: 54000,
       hasAttachment: true,
     },
     {
       id: 'f2',
-      fromCode: 'HND',
-      fromCity: 'Tokyo',
-      toCode: 'SFO',
-      toCity: 'San Francisco',
-      schedule: 'Sat, Jan 27 6:15pm — 11:30am',
-      airline: 'UNITED AIRLINES UA 876',
+      fromCode: 'CDG',
+      fromCity: 'Paris',
+      toCode: 'FCO',
+      toCity: 'Rome',
+      schedule: 'Sat, Jan 27 6:15pm — 8:30pm',
+      airline: 'AIR FRANCE AF 1120',
       confirmationCode: 'KI8725',
-      notes: 'Return flight confirmed',
-      cost: 1150.0,
+      notes: 'European connector flight',
+      cost: 14500,
       hasAttachment: true,
     },
   ]);
@@ -66,13 +66,13 @@ export function ReservationsHub({ trip, tripId }: ReservationsHubProps) {
   const [lodging, setLodging] = useState([
     {
       id: 'l1',
-      hotelName: 'Hilton Tokyo',
-      address: '12 Japan Address, Shinjuku, Tokyo',
+      hotelName: 'Grand Hotel Central Paris',
+      address: '12 Rue de Rivoli, Paris, France',
       schedule: 'Sat, Jan 20 — Fri, Jan 27',
       details: '7 nights • 1 room, 2 guests',
       confirmationCode: 'WY0242',
       notes: 'Breakfast included, high-floor executive room',
-      cost: 1840.0,
+      cost: 82000,
       hasAttachment: true,
     },
   ]);
@@ -80,22 +80,25 @@ export function ReservationsHub({ trip, tripId }: ReservationsHubProps) {
   const [rentalCars, setRentalCars] = useState([
     {
       id: 'r1',
-      company: 'Nippon Rent-A-Car',
-      carType: 'Compact SUV (Toyota Yaris Cross)',
+      company: 'Europcar France',
+      carType: 'Compact SUV (Peugeot 3008)',
       schedule: 'Jan 22 — Jan 25',
       confirmationCode: 'RC9901',
-      notes: 'ETC toll card included',
-      cost: 320.0,
+      notes: 'Unlimited mileage & GPS navigation',
+      cost: 16500,
       hasAttachment: true,
     },
   ]);
 
-  const totalSpent = 3750.0;
+  const totalSpent = 167000;
 
   const handleAddReservation = (type: string) => {
     toast.success(`New ${type} reservation form opened`);
     setShowAddModal(false);
   };
+
+  const formatINR = (val: number) =>
+    '₹' + Math.round(val).toLocaleString('en-IN');
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
@@ -104,7 +107,7 @@ export function ReservationsHub({ trip, tripId }: ReservationsHubProps) {
         <h2 className="text-sm font-bold text-slate-500">Import your flight and hotel reservations</h2>
       </div>
 
-      {/* Central Browser Frame Card matching Screenshot 8 */}
+      {/* Central Browser Frame Card matching Screenshot 8 in INR */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
         {/* Top Split: Category Icons (Left) & Budgeting Widget (Right) */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center border-b border-slate-100 pb-6">
@@ -144,13 +147,13 @@ export function ReservationsHub({ trip, tripId }: ReservationsHubProps) {
             </div>
           </div>
 
-          {/* Budgeting Widget matching Screenshot 8 (4 cols) */}
+          {/* Budgeting Widget matching Screenshot 8 in INR (4 cols) */}
           <div className="md:col-span-4 rounded-2xl border border-slate-200 bg-[#fbfcfd] p-4 text-center md:text-left space-y-1">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Budgeting
             </span>
             <h3 className="text-2xl font-black text-slate-900 font-mono">
-              ${totalSpent.toFixed(2)}
+              {formatINR(totalSpent)}
             </h3>
             <button
               onClick={() => toast.info('Navigating to Budgeting breakdown')}
@@ -211,7 +214,7 @@ export function ReservationsHub({ trip, tripId }: ReservationsHubProps) {
                       <span className="font-mono font-bold text-slate-900">{f.confirmationCode}</span>
                       <span className="text-[10px] text-slate-500 block">Notes: {f.notes}</span>
                       <span className="font-mono font-black text-slate-900 text-sm block mt-1">
-                        ${f.cost.toFixed(2)}
+                        {formatINR(f.cost)}
                       </span>
                     </div>
 
@@ -271,7 +274,7 @@ export function ReservationsHub({ trip, tripId }: ReservationsHubProps) {
                       <span className="font-mono font-bold text-slate-900">{l.confirmationCode}</span>
                       <span className="text-[10px] text-slate-500 block">Notes: {l.notes}</span>
                       <span className="font-mono font-black text-slate-900 text-sm block mt-1">
-                        ${l.cost.toFixed(2)}
+                        {formatINR(l.cost)}
                       </span>
                     </div>
 

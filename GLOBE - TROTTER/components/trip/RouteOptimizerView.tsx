@@ -217,7 +217,7 @@ export function RouteOptimizerView({ stops = [], tripId, onStopsReordered }: Rou
                 </div>
                 <div className="flex items-center gap-2 text-amber-400 font-semibold">
                   <span>💵</span>
-                  <span>$100 of gas money</span>
+                  <span>₹1,200 of gas money</span>
                 </div>
               </div>
             </div>

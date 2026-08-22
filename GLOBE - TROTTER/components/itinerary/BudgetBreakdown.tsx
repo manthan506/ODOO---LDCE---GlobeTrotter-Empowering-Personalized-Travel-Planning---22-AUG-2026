@@ -59,8 +59,8 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
   const [showBreakdownModal, setShowBreakdownModal] = useState(false);
   const [showAddTripmateModal, setShowAddTripmateModal] = useState(false);
 
-  // Edit budget state
-  const [newBudgetCap, setNewBudgetCap] = useState(trip?.budget_cap?.toString() || '5000');
+  // Edit budget state in INR
+  const [newBudgetCap, setNewBudgetCap] = useState(trip?.budget_cap?.toString() || '300000');
 
   // Add tripmate state
   const [tripmateName, setTripmateName] = useState('');
@@ -108,7 +108,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         credentials: 'include',
       });
       if (res.ok) {
-        toast.success(`Budget updated to $${Number(newBudgetCap).toLocaleString()}`);
+        toast.success(`Budget updated to ₹${Number(newBudgetCap).toLocaleString('en-IN')}`);
         setShowEditBudgetModal(false);
         fetchBudget();
         if (onExpenseAdded) onExpenseAdded();
@@ -198,35 +198,36 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
     }
   };
 
-  const formatUSD = (val: number) =>
-    '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Indian Rupee (₹) Formatter
+  const formatINR = (val: number) =>
+    '₹' + Math.round(val).toLocaleString('en-IN');
 
-  // Default seed expense items matching Screenshot 1 if no custom expenses logged yet
+  // Default seed expense items in INR matching Screenshot 1
   const defaultExpenses = [
     {
       id: 'e1',
-      title: 'SFO to HNL',
+      title: 'DEL to CDG Flights',
       category: 'Flights',
       date: 'Feb 15',
-      amount: 890.12,
+      amount: 74500,
       icon: Plane,
       avatars: ['https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&q=80'],
     },
     {
       id: 'e2',
-      title: 'Waikiki Hotel Resort and Spa',
+      title: 'Grand Hotel Central Lodging',
       category: 'Lodging',
       date: 'Feb 15',
-      amount: 1230.89,
+      amount: 102500,
       icon: Hotel,
       avatars: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&q=80'],
     },
     {
       id: 'e3',
-      title: 'Dinner at Café Kaila',
+      title: 'Dinner at Le Bistro Montmartre',
       category: 'Food',
       date: 'Feb 14',
-      amount: 178.90,
+      amount: 14800,
       icon: Utensils,
       avatars: [
         'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&q=80',
@@ -236,10 +237,10 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
     },
     {
       id: 'e4',
-      title: 'Drinks at Bar Nalu',
+      title: 'Evening Wine & Tapas Bar',
       category: 'Drinks',
       date: 'Feb 14',
-      amount: 68.12,
+      amount: 5600,
       icon: Wine,
       avatars: ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&q=80'],
     },
@@ -247,19 +248,19 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
 
   const totalCost = expenses.length > 0
     ? expenses.reduce((acc, curr) => acc + curr.amount, 0)
-    : 2345.10;
+    : 197400;
 
-  const currentBudgetCap = trip?.budget_cap || 5000;
+  const currentBudgetCap = trip?.budget_cap || 300000;
 
   const chartData = [
-    { category: 'Flights', amount: 890.12, percentage: 38, color: '#3B82F6' },
-    { category: 'Lodging', amount: 1230.89, percentage: 52, color: '#6366F1' },
-    { category: 'Food & Drinks', amount: 247.02, percentage: 10, color: '#F59E0B' },
+    { category: 'Flights', amount: 74500, percentage: 38, color: '#3B82F6' },
+    { category: 'Lodging', amount: 102500, percentage: 52, color: '#6366F1' },
+    { category: 'Food & Drinks', amount: 20400, percentage: 10, color: '#F59E0B' },
   ];
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      {/* Central Browser Frame Card matching Screenshot 1 */}
+      {/* Central Browser Frame Card matching Screenshot 1 in INR */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
         {/* Top Header: Budgeting Title + Add Expense Button */}
         <div className="flex items-center justify-between mb-6">
@@ -272,15 +273,15 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
           </button>
         </div>
 
-        {/* Balance Card Section (Screenshot 1: $2345.10 / Budget: $5000) */}
+        {/* Balance Card Section in INR (₹) */}
         <div className="rounded-2xl border border-slate-200 bg-[#fbfcfd] p-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-4">
             <div>
-              <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-                {formatUSD(totalCost)}
+              <h1 className="text-4xl font-black text-slate-900 tracking-tight font-mono">
+                {formatINR(totalCost)}
               </h1>
               <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-1">
-                <span>Budget: {formatUSD(currentBudgetCap)}</span>
+                <span>Budget: {formatINR(currentBudgetCap)}</span>
                 <Pencil
                   size={12}
                   className="cursor-pointer hover:text-slate-700"
@@ -289,7 +290,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
               </div>
             </div>
 
-            {/* Action Buttons: Edit budget & Debt summary (Screenshot 1) */}
+            {/* Action Buttons: Edit budget & Debt summary */}
             <div className="flex flex-wrap items-center gap-2.5">
               <button
                 onClick={() => setShowEditBudgetModal(true)}
@@ -307,7 +308,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
             </div>
           </div>
 
-          {/* Right Side Links (Screenshot 1: View breakdown, Add tripmate, Settings) */}
+          {/* Right Side Links (View breakdown, Add tripmate, Settings) */}
           <div className="flex flex-col gap-2.5 text-xs font-semibold text-slate-600 border-t md:border-t-0 md:border-l border-slate-200 pt-4 md:pt-0 md:pl-6">
             <button
               onClick={() => setShowBreakdownModal(true)}
@@ -335,7 +336,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
           </div>
         </div>
 
-        {/* Expenses List Section (Screenshot 1: Expenses + Sort: Date) */}
+        {/* Expenses List Section (Sort: Date) */}
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-base font-bold text-slate-900">Expenses</h3>
@@ -345,7 +346,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
             </div>
           </div>
 
-          {/* List of itemized expenses */}
+          {/* List of itemized expenses in INR */}
           <div className="divide-y divide-slate-100">
             {expenses.length === 0 ? (
               defaultExpenses.map((exp) => (
@@ -376,7 +377,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                       </div>
                     )}
                     <span className="text-xs font-bold text-slate-900 font-mono">
-                      {formatUSD(exp.amount)}
+                      {formatINR(exp.amount)}
                     </span>
                   </div>
                 </div>
@@ -398,7 +399,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
 
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-bold text-slate-900 font-mono">
-                      {formatUSD(exp.amount)}
+                      {formatINR(exp.amount)}
                     </span>
                     <button
                       onClick={() => handleDeleteExpense(exp.id)}
@@ -415,7 +416,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         </div>
       </div>
 
-      {/* Modal 1: Edit Budget */}
+      {/* Modal 1: Edit Budget in INR */}
       {showEditBudgetModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl space-y-4">
@@ -427,13 +428,13 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
             </div>
             <form onSubmit={handleUpdateBudget} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Target Budget Cap ($)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Target Budget Cap (₹)</label>
                 <input
                   type="number"
                   value={newBudgetCap}
                   onChange={(e) => setNewBudgetCap(e.target.value)}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm outline-none focus:border-blue-500 focus:bg-white"
-                  placeholder="5000"
+                  placeholder="300000"
                 />
               </div>
               <div className="flex gap-2">
@@ -456,7 +457,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         </div>
       )}
 
-      {/* Modal 2: Debt Summary & Group Expense Split */}
+      {/* Modal 2: Debt Summary in INR */}
       {showDebtSummaryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
@@ -473,14 +474,14 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
             </div>
 
             <p className="text-xs text-slate-500">
-              Total group spending: <strong className="text-slate-900">{formatUSD(totalCost)}</strong> across 4 tripmates ({formatUSD(totalCost / 4)} each).
+              Total group spending: <strong className="text-slate-900">{formatINR(totalCost)}</strong> across 4 tripmates ({formatINR(totalCost / 4)} each).
             </p>
 
             <div className="space-y-2.5">
               {[
-                { from: 'Rose Chen', to: 'You', amount: 480.20, status: 'owes' },
-                { from: 'James Levi', to: 'You', amount: 310.50, status: 'owes' },
-                { from: 'You', to: 'Lianne Jones', amount: 145.00, status: 'you owe' },
+                { from: 'Rose Chen', to: 'You', amount: 39500, status: 'owes' },
+                { from: 'James Levi', to: 'You', amount: 25400, status: 'owes' },
+                { from: 'You', to: 'Lianne Jones', amount: 11800, status: 'you owe' },
               ].map((debt, idx) => (
                 <div
                   key={idx}
@@ -492,7 +493,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                     <span className="font-bold text-slate-900">{debt.to}</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono font-bold text-slate-900 block">{formatUSD(debt.amount)}</span>
+                    <span className="font-mono font-bold text-slate-900 block">{formatINR(debt.amount)}</span>
                     <span className={`text-[9px] font-bold uppercase ${debt.status === 'owes' ? 'text-emerald-600' : 'text-amber-600'}`}>
                       {debt.status}
                     </span>
@@ -541,12 +542,12 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => [formatUSD(value), 'Cost']} />
+                  <Tooltip formatter={(value: number) => [formatINR(value), 'Cost']} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="text-[10px] text-slate-400 font-medium">Total</span>
-                <span className="text-xs font-bold text-slate-800">{formatUSD(totalCost)}</span>
+                <span className="text-xs font-bold text-slate-800">{formatINR(totalCost)}</span>
               </div>
             </div>
 
@@ -558,7 +559,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                     <span className="font-semibold text-slate-800">{item.category}</span>
                   </div>
                   <span className="font-mono font-bold text-slate-900">
-                    {formatUSD(item.amount)} ({item.percentage}%)
+                    {formatINR(item.amount)} ({item.percentage}%)
                   </span>
                 </div>
               ))}
@@ -609,7 +610,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         </div>
       )}
 
-      {/* Modal 5: Add Expense */}
+      {/* Modal 5: Add Expense in INR */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
@@ -622,16 +623,15 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
 
             <form onSubmit={handleAddExpense} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Amount ($)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Amount (₹)</label>
                 <input
                   required
                   type="number"
-                  step="0.01"
-                  min="0.01"
+                  min="1"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm outline-none focus:border-blue-500 focus:bg-white"
-                  placeholder="120.00"
+                  placeholder="3500"
                 />
               </div>
 
@@ -643,7 +643,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm outline-none focus:border-blue-500 focus:bg-white"
-                  placeholder="e.g. Dinner at Café Kaila, SFO to HNL Flights"
+                  placeholder="e.g. Flight ticket, Hotel booking, Dinner"
                 />
               </div>
 
