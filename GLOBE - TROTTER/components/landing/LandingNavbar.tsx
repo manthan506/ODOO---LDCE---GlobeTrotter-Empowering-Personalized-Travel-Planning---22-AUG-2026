@@ -69,11 +69,11 @@ export function LandingNavbar() {
           </span>
         </Link>
 
-        {/* NAVIGATION LINKS */}
-        <nav className="flex items-center gap-4 sm:gap-6 lg:gap-8 text-xs sm:text-sm font-semibold text-slate-600 overflow-x-auto no-scrollbar">
+        {/* DESKTOP NAVIGATION */}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
           <button
             onClick={() => scrollToSection('home')}
-            className={`relative py-1 transition hover:text-blue-600 cursor-pointer flex-shrink-0 ${
+            className={`relative py-1 transition hover:text-blue-600 cursor-pointer ${
               activeSection === 'home' ? 'text-blue-600 font-bold' : ''
             }`}
           >
@@ -85,7 +85,7 @@ export function LandingNavbar() {
 
           <button
             onClick={() => scrollToSection('features')}
-            className={`relative py-1 transition hover:text-blue-600 cursor-pointer flex-shrink-0 ${
+            className={`relative py-1 transition hover:text-blue-600 cursor-pointer ${
               activeSection === 'features' ? 'text-blue-600 font-bold' : ''
             }`}
           >
@@ -97,7 +97,7 @@ export function LandingNavbar() {
 
           <button
             onClick={() => scrollToSection('destinations')}
-            className={`relative py-1 transition hover:text-blue-600 cursor-pointer flex-shrink-0 ${
+            className={`relative py-1 transition hover:text-blue-600 cursor-pointer ${
               activeSection === 'destinations' ? 'text-blue-600 font-bold' : ''
             }`}
           >
@@ -109,7 +109,7 @@ export function LandingNavbar() {
 
           <button
             onClick={() => scrollToSection('planner')}
-            className={`relative py-1 transition hover:text-blue-600 cursor-pointer flex-shrink-0 ${
+            className={`relative py-1 transition hover:text-blue-600 cursor-pointer ${
               activeSection === 'planner' ? 'text-blue-600 font-bold' : ''
             }`}
           >
@@ -121,7 +121,7 @@ export function LandingNavbar() {
 
           <button
             onClick={() => scrollToSection('pricing')}
-            className={`relative py-1 transition hover:text-blue-600 cursor-pointer flex-shrink-0 hidden sm:inline-block ${
+            className={`relative py-1 transition hover:text-blue-600 cursor-pointer ${
               activeSection === 'pricing' ? 'text-blue-600 font-bold' : ''
             }`}
           >
@@ -132,7 +132,7 @@ export function LandingNavbar() {
           </button>
 
           {/* Resources Dropdown */}
-          <div className="relative hidden md:block">
+          <div className="relative">
             <button
               onClick={() => setResourcesOpen(!resourcesOpen)}
               className="flex items-center gap-1 py-1 transition hover:text-blue-600 cursor-pointer"
@@ -140,7 +140,7 @@ export function LandingNavbar() {
               Resources <ChevronDown size={14} className={`transition ${resourcesOpen ? 'rotate-180' : ''}`} />
             </button>
             {resourcesOpen && (
-              <div className="absolute top-8 left-0 w-48 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+              <div className="absolute top-8 left-0 w-48 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
                 <Link
                   href="/community"
                   className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600"
@@ -168,19 +168,19 @@ export function LandingNavbar() {
         </nav>
 
         {/* RIGHT SIDE: LANGUAGE & AUTH BUTTONS */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="hidden md:flex items-center gap-3.5">
           {/* Language Selector */}
-          <div className="relative hidden sm:block">
+          <div className="relative">
             <button
               onClick={() => setLangOpen(!langOpen)}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-700 transition cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 transition cursor-pointer"
             >
-              <Globe size={13} className="text-blue-600" />
+              <Globe size={14} className="text-blue-600" />
               <span>EN</span>
-              <ChevronDown size={11} className="text-slate-400" />
+              <ChevronDown size={12} className="text-slate-400" />
             </button>
             {langOpen && (
-              <div className="absolute right-0 top-10 w-36 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in duration-200 z-50">
+              <div className="absolute right-0 top-10 w-36 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in duration-200">
                 <button
                   onClick={() => setLangOpen(false)}
                   className="w-full text-left rounded-xl px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50"
@@ -207,29 +207,94 @@ export function LandingNavbar() {
           {user ? (
             <Link
               href="/dashboard"
-              className="flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-600 transition active:scale-95"
+              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-600 transition active:scale-95"
             >
               <span>Go to App</span>
-              <ArrowRight size={13} />
+              <ArrowRight size={14} />
             </Link>
           ) : (
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <>
               <Link
                 href="/login"
-                className="rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 transition"
+                className="rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 hover:text-blue-600 transition"
               >
                 Login
               </Link>
               <Link
                 href="/signup"
-                className="rounded-xl bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm shadow-blue-500/30 transition hover:shadow-md active:scale-95"
+                className="rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/30 transition hover:shadow-md active:scale-95"
               >
                 Sign Up
               </Link>
-            </div>
+            </>
           )}
         </div>
+
+        {/* MOBILE HAMBURGER BUTTON */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+        >
+          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
       </div>
+
+      {/* MOBILE DRAWER */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-3 animate-in slide-in-from-top-3 duration-200">
+          <button
+            onClick={() => scrollToSection('home')}
+            className="block w-full text-left rounded-xl px-3 py-2 text-sm font-bold text-slate-800 hover:bg-blue-50 hover:text-blue-600"
+          >
+            Home
+          </button>
+          <button
+            onClick={() => scrollToSection('features')}
+            className="block w-full text-left rounded-xl px-3 py-2 text-sm font-bold text-slate-800 hover:bg-blue-50 hover:text-blue-600"
+          >
+            Features
+          </button>
+          <button
+            onClick={() => scrollToSection('destinations')}
+            className="block w-full text-left rounded-xl px-3 py-2 text-sm font-bold text-slate-800 hover:bg-blue-50 hover:text-blue-600"
+          >
+            Destinations
+          </button>
+          <button
+            onClick={() => scrollToSection('planner')}
+            className="block w-full text-left rounded-xl px-3 py-2 text-sm font-bold text-slate-800 hover:bg-blue-50 hover:text-blue-600"
+          >
+            Itinerary Planner
+          </button>
+          <button
+            onClick={() => scrollToSection('pricing')}
+            className="block w-full text-left rounded-xl px-3 py-2 text-sm font-bold text-slate-800 hover:bg-blue-50 hover:text-blue-600"
+          >
+            Pricing
+          </button>
+          <Link
+            href="/community"
+            className="block w-full text-left rounded-xl px-3 py-2 text-sm font-bold text-slate-800 hover:bg-blue-50 hover:text-blue-600"
+          >
+            Community Trips 🌍
+          </Link>
+
+          <div className="pt-3 border-t border-slate-100 flex gap-2">
+            <Link
+              href="/login"
+              className="flex-1 text-center rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-700"
+            >
+              Login
+            </Link>
+            <Link
+              href="/signup"
+              className="flex-1 text-center rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white shadow-sm"
+            >
+              Sign Up
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

@@ -17,10 +17,10 @@ import {
   FileText,
   CheckCircle2,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { useTripSync } from '@/context/TripSyncContext';
 
 const AVATAR_PRESETS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
@@ -33,7 +33,6 @@ const AVATAR_PRESETS = [
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const router = useRouter();
   const { signIn, signUp } = useAuth();
-  const { updateUserProfile } = useTripSync();
 
   // Login & Shared State
   const [email, setEmail] = useState('');
@@ -85,7 +84,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
 
         const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
-        await signUp({
+        const res = await signUp({
           name: fullName,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
@@ -98,24 +97,17 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
           additionalInfo: additionalInfo.trim(),
         });
 
-        updateUserProfile({
-          name: fullName,
-          email: email.trim(),
-          avatar,
-          location: [city.trim(), country.trim()].filter(Boolean).join(', ') || 'Ahmedabad, India',
-          bio: additionalInfo.trim() || 'Passionate explorer crafting adventures.',
-        });
-
+        if (res.error) {
+          toast.error(res.error);
+          return;
+        }
         toast.success('Account created successfully! Welcome to GlobeTrotter ✨');
       } else {
-        await signIn(email.trim(), password);
-
-        const displayName = email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
-        updateUserProfile({
-          name: displayName,
-          email: email.trim(),
-        });
-
+        const res = await signIn(email.trim(), password);
+        if (res.error) {
+          toast.error(res.error);
+          return;
+        }
         toast.success('Welcome back to GlobeTrotter! 👋');
       }
       router.push('/dashboard');
@@ -225,6 +217,48 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
                 : 'Enter your credentials to access your trips and itineraries.'}
             </p>
           </div>
+
+          {/* ONE-CLICK DEMO LOGIN — shown only on login mode */}
+          {!isSignup && (
+            <div className="mb-4 rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50 p-4 flex flex-col gap-3">
+              <p className="text-center text-xs font-bold text-blue-700 uppercase tracking-wide">⚡ One-Click Demo Login</p>
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setEmail('alex@globetrotter.io');
+                    setPassword('password123');
+                    setLoading(true);
+                    const res = await signIn('alex@globetrotter.io', 'password123');
+                    if (res.error) { toast.error(res.error); setLoading(false); return; }
+                    toast.success('Logged in as Alex Nomad 🌍');
+                    router.push('/dashboard');
+                  }}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-sm font-bold text-white shadow hover:opacity-90 transition"
+                >
+                  <Zap size={15} />
+                  Login as Alex Nomad (Demo User)
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setEmail('admin@globetrotter.io');
+                    setPassword('admin123');
+                    setLoading(true);
+                    const res = await signIn('admin@globetrotter.io', 'admin123');
+                    if (res.error) { toast.error(res.error); setLoading(false); return; }
+                    toast.success('Logged in as Admin 🛡️');
+                    router.push('/admin');
+                  }}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-sm font-bold text-white shadow hover:opacity-90 transition"
+                >
+                  <Zap size={15} />
+                  Login as Admin (Dashboard)
+                </button>
+              </div>
+              <p className="text-center text-[10px] text-blue-500">No setup required — works instantly</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* LOGIN FIELDS */}
