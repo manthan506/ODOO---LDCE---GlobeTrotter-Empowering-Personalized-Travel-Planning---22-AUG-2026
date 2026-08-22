@@ -119,6 +119,13 @@ export function Navbar() {
                       >
                         <UserIcon size={14} /> Profile
                       </Link>
+                      <Link
+                        href="/admin"
+                        className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 transition"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Layers size={14} /> Admin & Analytics
+                      </Link>
                       <button
                         onClick={handleSignOut}
                         className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 transition"

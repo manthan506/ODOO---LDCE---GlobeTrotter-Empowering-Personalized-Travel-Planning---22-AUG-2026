@@ -2,21 +2,40 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CalendarDays, ChevronRight, Compass, Loader2, MapPin, Sparkles, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  CalendarDays,
+  ChevronRight,
+  Compass,
+  Copy,
+  Check,
+  Share2,
+  Loader2,
+  MapPin,
+  Sparkles,
+  Users,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 type PublicTrip = {
+  id?: string;
   name: string;
   description: string | null;
   start_date: string;
   end_date: string;
   cover_image_url: string | null;
+  budget_cap?: number | null;
   stops: any[];
   trip_members: any[];
 };
 
 export function PublicTripView({ slug }: { slug: string }) {
+  const router = useRouter();
   const [trip, setTrip] = useState<PublicTrip | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copying, setCopying] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     fetch(`/api/public/trips/${slug}`)
@@ -30,6 +49,87 @@ export function PublicTripView({ slug }: { slug: string }) {
         setLoading(false);
       });
   }, [slug]);
+
+  const handleShareLink = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      toast.success('Public trip link copied to clipboard!');
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
+
+  const handleCopyTrip = async () => {
+    if (!trip) return;
+    setCopying(true);
+    try {
+      // 1. Create cloned trip
+      const res = await fetch('/api/trips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${trip.name} (Copy)`,
+          startDate: trip.start_date,
+          endDate: trip.end_date,
+          description: trip.description || `Cloned from community trip: ${trip.name}`,
+          coverImageUrl: trip.cover_image_url,
+          budgetCap: trip.budget_cap || 110000,
+        }),
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          toast.info('Please log in or sign up to save this trip to your account.');
+          router.push('/login');
+          return;
+        }
+        throw new Error('Failed to copy trip');
+      }
+
+      const newTrip = await res.json();
+
+      // 2. Clone stops
+      for (const stop of trip.stops || []) {
+        if (stop.cities?.id) {
+          const stopRes = await fetch(`/api/trips/${newTrip.id}/stops`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              cityId: stop.cities.id,
+              arriveDate: stop.arrive_date,
+              leaveDate: stop.leave_date,
+              order: stop.order,
+            }),
+          });
+
+          if (stopRes.ok) {
+            const newStop = await stopRes.json();
+            // Clone activities
+            for (const sa of stop.stop_activities || []) {
+              if (sa.activities?.id) {
+                await fetch(`/api/stops/${newStop.id}/activities`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    activityId: sa.activities.id,
+                    scheduledTime: sa.scheduled_time || '10:00 AM',
+                  }),
+                });
+              }
+            }
+          }
+        }
+      }
+
+      toast.success('Trip successfully copied to your trips!');
+      router.push(`/trips/${newTrip.id}`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Could not copy trip');
+    } finally {
+      setCopying(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -58,7 +158,7 @@ export function PublicTripView({ slug }: { slug: string }) {
   const cover = trip.cover_image_url ?? stops[0]?.cities?.image_url ?? 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80';
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
+    <main className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
@@ -67,12 +167,23 @@ export function PublicTripView({ slug }: { slug: string }) {
             </span>
             <span className="text-lg font-bold">GlobeTrotter</span>
           </Link>
-          <Link
-            href="/signup"
-            className="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
-          >
-            Plan your own trip
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleShareLink}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+            >
+              {copiedLink ? <Check size={14} className="text-emerald-600" /> : <Share2 size={14} />}
+              {copiedLink ? 'Copied' : 'Share'}
+            </button>
+            <button
+              onClick={handleCopyTrip}
+              disabled={copying}
+              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition disabled:opacity-50"
+            >
+              {copying ? <Loader2 size={14} className="animate-spin" /> : <Copy size={14} />}
+              {copying ? 'Copying...' : 'Copy Trip'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -103,13 +214,23 @@ export function PublicTripView({ slug }: { slug: string }) {
           </div>
         </div>
 
-        <div className="mb-4 flex items-center gap-4 text-xs text-slate-500 font-medium">
-          <span className="flex items-center gap-1">
-            <MapPin size={13} /> {stops.length} destinations
-          </span>
-          <span className="flex items-center gap-1">
-            <Users size={13} /> Shared Itinerary
-          </span>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+          <div className="flex items-center gap-4 text-xs text-slate-500 font-medium">
+            <span className="flex items-center gap-1">
+              <MapPin size={13} /> {stops.length} destinations
+            </span>
+            <span className="flex items-center gap-1">
+              <Users size={13} /> Community Itinerary
+            </span>
+          </div>
+
+          <button
+            onClick={handleCopyTrip}
+            disabled={copying}
+            className="flex items-center gap-1.5 rounded-xl bg-blue-50 text-blue-700 px-3.5 py-1.5 text-xs font-bold hover:bg-blue-100 transition"
+          >
+            <Copy size={13} /> Duplicate to My Itineraries
+          </button>
         </div>
 
         {/* Stops list */}
