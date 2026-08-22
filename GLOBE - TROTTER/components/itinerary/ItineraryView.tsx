@@ -55,6 +55,7 @@ import { CollaborationWorkspace } from '@/components/trip/CollaborationWorkspace
 import { RouteOptimizerView } from '@/components/trip/RouteOptimizerView';
 import { SplitItineraryView } from '@/components/itinerary/SplitItineraryView';
 import { OfflineAccessView } from '@/components/trip/OfflineAccessView';
+import { ReservationsHub } from '@/components/itinerary/ReservationsHub';
 
 export function ItineraryView({ tripId }: { tripId: string }) {
   const { trip, loading, refetch } = useTrip(tripId);
@@ -270,18 +271,9 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         <OfflineAccessView currentTripName={trip.name} />
       )}
 
-      {/* 8. Reservations (Screenshot 8) */}
+      {/* 8. Reservations (Screenshot 8 - Phase 8) */}
       {activeTab === 'reservations' && (
-        <div className="space-y-4">
-          {sortedStops.map((stop) => (
-            <ReservationsCard
-              key={stop.id}
-              stopId={stop.id}
-              reservations={stop.reservations}
-              onUpdated={refetch}
-            />
-          ))}
-        </div>
+        <ReservationsHub trip={trip} tripId={tripId} />
       )}
 
       {/* 9. Lodging (Screenshot 9) */}
