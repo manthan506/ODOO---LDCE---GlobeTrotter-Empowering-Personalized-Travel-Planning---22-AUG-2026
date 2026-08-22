@@ -38,6 +38,11 @@ import {
   User,
   Eye,
   SlidersHorizontal,
+  ArrowLeftRight,
+  Anchor,
+  HelpCircle,
+  PhoneCall,
+  Award,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -49,13 +54,16 @@ export default function LandingPage() {
   const { masterTrip, totalCalculatedCost, userProfile, addSavedDestination } = useTripSync();
   const router = useRouter();
 
-  // Search Widget State
-  const [searchTab, setSearchTab] = useState<'flights' | 'hotels' | 'activities' | 'itineraries'>('itineraries');
-  const [origin, setOrigin] = useState('Mumbai, India (BOM)');
-  const [destination, setDestination] = useState('Paris & Swiss Alps (Multi-City)');
-  const [departDate, setDepartDate] = useState('Sep 10, 2026');
-  const [returnDate, setReturnDate] = useState('Sep 28, 2026');
-  const [travelersCount, setTravelersCount] = useState('2 Adults, 1 Trip');
+  // Search Widget State matching template
+  const [searchTab, setSearchTab] = useState<'flights' | 'hotels' | 'cars' | 'cruises' | 'itineraries'>('flights');
+  const [origin, setOrigin] = useState('New York, USA');
+  const [destination, setDestination] = useState('Anywhere (Paris, Swiss Alps, Rome)');
+  const [departDate, setDepartDate] = useState('May 24, 2026');
+  const [returnDate, setReturnDate] = useState('May 31, 2026');
+  const [travelersCount, setTravelersCount] = useState('2 Adults, 1 Child');
+
+  // Liked / Saved suggestion cards
+  const [likedSuggestions, setLikedSuggestions] = useState<Record<string, boolean>>({});
 
   // Auth Modal State (Sign-in / Sign-up)
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -68,9 +76,16 @@ export default function LandingPage() {
   // Newsletter State
   const [newsletterEmail, setNewsletterEmail] = useState('');
 
+  const handleSwapLocations = () => {
+    const temp = origin;
+    setOrigin(destination.includes('(') ? 'Paris, France' : destination);
+    setDestination(temp);
+    toast.info('Swapped origin and destination');
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(`Searching ${destination} itineraries for ${departDate}!`);
+    toast.success(`Searching ${searchTab} to ${destination}!`);
     router.push('/explore');
   };
 
@@ -110,67 +125,80 @@ export default function LandingPage() {
     }
   };
 
-  const handleSaveWishlist = (dest: { id: string; name: string; country: string; img: string }) => {
-    addSavedDestination(dest);
+  const toggleLike = (id: string, name: string, country: string, img: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLikedSuggestions((prev) => ({ ...prev, [id]: !prev[id] }));
+    addSavedDestination({ id, name, country, img });
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-900 font-sans selection:bg-blue-600 selection:text-white">
       {/* ============================================================ */}
-      {/* 1. HEADER & NAVIGATION                                       */}
+      {/* 1. HERO SECTION WITH EXACT AI ARTWORK BACKGROUND & TEMPLATE  */}
       {/* ============================================================ */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 group-hover:scale-105 transition duration-300">
-              <Compass size={22} strokeWidth={2.3} className="animate-spin-slow" />
+      <div className="relative min-h-screen w-full overflow-hidden bg-sky-500 pb-16">
+        {/* Exact AI-Generated 3D Earth & Landmark Panorama Background */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/globe-landmarks-hero.jpg"
+            alt="Globe Landmark Panorama"
+            className="h-full w-full object-cover object-center"
+          />
+          {/* Subtle gradient vignette to ensure crisp UI contrast */}
+          <div className="absolute inset-0 bg-gradient-to-b from-sky-900/40 via-sky-800/20 to-sky-950/70" />
+        </div>
+
+        {/* ------------------------------------------------------------ */}
+        {/* TOP HEADER & NAVBAR (Matching GlobalVista Template)          */}
+        {/* ------------------------------------------------------------ */}
+        <header className="relative z-20 mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* Brand Logo matching template */}
+          <Link href="/" className="flex items-center gap-2.5 text-white group">
+            <div className="grid h-10 w-10 place-items-center rounded-full bg-white/15 backdrop-blur-md border border-white/30 text-white shadow-md group-hover:scale-105 transition duration-300">
+              <Globe2 size={24} className="animate-spin-slow text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-black tracking-tight text-white leading-none">
-                GlobeTrotter
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-white leading-none drop-shadow-md">
+                GlobalVista
               </span>
-              <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mt-0.5">
-                AI Travel Planner
+              <span className="text-[10px] text-sky-100 font-medium tracking-wide drop-shadow-xs mt-0.5">
+                Your Journey, Our Expertise
               </span>
             </div>
           </Link>
 
-          {/* Desktop Nav Items */}
-          <nav className="hidden lg:flex items-center gap-1.5 text-xs font-bold text-slate-300">
-            <Link href="#features" className="rounded-xl px-3.5 py-2 hover:bg-white/10 hover:text-white transition">
-              Features
+          {/* Nav Links matching template */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-white/90">
+            <Link href="/" className="relative text-white font-bold drop-shadow-sm pb-1">
+              Home
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-white" />
             </Link>
-            <Link href="/explore" className="rounded-xl px-3.5 py-2 hover:bg-white/10 hover:text-white transition">
+            <Link href="/explore" className="hover:text-white transition drop-shadow-sm">
               Destinations
             </Link>
-            <Link href="/trips" className="rounded-xl px-3.5 py-2 hover:bg-white/10 hover:text-white transition">
-              Itinerary Builder
+            <Link href="/trips" className="hover:text-white transition drop-shadow-sm">
+              Packages & Itineraries
             </Link>
-            <Link href="/budget" className="rounded-xl px-3.5 py-2 hover:bg-white/10 hover:text-white transition">
-              Budget (₹ INR)
+            <Link href="/community" className="hover:text-white transition drop-shadow-sm">
+              Community
             </Link>
-            <Link href="/calendar" className="rounded-xl px-3.5 py-2 hover:bg-white/10 hover:text-white transition">
-              Calendar
-            </Link>
-            <Link href="/community" className="rounded-xl px-3.5 py-2 hover:bg-white/10 hover:text-white transition">
-              Community Hub
+            <Link href="#features" className="hover:text-white transition drop-shadow-sm">
+              Features
             </Link>
           </nav>
 
-          {/* Right Action & Auth */}
+          {/* Right Action & Auth Buttons */}
           <div className="flex items-center gap-3">
-            {/* Currency Pill */}
-            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold text-emerald-400 backdrop-blur-md">
+            <div className="hidden sm:inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold text-white backdrop-blur-md drop-shadow-sm">
               <span>🇮🇳 ₹ INR</span>
             </div>
 
             {user ? (
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-500/25 transition active:scale-95"
+                className="inline-flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-500 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-900/30 transition hover:scale-105 active:scale-95"
               >
-                Go to Dashboard ➔
+                Dashboard ➔
               </Link>
             ) : (
               <div className="flex items-center gap-2">
@@ -180,9 +208,9 @@ export default function LandingPage() {
                     setAuthMode('login');
                     setShowAuthModal(true);
                   }}
-                  className="rounded-2xl border border-white/20 bg-white/5 hover:bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur-md transition"
+                  className="rounded-full border border-white/30 bg-white/10 hover:bg-white/20 px-4 py-2 text-xs font-bold text-white backdrop-blur-md transition cursor-pointer"
                 >
-                  Log In
+                  Sign In
                 </button>
                 <button
                   type="button"
@@ -190,147 +218,160 @@ export default function LandingPage() {
                     setAuthMode('signup');
                     setShowAuthModal(true);
                   }}
-                  className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-500/30 transition active:scale-95"
+                  className="rounded-full bg-blue-600 hover:bg-blue-500 px-5 py-2 text-xs font-extrabold text-white shadow-lg shadow-blue-900/40 transition hover:scale-105 active:scale-95 cursor-pointer"
                 >
-                  Get Started Free
+                  Sign Up
                 </button>
               </div>
             )}
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* ============================================================ */}
-      {/* 2. HERO SECTION (GlobalVista Panorama Inspired)             */}
-      {/* ============================================================ */}
-      <section className="relative min-h-[92vh] flex flex-col justify-center overflow-hidden pt-12 pb-20">
-        {/* Panoramic Background with Iconic World Monuments */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=2000&q=90"
-            alt="World Destinations Panorama"
-            className="h-full w-full object-cover opacity-35 scale-105 transition-transform duration-1000"
-          />
-          {/* Blue Vignette Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/80 to-slate-950" />
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          {/* Top AI Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/10 px-4 py-1.5 text-xs font-bold text-blue-300 backdrop-blur-md mb-6 animate-in fade-in slide-in-from-bottom-2">
-            <Sparkles size={14} className="text-yellow-400" />
-            <span>AI-POWERED PERSONALIZED TRAVEL PLANNER</span>
+        {/* ------------------------------------------------------------ */}
+        {/* HERO CENTER TEXT & CALL TO ACTION                            */}
+        {/* ------------------------------------------------------------ */}
+        <div className="relative z-10 mx-auto max-w-5xl px-4 pt-6 sm:pt-10 text-center">
+          {/* AI Badge Pill matching template */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-slate-900/40 px-4 py-1 text-xs font-bold text-white backdrop-blur-md shadow-md mb-4 animate-in fade-in slide-in-from-bottom-2">
+            <Sparkles size={13} className="text-yellow-400" />
+            <span className="tracking-wide">AI-POWERED TRAVEL PLANNER</span>
           </div>
 
-          {/* Catchy Headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight">
-            Explore the World <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
-              With Confidence
-            </span>
+          {/* Main Title matching template */}
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight drop-shadow-lg leading-tight">
+            Explore the World <br />
+            With Confidence
           </h1>
 
-          {/* Subtitle */}
-          <p className="mt-4 text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Seamless multi-city travel planning, day-wise interactive itineraries, real-time ₹ INR budget breakdown, and 1-click community trip cloning — all in one place.
+          {/* Subtitle matching template */}
+          <p className="mt-3 text-xs sm:text-base text-white/90 font-medium max-w-2xl mx-auto drop-shadow-md leading-relaxed">
+            Seamless global travel planning, personalized experiences, and trusted booking — all in one place.
           </p>
 
-          {/* Top CTAs */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          {/* Two Hero CTAs matching template */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3.5">
             <button
               type="button"
               onClick={() => {
                 setAuthMode('signup');
                 setShowAuthModal(true);
               }}
-              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-500 px-6 py-3.5 text-sm font-extrabold text-white shadow-xl shadow-blue-500/35 transition hover:scale-105 active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-500 px-7 py-3 text-xs sm:text-sm font-extrabold text-white shadow-xl shadow-blue-900/40 transition hover:scale-105 active:scale-95 cursor-pointer"
             >
               Start Your Journey ➔
             </button>
 
             <Link
               href="/trips"
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/25 bg-white/10 hover:bg-white/20 px-6 py-3.5 text-sm font-bold text-white backdrop-blur-md transition hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 hover:bg-white/25 px-6 py-3 text-xs sm:text-sm font-bold text-white backdrop-blur-md transition hover:scale-105 active:scale-95 drop-shadow-md"
             >
-              <Eye size={16} /> View Sample Itinerary
+              <MapPin size={15} /> View Destinations ➔
             </Link>
           </div>
 
-          {/* ============================================================ */}
-          {/* GLASSMORPHISM FLOATING SEARCH WIDGET (GlobalVista Layout)    */}
-          {/* ============================================================ */}
-          <div className="mt-14 mx-auto max-w-5xl rounded-3xl border border-white/20 bg-slate-900/75 p-5 sm:p-7 shadow-2xl backdrop-blur-2xl text-left animate-in fade-in slide-in-from-bottom-6">
-            {/* Search Type Tabs */}
-            <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4 mb-5">
+          {/* ------------------------------------------------------------ */}
+          {/* FLOATING GLASSMORPHIC SEARCH CARD (Exact GlobalVista Layout) */}
+          {/* ------------------------------------------------------------ */}
+          <div className="mt-10 mx-auto max-w-4xl rounded-3xl border border-white/40 bg-white/20 p-5 sm:p-6 shadow-2xl backdrop-blur-xl text-left animate-in fade-in slide-in-from-bottom-6">
+            {/* Top Navigation Tabs */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
               {[
-                { key: 'itineraries', label: '📅 Modular Itineraries', icon: Compass },
-                { key: 'flights', label: '✈️ Flights & Transit', icon: Plane },
-                { key: 'hotels', label: '🏨 Stays & Chalets', icon: Hotel },
-                { key: 'activities', label: '🏄 Activities & Tours', icon: Sparkles },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setSearchTab(tab.key as any)}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition cursor-pointer ${
-                    searchTab === tab.key
-                      ? 'bg-white text-slate-900 shadow-md'
-                      : 'text-slate-400 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+                { key: 'flights', label: 'Flights', icon: Plane },
+                { key: 'hotels', label: 'Hotels', icon: Hotel },
+                { key: 'cars', label: 'Cars', icon: Car },
+                { key: 'cruises', label: 'Cruises', icon: Anchor },
+                { key: 'itineraries', label: 'Modular Itineraries', icon: Compass },
+              ].map((tab) => {
+                const IconComponent = tab.icon;
+                const isActive = searchTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setSearchTab(tab.key as any)}
+                    className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-extrabold transition cursor-pointer ${
+                      isActive
+                        ? 'bg-white text-blue-600 shadow-md'
+                        : 'text-white/90 hover:bg-white/15'
+                    }`}
+                  >
+                    <IconComponent size={14} />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Input Fields Grid */}
-            <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-              {/* Origin */}
-              <div className="lg:col-span-3 space-y-1">
-                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                  From:
-                </label>
-                <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs text-white">
-                  <MapPin size={15} className="text-blue-400 flex-shrink-0" />
+            {/* Input Fields Row */}
+            <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center rounded-2xl bg-white/25 border border-white/40 p-2.5 backdrop-blur-md">
+              {/* From */}
+              <div className="lg:col-span-3 px-2 py-1">
+                <span className="block text-[10px] font-bold text-white/80 uppercase tracking-wider">
+                  From
+                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <MapPin size={14} className="text-white/70 flex-shrink-0" />
                   <input
                     type="text"
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
-                    className="w-full bg-transparent font-bold outline-none text-white placeholder:text-slate-500"
-                    placeholder="Origin City..."
+                    className="w-full bg-transparent text-xs font-black text-white placeholder:text-white/60 outline-none truncate"
                   />
+                  <button
+                    type="button"
+                    onClick={handleSwapLocations}
+                    className="p-1 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+                    title="Swap locations"
+                  >
+                    <ArrowLeftRight size={13} />
+                  </button>
                 </div>
               </div>
 
-              {/* Destination */}
-              <div className="lg:col-span-4 space-y-1">
-                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                  To (Multi-City):
-                </label>
-                <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs text-white">
-                  <Compass size={15} className="text-emerald-400 flex-shrink-0" />
+              {/* To */}
+              <div className="lg:col-span-3 px-2 py-1 border-t sm:border-t-0 sm:border-l border-white/20">
+                <span className="block text-[10px] font-bold text-white/80 uppercase tracking-wider">
+                  To
+                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Compass size={14} className="text-white/70 flex-shrink-0" />
                   <input
                     type="text"
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
-                    className="w-full bg-transparent font-bold outline-none text-white placeholder:text-slate-500"
-                    placeholder="e.g. Paris, Swiss Alps, Rome"
+                    className="w-full bg-transparent text-xs font-black text-white placeholder:text-white/60 outline-none truncate"
                   />
                 </div>
               </div>
 
-              {/* Travel Dates */}
-              <div className="lg:col-span-3 space-y-1">
-                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                  Dates:
-                </label>
-                <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs text-white">
-                  <Calendar size={15} className="text-indigo-400 flex-shrink-0" />
+              {/* Depart */}
+              <div className="lg:col-span-2 px-2 py-1 border-t lg:border-t-0 lg:border-l border-white/20">
+                <span className="block text-[10px] font-bold text-white/80 uppercase tracking-wider">
+                  Depart
+                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Calendar size={14} className="text-white/70 flex-shrink-0" />
                   <input
                     type="text"
-                    value={`${departDate} – ${returnDate}`}
+                    value={departDate}
                     onChange={(e) => setDepartDate(e.target.value)}
-                    className="w-full bg-transparent font-bold outline-none text-white"
+                    className="w-full bg-transparent text-xs font-black text-white outline-none truncate"
+                  />
+                </div>
+              </div>
+
+              {/* Return */}
+              <div className="lg:col-span-2 px-2 py-1 border-t lg:border-t-0 lg:border-l border-white/20">
+                <span className="block text-[10px] font-bold text-white/80 uppercase tracking-wider">
+                  Return
+                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Calendar size={14} className="text-white/70 flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={returnDate}
+                    onChange={(e) => setReturnDate(e.target.value)}
+                    className="w-full bg-transparent text-xs font-black text-white outline-none truncate"
                   />
                 </div>
               </div>
@@ -339,119 +380,156 @@ export default function LandingPage() {
               <div className="lg:col-span-2">
                 <button
                   type="submit"
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-black text-white shadow-lg shadow-blue-500/30 transition active:scale-95 cursor-pointer"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-black text-white shadow-lg shadow-blue-900/40 transition hover:scale-102 active:scale-95 cursor-pointer"
                 >
-                  <Search size={15} /> Search Itinerary
+                  <Search size={15} /> Search 🔍
                 </button>
               </div>
             </form>
 
-            {/* AI SUGGESTIONS CHIPS (GlobalVista inspiration) */}
-            <div className="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
-                <Sparkles size={13} className="text-yellow-400" />
-                <span>AI Suggestions for you:</span>
+            {/* ------------------------------------------------------------ */}
+            {/* AI SUGGESTIONS FOR YOU ROW (Exact 4 Cards with Heart & Price) */}
+            {/* ------------------------------------------------------------ */}
+            <div className="mt-4 pt-3.5 border-t border-white/20">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-extrabold text-white">
+                  <Sparkles size={14} className="text-yellow-300" />
+                  <span>AI SUGGESTIONS FOR YOU</span>
+                </div>
+                <Link
+                  href="/explore"
+                  className="text-[11px] font-bold text-white/90 hover:text-white flex items-center gap-1"
+                >
+                  See more ideas →
+                </Link>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2.5">
+              {/* 4 Cards matching the template */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {[
-                  { id: 'c-bali', name: 'Bali, Indonesia', price: '₹48,000', country: 'Indonesia', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80' },
-                  { id: 'c-swiss', name: 'Swiss Alps, Switzerland', price: '₹75,000', country: 'Switzerland', img: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=400&q=80' },
-                  { id: 'c-paris', name: 'Paris, France', price: '₹54,000', country: 'France', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80' },
-                  { id: 'c-rome', name: 'Rome, Italy', price: '₹52,000', country: 'Italy', img: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&q=80' },
-                ].map((sugg) => (
-                  <div
-                    key={sugg.id}
-                    onClick={() => {
-                      setDestination(sugg.name);
-                      toast.info(`Selected ${sugg.name}`);
-                    }}
-                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 p-1.5 pr-3 text-xs text-white transition cursor-pointer"
-                  >
-                    <img src={sugg.img} alt={sugg.name} className="h-6 w-6 rounded-lg object-cover" />
-                    <span className="font-semibold">{sugg.name}</span>
-                    <span className="text-[10px] font-black text-emerald-400">from {sugg.price}</span>
-                  </div>
-                ))}
+                  { id: 's-bali', name: 'Bali, Indonesia', country: 'Indonesia', priceUSD: '$899', priceINR: '₹48,000', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80' },
+                  { id: 's-santorini', name: 'Santorini, Greece', country: 'Greece', priceUSD: '$1,299', priceINR: '₹82,000', img: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400&q=80' },
+                  { id: 's-dubai', name: 'Dubai, UAE', country: 'UAE', priceUSD: '$1,099', priceINR: '₹65,000', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&q=80' },
+                  { id: 's-maldives', name: 'Maldives', country: 'Maldives', priceUSD: '$1,499', priceINR: '₹95,000', img: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400&q=80' },
+                ].map((item) => {
+                  const isLiked = !!likedSuggestions[item.id];
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        setDestination(item.name);
+                        toast.info(`Selected ${item.name}`);
+                      }}
+                      className="group flex items-center justify-between rounded-2xl border border-white/30 bg-white/20 p-1.5 pr-2.5 backdrop-blur-md hover:bg-white/30 transition cursor-pointer shadow-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <img
+                          src={item.img}
+                          alt={item.name}
+                          className="h-10 w-10 rounded-xl object-cover flex-shrink-0 group-hover:scale-105 transition duration-300"
+                        />
+                        <div className="min-w-0">
+                          <h4 className="text-[11px] font-extrabold text-white truncate drop-shadow-xs">
+                            {item.name}
+                          </h4>
+                          <span className="text-[10px] font-bold text-emerald-300 block">
+                            from {item.priceINR} ({item.priceUSD})
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => toggleLike(item.id, item.name, item.country, item.img, e)}
+                        className={`p-1 rounded-full transition ${isLiked ? 'text-red-400 bg-white/20' : 'text-white/70 hover:text-red-300'}`}
+                      >
+                        <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ============================================================ */}
-      {/* 3. TRUST & SOCIAL PROOF STRIP                                */}
+      {/* 2. BOTTOM WHITE TRUST BAR (Matching GlobalVista Bottom Row)  */}
       {/* ============================================================ */}
-      <section className="border-y border-white/10 bg-slate-900/50 py-8 px-4 sm:px-6">
-        <div className="mx-auto max-w-7xl grid grid-cols-2 md:grid-cols-4 gap-6 text-center sm:text-left">
-          <div className="flex items-center gap-3.5">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex-shrink-0">
+      <section className="bg-white py-6 border-b border-slate-200 text-slate-800 shadow-xs">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center sm:text-left">
+          {/* 1. Best Price Guarantee */}
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
               <ShieldCheck size={22} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">Best Price Guarantee</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Real-time ₹ INR smart budget matches</p>
+              <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">Best Price Guarantee</h4>
+              <p className="text-[11px] text-slate-500 font-medium">We match the best prices & ₹ INR budgets</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3.5">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0">
+          {/* 2. 24/7 Travel Support */}
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
               <Headphones size={22} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">24/7 Travel Planner</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Offline synchronized itinerary flow</p>
+              <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">24/7 Travel Support</h4>
+              <p className="text-[11px] text-slate-500 font-medium">Always here when you need us</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3.5">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex-shrink-0">
+          {/* 3. Secure Booking */}
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
               <Lock size={22} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">100% Secure Data</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Instant reactive cloud persistence</p>
+              <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">Secure Booking</h4>
+              <p className="text-[11px] text-slate-500 font-medium">Your data is 100% protected</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3.5">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex-shrink-0">
-              <Star size={22} fill="currentColor" />
+          {/* 4. Trusted by Millions */}
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+              <Star size={22} fill="#3B82F6" className="text-blue-600" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">Trusted by 10k+ Travelers</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">⭐ 4.9/5 star community rating</p>
+              <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">Trusted by Millions</h4>
+              <p className="text-[11px] text-slate-500 font-medium">10M+ happy travelers worldwide</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* ============================================================ */}
-      {/* 4. ALL BUILT FEATURES MARKETING SPOTLIGHT                    */}
-      {/* Showcases all screens built above with live interactive cards */}
+      {/* 3. COMPREHENSIVE FEATURES SPOTLIGHT & MARKETING (All 13)     */}
       {/* ============================================================ */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16">
+      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 bg-slate-950 text-white">
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="rounded-full bg-blue-500/10 border border-blue-400/20 px-3.5 py-1 text-xs font-extrabold text-blue-400 uppercase tracking-wider">
-            All-in-One Travel Ecosystem
+          <span className="rounded-full bg-blue-500/15 border border-blue-400/30 px-3.5 py-1 text-xs font-black text-blue-400 uppercase tracking-wider">
+            All-In-One Travel Suite
           </span>
           <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-            Everything You Need to Plan Your Next Grand Adventure
+            Every Tool to Build, Budget & Share Your Journey
           </h2>
           <p className="text-sm sm:text-base text-slate-400">
-            From multi-stop day planning to live expense splitting and community route cloning.
+            Engineered with real-time ₹ INR calculations, drag-to-reorder day plans, and 1-click community cloning.
           </p>
         </div>
 
         {/* 6 Feature Marketing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Feature 1: Multi-City Builder */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-6 sm:p-7 shadow-xl hover:border-blue-500/40 hover:bg-slate-900 transition-all space-y-4">
+          {/* Feature 1: Multi-City Itinerary Builder */}
+          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-blue-500/50 hover:bg-slate-900 transition-all space-y-4">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
               <Compass size={24} />
             </div>
             <div>
-              <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-wider">Feature #5 & 6</span>
+              <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-wider">Features #5 & #6</span>
               <h3 className="text-lg font-bold text-white mt-1">Modular Itinerary Builder</h3>
               <p className="text-xs text-slate-400 mt-2 leading-relaxed">
                 Add cities, travel dates, and modular sections. Drag-to-reorder stops effortlessly and preview two-column physical activity & expense timelines.
@@ -459,13 +537,13 @@ export default function LandingPage() {
             </div>
             <div className="pt-2 border-t border-white/5 flex items-center justify-between">
               <Link href="/trips" className="text-xs font-bold text-blue-400 group-hover:text-blue-300 flex items-center gap-1">
-                Explore Builder Screen <ChevronRight size={14} />
+                Open Builder Screen <ChevronRight size={14} />
               </Link>
             </div>
           </div>
 
-          {/* Feature 2: Smart Budget Breakdown */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-6 sm:p-7 shadow-xl hover:border-emerald-500/40 hover:bg-slate-900 transition-all space-y-4">
+          {/* Feature 2: Smart ₹ INR Budget Breakdown */}
+          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-emerald-500/50 hover:bg-slate-900 transition-all space-y-4">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30">
               <Wallet size={24} />
             </div>
@@ -483,8 +561,8 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Feature 3: Trip Calendar */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-6 sm:p-7 shadow-xl hover:border-indigo-500/40 hover:bg-slate-900 transition-all space-y-4">
+          {/* Feature 3: Trip Calendar & Timeline */}
+          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-indigo-500/50 hover:bg-slate-900 transition-all space-y-4">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
               <Calendar size={24} />
             </div>
@@ -497,18 +575,18 @@ export default function LandingPage() {
             </div>
             <div className="pt-2 border-t border-white/5 flex items-center justify-between">
               <Link href="/calendar" className="text-xs font-bold text-indigo-400 group-hover:text-indigo-300 flex items-center gap-1">
-                View Calendar Screen <ChevronRight size={14} />
+                View Calendar Grid <ChevronRight size={14} />
               </Link>
             </div>
           </div>
 
           {/* Feature 4: City & Activity Search */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-6 sm:p-7 shadow-xl hover:border-amber-500/40 hover:bg-slate-900 transition-all space-y-4">
+          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-amber-500/50 hover:bg-slate-900 transition-all space-y-4">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-600/20 text-amber-400 border border-amber-500/30">
               <Search size={24} />
             </div>
             <div>
-              <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-wider">Feature #7 & 8</span>
+              <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-wider">Features #7 & #8</span>
               <h3 className="text-lg font-bold text-white mt-1">City & Experience Discovery</h3>
               <p className="text-xs text-slate-400 mt-2 leading-relaxed">
                 Filter activities by interest (Adventure, Culture, Food, Cruises), duration, and rupee cost index with instant "+ Add to Stop" toggling.
@@ -516,13 +594,13 @@ export default function LandingPage() {
             </div>
             <div className="pt-2 border-t border-white/5 flex items-center justify-between">
               <Link href="/explore" className="text-xs font-bold text-amber-400 group-hover:text-amber-300 flex items-center gap-1">
-                Search Activities <ChevronRight size={14} />
+                Explore Experiences <ChevronRight size={14} />
               </Link>
             </div>
           </div>
 
-          {/* Feature 5: Community Hub */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-6 sm:p-7 shadow-xl hover:border-purple-500/40 hover:bg-slate-900 transition-all space-y-4">
+          {/* Feature 5: Community Hub & 1-Click Clone */}
+          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-purple-500/50 hover:bg-slate-900 transition-all space-y-4">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
               <Globe2 size={24} />
             </div>
@@ -541,7 +619,7 @@ export default function LandingPage() {
           </div>
 
           {/* Feature 6: Admin Analytics Dashboard */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-6 sm:p-7 shadow-xl hover:border-sky-500/40 hover:bg-slate-900 transition-all space-y-4">
+          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-sky-500/50 hover:bg-slate-900 transition-all space-y-4">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-sky-600/20 text-sky-400 border border-sky-500/30">
               <BarChart3 size={24} />
             </div>
@@ -562,9 +640,9 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================================ */}
-      {/* 5. BOTTOM CALL TO ACTION BANNER                              */}
+      {/* 4. BOTTOM BANNER & CALL TO ACTION                            */}
       {/* ============================================================ */}
-      <section className="py-16 px-4 sm:px-6 max-w-6xl mx-auto">
+      <section className="py-16 px-4 sm:px-6 max-w-6xl mx-auto bg-slate-950">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 p-8 sm:p-14 text-center text-white shadow-2xl">
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
             <h2 className="text-3xl sm:text-4xl font-black">
@@ -580,14 +658,14 @@ export default function LandingPage() {
                   setAuthMode('signup');
                   setShowAuthModal(true);
                 }}
-                className="rounded-2xl bg-white text-slate-900 hover:bg-slate-100 px-6 py-3 text-xs font-black shadow-lg transition active:scale-95 cursor-pointer"
+                className="rounded-full bg-white text-slate-900 hover:bg-slate-100 px-7 py-3 text-xs font-black shadow-lg transition active:scale-95 cursor-pointer"
               >
                 Create Free Account
               </button>
               <button
                 type="button"
                 onClick={handleQuickDemoLogin}
-                className="rounded-2xl border border-white/30 bg-white/10 hover:bg-white/20 px-6 py-3 text-xs font-bold text-white backdrop-blur-md transition active:scale-95 cursor-pointer"
+                className="rounded-full border border-white/30 bg-white/10 hover:bg-white/20 px-6 py-3 text-xs font-bold text-white backdrop-blur-md transition active:scale-95 cursor-pointer"
               >
                 ⚡ 1-Click Demo Login
               </button>
@@ -597,44 +675,44 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================================ */}
-      {/* 6. COMPREHENSIVE FOOTER                                      */}
+      {/* 5. COMPREHENSIVE FOOTER                                      */}
       {/* ============================================================ */}
-      <footer className="border-t border-white/10 bg-slate-950 pt-14 pb-12 px-4 sm:px-6 lg:px-8">
+      <footer className="border-t border-white/10 bg-slate-950 pt-14 pb-12 px-4 sm:px-6 lg:px-8 text-white">
         <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-5 gap-8 mb-12 text-xs">
           {/* Col 1: Brand */}
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-center gap-2.5">
               <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-600 text-white">
-                <Compass size={20} />
+                <Globe2 size={20} />
               </div>
-              <span className="text-lg font-black text-white">GlobeTrotter</span>
+              <span className="text-lg font-black text-white">GlobalVista / GlobeTrotter</span>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-              Empowering personalized travel planning with modular day itineraries, synchronized ₹ INR budget analytics, and collaborative community trips.
+              Seamless global travel planning, personalized experiences, and trusted booking — empowering smart journey planning with ₹ INR budget synchronicity.
             </p>
             <span className="inline-block text-[11px] font-semibold text-slate-500">
-              Built for ODOO X L.D College of Engineering Hackathon 2026
+              Built for ODOO X L.D College Hackathon 2026
             </span>
           </div>
 
-          {/* Col 2: Features */}
+          {/* Col 2: Navigation */}
           <div className="space-y-2.5">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider">Features</h4>
             <ul className="space-y-2 text-slate-400">
               <li><Link href="/trips" className="hover:text-white transition">Itinerary Builder</Link></li>
-              <li><Link href="/budget" className="hover:text-white transition">₹ INR Budget Breakdown</Link></li>
-              <li><Link href="/calendar" className="hover:text-white transition">Calendar & Timeline</Link></li>
-              <li><Link href="/explore" className="hover:text-white transition">Activity Discovery</Link></li>
-              <li><Link href="/community" className="hover:text-white transition">Community Public Routes</Link></li>
+              <li><Link href="/budget" className="hover:text-white transition">₹ INR Budget Tracker</Link></li>
+              <li><Link href="/calendar" className="hover:text-white transition">Calendar Timeline</Link></li>
+              <li><Link href="/explore" className="hover:text-white transition">Activities & Experiences</Link></li>
+              <li><Link href="/community" className="hover:text-white transition">Community Hub</Link></li>
             </ul>
           </div>
 
           {/* Col 3: Company */}
           <div className="space-y-2.5">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Company</h4>
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Account</h4>
             <ul className="space-y-2 text-slate-400">
-              <li><Link href="/profile" className="hover:text-white transition">User Profile & Wishlist</Link></li>
-              <li><Link href="/admin" className="hover:text-white transition">Admin Dashboard</Link></li>
+              <li><Link href="/profile" className="hover:text-white transition">Profile & Wishlist</Link></li>
+              <li><Link href="/admin" className="hover:text-white transition">Admin Panel</Link></li>
               <li><Link href="/login" className="hover:text-white transition">Sign In</Link></li>
               <li><Link href="/signup" className="hover:text-white transition">Register</Link></li>
             </ul>
@@ -642,7 +720,7 @@ export default function LandingPage() {
 
           {/* Col 4: Newsletter */}
           <div className="space-y-2.5">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Travel Deal Alerts</h4>
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Travel Alerts</h4>
             <p className="text-[11px] text-slate-400 leading-relaxed">
               Get weekly curated deals and budget travel tips directly in ₹ INR.
             </p>
@@ -650,7 +728,7 @@ export default function LandingPage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (newsletterEmail) {
-                  toast.success('Subscribed for travel deal alerts in ₹ INR!');
+                  toast.success('Subscribed for deal alerts in ₹ INR!');
                   setNewsletterEmail('');
                 }
               }}
@@ -675,7 +753,7 @@ export default function LandingPage() {
         </div>
 
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
-          <span>© 2026 GlobeTrotter Inc. All rights reserved.</span>
+          <span>© 2026 GlobeTrotter & GlobalVista. All rights reserved.</span>
           <div className="flex items-center gap-4">
             <span className="hover:text-slate-400 cursor-pointer">Privacy Policy</span>
             <span className="hover:text-slate-400 cursor-pointer">Terms of Service</span>
@@ -685,7 +763,7 @@ export default function LandingPage() {
       </footer>
 
       {/* ============================================================ */}
-      {/* 7. INTERACTIVE SIGN-IN / SIGN-UP MODAL POPUP                 */}
+      {/* 6. INTERACTIVE SIGN-IN / SIGN-UP MODAL POPUP                 */}
       {/* ============================================================ */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md animate-in fade-in">
