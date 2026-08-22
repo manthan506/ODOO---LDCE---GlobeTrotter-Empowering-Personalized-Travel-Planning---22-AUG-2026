@@ -37,7 +37,6 @@ import {
   Bookmark,
   TrendingDown,
   Route,
-  WifiOff,
   Ticket,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -50,7 +49,6 @@ import { TravelGuides } from '@/components/trip/TravelGuides';
 import { CollaborationWorkspace } from '@/components/trip/CollaborationWorkspace';
 import { RouteOptimizerView } from '@/components/trip/RouteOptimizerView';
 import { SplitItineraryView } from '@/components/itinerary/SplitItineraryView';
-import { OfflineAccessView } from '@/components/trip/OfflineAccessView';
 import { ReservationsHub } from '@/components/itinerary/ReservationsHub';
 import { LodgingComparisonView } from '@/components/itinerary/LodgingComparisonView';
 import { WeatherStrip } from '@/components/trip/WeatherStrip';
@@ -60,7 +58,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
   const { expenses, refetch: refetchExpenses } = useExpenses(tripId);
   const { members, refetch: refetchMembers } = useTripMembers(tripId);
 
-  // Active top navigation tab
+  // Active top navigation tab (10 core tools, offline access removed)
   const [activeTab, setActiveTab] = useState<
     | 'budgeting'
     | 'map'
@@ -68,7 +66,6 @@ export function ItineraryView({ tripId }: { tripId: string }) {
     | 'flight_status'
     | 'route_optimization'
     | 'itinerary'
-    | 'offline_access'
     | 'reservations'
     | 'lodging'
     | 'packing'
@@ -141,7 +138,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
   const sortedStops = [...(trip.stops ?? [])].sort((a, b) => a.order - b.order);
   const destinationCity = trip.name || sortedStops[0]?.cities?.name || 'Japan';
 
-  // 11 Real Features
+  // 10 Core Features
   const topTabs = [
     { id: 'budgeting', label: 'Budgeting', icon: DollarSign },
     { id: 'map', label: 'Map view', icon: Navigation },
@@ -149,7 +146,6 @@ export function ItineraryView({ tripId }: { tripId: string }) {
     { id: 'flight_status', label: 'Flight status', icon: Plane },
     { id: 'route_optimization', label: 'Route optimization', icon: Route },
     { id: 'itinerary', label: 'Itinerary', icon: ListIcon },
-    { id: 'offline_access', label: 'Offline access', icon: WifiOff },
     { id: 'reservations', label: 'Reservations', icon: Ticket },
     { id: 'lodging', label: 'Lodging', icon: Hotel },
     { id: 'packing', label: 'Packing checklists', icon: CheckSquare },
@@ -190,7 +186,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
       {/* Live Open-Meteo Weather Strip */}
       <WeatherStrip cityName={destinationCity} />
 
-      {/* 11-Icon Feature Bar */}
+      {/* 10-Icon Feature Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
         {topTabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -217,7 +213,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         })}
       </div>
 
-      {/* RENDER DYNAMIC TAB CONTENT */}
+      {/* RENDER ACTIVE TAB CONTENT */}
 
       {/* 1. Budgeting */}
       {activeTab === 'budgeting' && (
@@ -266,27 +262,22 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         <SplitItineraryView trip={trip} tripId={tripId} destinationCity={destinationCity} />
       )}
 
-      {/* 7. Offline access */}
-      {activeTab === 'offline_access' && (
-        <OfflineAccessView currentTripName={trip.name} />
-      )}
-
-      {/* 8. Reservations */}
+      {/* 7. Reservations */}
       {activeTab === 'reservations' && (
         <ReservationsHub trip={trip} tripId={tripId} destinationCity={destinationCity} />
       )}
 
-      {/* 9. Lodging */}
+      {/* 8. Lodging */}
       {activeTab === 'lodging' && (
         <LodgingComparisonView trip={trip} tripId={tripId} destinationCity={destinationCity} />
       )}
 
-      {/* 10. Packing */}
+      {/* 9. Packing */}
       {activeTab === 'packing' && (
         <PackingChecklist tripName={trip.name} />
       )}
 
-      {/* 11. Travel Guides */}
+      {/* 10. Travel Guides */}
       {activeTab === 'guides' && (
         <TravelGuides activeCity={destinationCity} />
       )}
