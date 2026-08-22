@@ -6,9 +6,16 @@ import User from '@/models/User';
 import { signToken, AUTH_COOKIE_NAME } from '@/lib/auth';
 
 const signupSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  name: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  phone: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  avatar: z.string().optional(),
+  additionalInfo: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -23,7 +30,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, email, password } = result.data;
+    const {
+      name,
+      firstName,
+      lastName,
+      email,
+      password,
+      phone,
+      city,
+      country,
+      avatar,
+      additionalInfo,
+    } = result.data;
+
     await connectDB();
 
     const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -37,10 +56,22 @@ export async function POST(req: Request) {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const displayName =
+      name?.trim() ||
+      `${firstName || ''} ${lastName || ''}`.trim() ||
+      email.split('@')[0];
+
     const user = await User.create({
-      name,
+      name: displayName,
+      firstName: firstName || '',
+      lastName: lastName || '',
       email: email.toLowerCase(),
       password: hashedPassword,
+      phone: phone || '',
+      city: city || '',
+      country: country || '',
+      avatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+      additionalInfo: additionalInfo || '',
       role: 'user',
     });
 
@@ -55,7 +86,14 @@ export async function POST(req: Request) {
         user: {
           id: user._id.toString(),
           name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
+          phone: user.phone,
+          city: user.city,
+          country: user.country,
+          avatar: user.avatar,
+          additionalInfo: user.additionalInfo,
           role: user.role,
         },
         message: 'Account created successfully',

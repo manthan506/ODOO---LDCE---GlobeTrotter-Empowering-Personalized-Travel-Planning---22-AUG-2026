@@ -1,49 +1,113 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Compass, Loader2, ArrowRight, Mail, Lock, User as UserIcon } from 'lucide-react';
+import {
+  Compass,
+  Loader2,
+  ArrowRight,
+  Mail,
+  Lock,
+  User as UserIcon,
+  Phone,
+  MapPin,
+  Globe,
+  Camera,
+  FileText,
+  CheckCircle2,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+
+const AVATAR_PRESETS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&q=80',
+];
 
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const router = useRouter();
   const { signIn, signUp } = useAuth();
-  const [name, setName] = useState('');
+
+  // Login & Shared State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Screen 2 Registration Specific State
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [city, setCity] = useState('');
+  const [country, setCountry] = useState('');
+  const [additionalInfo, setAdditionalInfo] = useState('');
+  const [avatar, setAvatar] = useState(AVATAR_PRESETS[0]);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+
   const isSignup = mode === 'signup';
+
+  const handlePhotoUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setAvatar(reader.result);
+          toast.success('Profile photo uploaded!');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
     }
+
     setLoading(true);
     try {
       if (isSignup) {
-        if (!name.trim()) {
-          toast.error('Please enter your name');
+        if (!firstName.trim()) {
+          toast.error('Please enter your first name');
           setLoading(false);
           return;
         }
-        const res = await signUp(name, email, password);
+
+        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+
+        const res = await signUp({
+          name: fullName,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          password,
+          phone: phone.trim(),
+          city: city.trim(),
+          country: country.trim(),
+          avatar,
+          additionalInfo: additionalInfo.trim(),
+        });
+
         if (res.error) {
           toast.error(res.error);
           return;
         }
-        toast.success('Account created — welcome to GlobeTrotter!');
+        toast.success('Account created successfully! Welcome to GlobeTrotter ✨');
       } else {
-        const res = await signIn(email, password);
+        const res = await signIn(email.trim(), password);
         if (res.error) {
           toast.error(res.error);
           return;
         }
-        toast.success('Welcome back!');
+        toast.success('Welcome back to GlobeTrotter! 👋');
       }
       router.push('/dashboard');
     } catch (err) {
@@ -55,114 +119,329 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50/50 via-white to-slate-50 px-4 py-8">
-      <div className="w-full max-w-[420px]">
-        {/* Header / Brand */}
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 px-4 py-10 relative overflow-hidden">
+      {/* Dynamic Background Glows */}
+      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+
+      <div className={`w-full ${isSignup ? 'max-w-2xl' : 'max-w-md'} relative z-10 transition-all duration-300`}>
+        {/* Brand Header */}
         <Link href="/" className="mb-6 flex flex-col items-center justify-center gap-2 group">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition">
-            <Compass size={26} strokeWidth={2.2} />
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition">
+            <Compass size={28} strokeWidth={2.2} />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900">GlobeTrotter</span>
-          <span className="text-xs text-slate-500 font-medium -mt-1">Empowering Personalized Travel Planning</span>
+          <span className="text-2xl font-black tracking-tight text-white">GlobeTrotter</span>
+          <span className="text-xs text-blue-200/70 font-medium -mt-1">
+            Empowering Personalized Travel Planning
+          </span>
         </Link>
 
-        {/* Card */}
-        <div className="rounded-3xl border border-slate-100 bg-white p-7 shadow-xl shadow-slate-200/60">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              {isSignup ? 'Create Account ✨' : 'Welcome Back! 👋'}
+        {/* Main Card */}
+        <div className="rounded-3xl border border-white/10 bg-white/95 backdrop-blur-xl p-6 sm:p-8 shadow-2xl shadow-black/40">
+          {/* Wireframe Top Photo Circle */}
+          <div className="flex flex-col items-center mb-6">
+            <div className="relative group">
+              <div className="h-24 w-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 flex items-center justify-center">
+                {isSignup ? (
+                  <img
+                    src={avatar}
+                    alt="User Photo"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white">
+                    <UserIcon size={40} strokeWidth={1.75} />
+                  </div>
+                )}
+              </div>
+
+              {isSignup && (
+                <label
+                  htmlFor="photo-upload"
+                  className="absolute bottom-0 right-0 grid h-8 w-8 place-items-center rounded-full bg-blue-600 text-white border-2 border-white shadow-md hover:bg-blue-700 cursor-pointer transition active:scale-95"
+                  title="Upload profile photo"
+                >
+                  <Camera size={14} />
+                  <input
+                    id="photo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+
+            {isSignup && (
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 underline flex items-center gap-1"
+                >
+                  <Sparkles size={12} />
+                  {showAvatarPicker ? 'Hide Presets' : 'Choose Preset Avatar'}
+                </button>
+              </div>
+            )}
+
+            {/* Avatar Preset Tray */}
+            {isSignup && showAvatarPicker && (
+              <div className="mt-3 flex items-center justify-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-2xl animate-in fade-in">
+                {AVATAR_PRESETS.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setAvatar(preset);
+                      toast.success(`Selected Avatar #${idx + 1}`);
+                    }}
+                    className={`h-9 w-9 rounded-full overflow-hidden border-2 transition ${
+                      avatar === preset ? 'border-blue-600 scale-110 shadow-sm' : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={preset} alt={`Preset ${idx + 1}`} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
+              {isSignup ? 'Create Your Account ✨' : 'Welcome Back! 👋'}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-0.5 text-xs text-slate-500 font-medium text-center">
               {isSignup
-                ? 'Join thousands of smart travelers worldwide.'
-                : 'Login to continue your adventures.'}
+                ? 'Fill out your travel details to start planning personalized journeys.'
+                : 'Enter your credentials to access your trips and itineraries.'}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignup && (
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-700">Full name</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                    <UserIcon size={18} />
+            {/* LOGIN FIELDS */}
+            {!isSignup && (
+              <>
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-700">Email Address / Username</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                      <Mail size={18} />
+                    </div>
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                      placeholder="name@example.com"
+                    />
                   </div>
-                  <input
-                    required
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                    placeholder="Jane Traveler"
-                  />
                 </div>
-              </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700">Password</label>
+                    <a
+                      href="#forgot"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toast.info('Password reset instructions sent to your email address (Demo)');
+                      }}
+                      className="text-xs font-semibold text-blue-600 hover:underline"
+                    >
+                      Forgot Password?
+                    </a>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                      <Lock size={18} />
+                    </div>
+                    <input
+                      required
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                      placeholder="Enter your password"
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-slate-700">Email address</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                  <Mail size={18} />
-                </div>
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                  placeholder="name@example.com"
-                />
-              </div>
-            </div>
+            {/* REGISTRATION FIELDS */}
+            {isSignup && (
+              <>
+                {/* Row 1: First Name & Last Name */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-slate-700">First Name *</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                        <UserIcon size={17} />
+                      </div>
+                      <input
+                        required
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                        placeholder="John"
+                      />
+                    </div>
+                  </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-slate-700">Password</label>
-                {!isSignup && (
-                  <a href="#forgot" onClick={(e) => { e.preventDefault(); toast.info('Password reset instructions sent to email (Demo)'); }} className="text-xs font-medium text-blue-600 hover:underline">
-                    Forgot Password?
-                  </a>
-                )}
-              </div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                  <Lock size={18} />
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-slate-700">Last Name</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                        <UserIcon size={17} />
+                      </div>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                        placeholder="Doe"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <input
-                  required
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                  placeholder={isSignup ? 'At least 6 characters' : 'Enter your password'}
-                />
-              </div>
-            </div>
 
+                {/* Row 2: Email Address & Phone Number */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-slate-700">Email Address *</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                        <Mail size={17} />
+                      </div>
+                      <input
+                        required
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                        placeholder="john.doe@example.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-slate-700">Phone Number</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                        <Phone size={17} />
+                      </div>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                        placeholder="+91 98765 43210"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 3: City & Country */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-slate-700">City</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                        <MapPin size={17} />
+                      </div>
+                      <input
+                        type="text"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                        placeholder="Ahmedabad"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-slate-700">Country</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                        <Globe size={17} />
+                      </div>
+                      <input
+                        type="text"
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                        placeholder="India"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 4: Additional Information (Textarea) */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-700">
+                    Additional Information / Preferences
+                  </label>
+                  <div className="relative">
+                    <div className="absolute top-3 left-3 pointer-events-none text-slate-400">
+                      <FileText size={17} />
+                    </div>
+                    <textarea
+                      rows={3}
+                      value={additionalInfo}
+                      onChange={(e) => setAdditionalInfo(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 resize-none"
+                      placeholder="Travel style (backpacker, luxury, solo), dietary preferences, favorite destinations..."
+                    />
+                  </div>
+                </div>
+
+                {/* Row 5: Password */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-700">Password *</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                      <Lock size={17} />
+                    </div>
+                    <input
+                      required
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                      placeholder="At least 6 characters"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Action Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-sm font-semibold text-white shadow-md shadow-blue-500/25 transition hover:opacity-95 active:scale-[0.99] disabled:opacity-60"
+              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:opacity-95 hover:shadow-blue-500/35 active:scale-[0.99] disabled:opacity-60"
             >
               {loading ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <>
-                  {isSignup ? 'Get Started' : 'Login'}
+                  {isSignup ? 'Create Account' : 'Log In'}
                   <ArrowRight size={16} />
                 </>
               )}
             </button>
           </form>
 
-          {/* Social Auth Mock */}
+          {/* Quick Pre-fill Demo Profiles for Evaluators */}
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200" />
             </div>
             <div className="relative flex justify-center text-xs text-slate-400">
-              <span className="bg-white px-2">or continue with</span>
+              <span className="bg-white px-2">Quick Demo Shortcuts</span>
             </div>
           </div>
 
@@ -170,55 +449,57 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             <button
               type="button"
               onClick={() => {
-                setName('Alex Nomad');
-                setEmail('alex@globetrotter.io');
-                setPassword('password123');
-                toast.success('Pre-filled demo traveler credentials!');
+                if (isSignup) {
+                  setFirstName('Alex');
+                  setLastName('Nomad');
+                  setEmail('alex@globetrotter.io');
+                  setPhone('+91 98765 12345');
+                  setCity('Ahmedabad');
+                  setCountry('India');
+                  setAdditionalInfo('Love mountain trekking, street food tours, and budget travel.');
+                  setPassword('password123');
+                } else {
+                  setEmail('alex@globetrotter.io');
+                  setPassword('password123');
+                }
+                toast.success('Pre-filled Alex Nomad demo details!');
               }}
-              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 text-xs font-bold text-slate-700 transition hover:bg-slate-100"
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24">
-                <path
-                  fill="#EA4335"
-                  d="M12 5c1.55 0 2.95.55 4.04 1.45l3.03-3.03C17.24 1.7 14.78 1 12 1 7.42 1 3.52 3.61 1.63 7.42l3.67 2.85C6.18 7.37 8.84 5 12 5z"
-                />
-                <path
-                  fill="#4285F4"
-                  d="M23.49 12.28c0-.79-.07-1.54-.19-2.28H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.69 2.86c2.16-1.99 3.41-4.92 3.41-8.67z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.3 14.73c-.22-.67-.35-1.39-.35-2.13s.13-1.46.35-2.13L1.63 7.62C.59 9.69 0 12.02 0 14.5s.59 4.81 1.63 6.88l3.67-2.85c-.23-.6-.35-1.2-.35-1.8z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c3.24 0 5.95-1.08 7.93-2.91l-3.69-2.86c-1.07.72-2.45 1.16-4.24 1.16-3.16 0-5.82-2.37-6.7-5.27L1.63 15.97C3.52 19.79 7.42 22.4 12 22.4z"
-                />
-              </svg>
-              Google
+              <CheckCircle2 size={15} className="text-blue-600" />
+              Alex Nomad
             </button>
             <button
               type="button"
               onClick={() => {
-                setName('Sarah Traveler');
-                setEmail('sarah@globetrotter.io');
-                setPassword('password123');
-                toast.success('Pre-filled demo credentials!');
+                if (isSignup) {
+                  setFirstName('Sarah');
+                  setLastName('Explorer');
+                  setEmail('sarah@globetrotter.io');
+                  setPhone('+1 415 555 2671');
+                  setCity('San Francisco');
+                  setCountry('USA');
+                  setAdditionalInfo('Cultural heritage, art museums, luxury stays.');
+                  setPassword('password123');
+                } else {
+                  setEmail('sarah@globetrotter.io');
+                  setPassword('password123');
+                }
+                toast.success('Pre-filled Sarah Explorer demo details!');
               }}
-              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 text-xs font-bold text-slate-700 transition hover:bg-slate-100"
             >
-              <svg className="h-4 w-4 fill-current text-slate-900" viewBox="0 0 24 24">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 1.01-2.87-.96.04-2.12.64-2.8 1.44-.59.69-1.12 1.77-.98 2.82 1.07.08 2.15-.56 2.77-1.39z" />
-              </svg>
-              Apple
+              <CheckCircle2 size={15} className="text-indigo-600" />
+              Sarah Explorer
             </button>
           </div>
 
-          <p className="mt-6 text-center text-xs text-slate-500">
+          {/* Footer Switch Link */}
+          <p className="mt-6 text-center text-xs text-slate-500 font-medium">
             {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
             <Link
               href={isSignup ? '/login' : '/signup'}
-              className="font-bold text-blue-600 hover:underline"
+              className="font-bold text-blue-600 hover:text-blue-700 hover:underline ml-1"
             >
               {isSignup ? 'Sign in' : 'Sign up'}
             </Link>

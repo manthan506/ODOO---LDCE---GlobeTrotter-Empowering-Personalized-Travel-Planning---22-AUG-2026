@@ -5,15 +5,35 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 export type UserProfile = {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
+  phone?: string;
+  city?: string;
+  country?: string;
+  avatar?: string;
+  additionalInfo?: string;
   role: 'user' | 'admin';
+};
+
+export type SignUpPayload = {
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  password: string;
+  phone?: string;
+  city?: string;
+  country?: string;
+  avatar?: string;
+  additionalInfo?: string;
 };
 
 type AuthContextValue = {
   user: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
-  signUp: (name: string, email: string, password: string) => Promise<{ error?: string }>;
+  signUp: (payload: SignUpPayload | string, email?: string, password?: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   refetchUser: () => Promise<void>;
 };
@@ -73,27 +93,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const signUp = useCallback(async (name: string, email: string, password: string) => {
-    try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-        credentials: 'include',
-      });
+  const signUp = useCallback(
+    async (payload: SignUpPayload | string, emailArg?: string, passwordArg?: string) => {
+      try {
+        let bodyPayload: Record<string, unknown>;
+        if (typeof payload === 'string') {
+          bodyPayload = {
+            name: payload,
+            email: emailArg,
+            password: passwordArg,
+          };
+        } else {
+          bodyPayload = {
+            ...payload,
+            name: payload.name || `${payload.firstName || ''} ${payload.lastName || ''}`.trim(),
+          };
+        }
 
-      const data = await res.json();
-      if (!res.ok) {
-        return { error: data.error || 'Failed to sign up' };
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyPayload),
+          credentials: 'include',
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          return { error: data.error || 'Failed to sign up' };
+        }
+
+        setUser(data.user);
+        return {};
+      } catch (err) {
+        console.error('Sign up error:', err);
+        return { error: 'Network error during sign up' };
       }
-
-      setUser(data.user);
-      return {};
-    } catch (err) {
-      console.error('Sign up error:', err);
-      return { error: 'Network error during sign up' };
-    }
-  }, []);
+    },
+    []
+  );
 
   const signOut = useCallback(async () => {
     try {

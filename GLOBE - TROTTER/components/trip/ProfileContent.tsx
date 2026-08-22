@@ -21,11 +21,22 @@ import { toast } from 'sonner';
 export function ProfileContent() {
   const { user, signOut } = useAuth();
 
-  const userName = user?.name || user?.email?.split('@')[0] || 'J. Snow';
+  const userName =
+    user?.name ||
+    `${user?.firstName || ''} ${user?.lastName || ''}`.trim() ||
+    user?.email?.split('@')[0] ||
+    'Traveler';
+
+  const userAvatar =
+    user?.avatar ||
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80';
+
+  const userLocation =
+    [user?.city, user?.country].filter(Boolean).join(', ') || 'Global Explorer';
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 sm:px-6">
-      {/* Profile Header Card matching Screen 12 */}
+      {/* Profile Header Card */}
       <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm text-center">
         {/* Background gradient banner */}
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400 opacity-90" />
@@ -33,13 +44,13 @@ export function ProfileContent() {
         {/* User Avatar with Camera Badge */}
         <div className="relative mx-auto mt-4 mb-3 h-24 w-24">
           <img
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80"
+            src={userAvatar}
             alt={userName}
             className="h-full w-full rounded-full border-4 border-white object-cover shadow-md"
           />
           <button
             type="button"
-            onClick={() => toast.info('Avatar change (demo)')}
+            onClick={() => toast.info('Avatar custom upload available on registration & edit')}
             className="absolute bottom-0 right-0 grid h-7 w-7 place-items-center rounded-full bg-slate-900 text-white border-2 border-white shadow-sm hover:bg-slate-800"
           >
             <Camera size={13} />
@@ -48,9 +59,25 @@ export function ProfileContent() {
 
         <h2 className="text-xl font-bold text-slate-900">{userName}</h2>
         <p className="text-xs text-slate-500 mt-0.5">{user?.email || 'traveler@globetrotter.io'}</p>
+        
+        {user?.phone && (
+          <p className="text-[11px] text-slate-400 font-medium mt-0.5">📞 {user.phone}</p>
+        )}
+
         <span className="text-[11px] font-semibold text-blue-600 mt-1 inline-block">
-          📍 17 km from your location
+          📍 {userLocation}
         </span>
+
+        {user?.additionalInfo && (
+          <div className="mt-3 mx-2 p-2.5 rounded-xl bg-blue-50/60 border border-blue-100 text-left">
+            <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider block mb-0.5">
+              Travel Bio / Preferences
+            </span>
+            <p className="text-xs text-slate-600 italic leading-relaxed">
+              "{user.additionalInfo}"
+            </p>
+          </div>
+        )}
 
         {/* Persona tags (Nomad, Explorer) */}
         <div className="mt-3 flex items-center justify-center gap-2">
