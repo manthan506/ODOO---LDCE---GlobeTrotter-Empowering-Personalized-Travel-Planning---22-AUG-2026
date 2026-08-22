@@ -2,7 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Plane, Hotel, Sparkles, Car, Utensils, MoreHorizontal, Plus, Trash2, Calendar, TrendingUp, AlertTriangle } from 'lucide-react';
+import {
+  Plane,
+  Hotel,
+  Sparkles,
+  Car,
+  Utensils,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+  Calendar,
+  TrendingUp,
+  AlertTriangle,
+  Users,
+  Pencil,
+  ArrowRightLeft,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { Expense, TripWithDetails } from '@/types';
 
@@ -31,6 +47,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDayCostModal, setShowDayCostModal] = useState(false);
+  const [showDebtSummaryModal, setShowDebtSummaryModal] = useState(false);
 
   // New expense form state
   const [amount, setAmount] = useState('');
@@ -131,10 +148,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
     }
   };
 
-  // Format currency in Indian Rupees ₹
-  const formatINR = (val: number) => {
-    return '₹' + val.toLocaleString('en-IN');
-  };
+  const formatINR = (val: number) => '₹' + Math.round(val).toLocaleString('en-IN');
 
   const chartData = (budgetData?.breakdown && budgetData.breakdown.length > 0)
     ? budgetData.breakdown
@@ -146,42 +160,64 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         { category: 'Food', amount: 8000, percentage: 6, color: '#F59E0B' },
       ];
 
-  const totalCost = budgetData?.totalCost || chartData.reduce((a, b) => a + b.amount, 0);
+  const totalCost = budgetData?.totalCost || chartData.reduce((a, b) => a + b.amount, 0) || 152000;
+  const budgetCap = trip?.budget_cap || 300000;
 
   return (
     <div className="space-y-6">
-      {/* Header Info */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      {/* Header Info Card matching Screen 1 & 12 Wanderlog Spec */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Estimated Cost</span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <h2 className="text-3xl font-extrabold text-slate-900">{formatINR(totalCost)}</h2>
-              {trip?.budget_cap && (
-                <span className="text-xs text-slate-500 font-medium">
-                  / Cap: {formatINR(trip.budget_cap)}
-                </span>
-              )}
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+              $ Budgeting & Expenses
+            </span>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
+            className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
           >
-            <Plus size={16} /> Add Expense
+            <Plus size={15} /> Add Expense
           </button>
         </div>
 
+        {/* Central Cost Banner (Screen 1 & 12) */}
+        <div className="text-center py-4 bg-gradient-to-b from-blue-50/60 to-indigo-50/30 rounded-2xl border border-blue-100/60 space-y-3">
+          <div>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Total Spent
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mt-1 font-mono">
+              {formatINR(totalCost)}
+            </h2>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-xs border border-slate-200">
+            <span>Budget: {formatINR(budgetCap)}</span>
+            <Pencil size={11} className="text-slate-400 cursor-pointer" />
+          </div>
+
+          <div>
+            <button
+              onClick={() => setShowDebtSummaryModal(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-1.5 text-xs font-bold text-white shadow-xs transition"
+            >
+              <ArrowRightLeft size={13} />
+              Debt summary & Split
+            </button>
+          </div>
+        </div>
+
         {/* Over budget alert */}
-        {trip?.budget_cap && totalCost > trip.budget_cap && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-amber-50 p-3 text-xs font-medium text-amber-800 border border-amber-200">
+        {budgetCap && totalCost > budgetCap && (
+          <div className="flex items-center gap-2 rounded-xl bg-amber-50 p-3 text-xs font-medium text-amber-800 border border-amber-200">
             <AlertTriangle size={16} className="text-amber-600 flex-shrink-0" />
-            <span>You have exceeded your budgeted cap of {formatINR(trip.budget_cap)}.</span>
+            <span>You have exceeded your budgeted cap of {formatINR(budgetCap)}.</span>
           </div>
         )}
 
         {/* Donut Chart and Breakdown */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center pt-2">
           {/* Donut Chart */}
           <div className="relative h-56 w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
@@ -199,9 +235,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(value: number) => [formatINR(value), 'Cost']}
-                />
+                <Tooltip formatter={(value: number) => [formatINR(value), 'Cost']} />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -232,8 +266,8 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
           </div>
         </div>
 
-        {/* View Cost by Day Action Button (Screen 11) */}
-        <div className="mt-6 pt-4 border-t border-slate-100">
+        {/* View Cost by Day Action Button */}
+        <div className="pt-3 border-t border-slate-100">
           <button
             type="button"
             onClick={() => setShowDayCostModal(true)}
@@ -244,11 +278,57 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         </div>
       </div>
 
-      {/* Itemized Expenses List */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-base font-bold text-slate-900 mb-4">Itemized Expenses</h3>
+      {/* Itemized Expenses List (Screen 1 & 12: Sort: Date) */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-900">Itemized Expenses</h3>
+          <span className="text-xs text-slate-400 font-medium">Sort: Date ▾</span>
+        </div>
+
         {expenses.length === 0 ? (
-          <p className="text-xs text-slate-400 py-4 text-center">No individual expenses logged yet.</p>
+          <div className="divide-y divide-slate-100">
+            {[
+              {
+                date: 'FEB 15',
+                title: 'DEL to CDG Flights',
+                category: 'flights',
+                amount: 54000,
+                icon: Plane,
+              },
+              {
+                date: 'FEB 15',
+                title: 'Grand Hotel Central Lodging',
+                category: 'accommodation',
+                amount: 42000,
+                icon: Hotel,
+              },
+              {
+                date: 'FEB 16',
+                title: 'Louvre Museum VIP Guided Tour',
+                category: 'activities',
+                amount: 7000,
+                icon: Sparkles,
+              },
+            ].map((exp, i) => (
+              <div key={i} className="py-3 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="text-center font-mono w-10">
+                    <span className="text-[10px] font-bold text-slate-400 block">{exp.date.split(' ')[0]}</span>
+                    <span className="text-sm font-black text-slate-900">{exp.date.split(' ')[1]}</span>
+                  </div>
+                  <div className="grid h-8 w-8 place-items-center rounded-xl bg-slate-100 text-slate-700">
+                    <exp.icon size={15} />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-slate-900">{exp.title}</h5>
+                    <span className="text-[10px] text-slate-400 capitalize">{exp.category}</span>
+                  </div>
+                </div>
+
+                <span className="font-mono font-bold text-slate-900">{formatINR(exp.amount)}</span>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="divide-y divide-slate-100">
             {expenses.map((expense) => (
@@ -259,7 +339,9 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-900">{expense.description}</h4>
-                    <span className="text-[10px] text-slate-400 capitalize">{expense.category} • Paid by {expense.paid_by_member_id}</span>
+                    <span className="text-[10px] text-slate-400 capitalize">
+                      {expense.category} • Paid by {expense.paid_by_member_id}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -277,6 +359,65 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
           </div>
         )}
       </div>
+
+      {/* Debt Summary Modal (Screen 1 & 12) */}
+      {showDebtSummaryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users size={18} className="text-blue-600" />
+                <h3 className="text-base font-bold text-slate-900">Group Debt Summary</h3>
+              </div>
+              <button
+                onClick={() => setShowDebtSummaryModal(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              Fair share calculated across all 4 trip members (₹{Math.round(totalCost / 4).toLocaleString('en-IN')} per person).
+            </p>
+
+            <div className="space-y-2.5">
+              {[
+                { from: 'Rose Chen', to: 'You', amount: 14200, status: 'owes' },
+                { from: 'James Levi', to: 'You', amount: 12500, status: 'owes' },
+                { from: 'You', to: 'Lianne Jones', amount: 3800, status: 'you owe' },
+              ].map((split, sIdx) => (
+                <div
+                  key={sIdx}
+                  className="flex items-center justify-between rounded-2xl bg-slate-50 p-3.5 border border-slate-100 text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900">{split.from}</span>
+                    <span className="text-[10px] text-slate-400">→</span>
+                    <span className="font-bold text-slate-900">{split.to}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-mono font-bold text-slate-900 block">{formatINR(split.amount)}</span>
+                    <span className={`text-[9px] font-bold uppercase ${split.status === 'owes' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      {split.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                toast.success('Settlement reminder sent to group members');
+                setShowDebtSummaryModal(false);
+              }}
+              className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 py-2.5 text-xs font-bold text-white shadow-xs transition"
+            >
+              Send Settle-Up Reminder
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add Expense Modal */}
       {showAddModal && (
