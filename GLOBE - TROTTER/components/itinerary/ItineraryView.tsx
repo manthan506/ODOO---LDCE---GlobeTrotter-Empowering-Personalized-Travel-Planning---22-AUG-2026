@@ -52,6 +52,7 @@ import { FlightStatusCard } from '@/components/trip/FlightStatusCard';
 import { PackingChecklist } from '@/components/trip/PackingChecklist';
 import { TravelGuides } from '@/components/trip/TravelGuides';
 import { CollaborationWorkspace } from '@/components/trip/CollaborationWorkspace';
+import { RouteOptimizerView } from '@/components/trip/RouteOptimizerView';
 
 export function ItineraryView({ tripId }: { tripId: string }) {
   const { trip, loading, refetch } = useTrip(tripId);
@@ -248,9 +249,9 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         <FlightStatusCard firstStopCity={firstCityName} startDate={trip.start_date} />
       )}
 
-      {/* 5. Route optimization (Screenshot 5) */}
+      {/* 5. Route optimization (Screenshot 5 - Phase 5) */}
       {activeTab === 'route_optimization' && (
-        <TripMapView
+        <RouteOptimizerView
           stops={sortedStops}
           tripId={tripId}
           onStopsReordered={refetch}
