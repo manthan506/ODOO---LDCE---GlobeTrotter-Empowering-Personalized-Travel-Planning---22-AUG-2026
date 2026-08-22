@@ -53,6 +53,7 @@ import { PackingChecklist } from '@/components/trip/PackingChecklist';
 import { TravelGuides } from '@/components/trip/TravelGuides';
 import { CollaborationWorkspace } from '@/components/trip/CollaborationWorkspace';
 import { RouteOptimizerView } from '@/components/trip/RouteOptimizerView';
+import { SplitItineraryView } from '@/components/itinerary/SplitItineraryView';
 
 export function ItineraryView({ tripId }: { tripId: string }) {
   const { trip, loading, refetch } = useTrip(tripId);
@@ -258,46 +259,9 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         />
       )}
 
-      {/* 6. Itinerary (Screenshot 6) */}
+      {/* 6. Itinerary (Screenshot 6 - Phase 6) */}
       {activeTab === 'itinerary' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900">
-                Saturday, {new Date(trip.start_date).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}
-              </h3>
-              <div className="flex gap-2">
-                <button className="rounded-xl bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
-                  Auto-fill day
-                </button>
-                <button
-                  onClick={() => toast.success('Route optimized!')}
-                  className="rounded-xl bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 text-xs font-bold"
-                >
-                  Optimize route
-                </button>
-              </div>
-            </div>
-
-            {sortedStops.map((stop, sIdx) => (
-              <div key={stop.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-2">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-6 w-6 place-items-center rounded-lg bg-blue-600 text-xs font-bold text-white">
-                    {sIdx + 1}
-                  </span>
-                  <h4 className="text-sm font-bold text-slate-900">{stop.cities?.name}, {stop.cities?.country}</h4>
-                </div>
-                <p className="text-[10px] text-slate-400">2 min walk • 0.1 mi • Directions</p>
-              </div>
-            ))}
-          </div>
-
-          <TripMapView
-            stops={sortedStops}
-            tripId={tripId}
-            onStopsReordered={refetch}
-          />
-        </div>
+        <SplitItineraryView trip={trip} tripId={tripId} />
       )}
 
       {/* 7. Offline access (Screenshot 7) */}
