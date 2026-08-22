@@ -41,6 +41,10 @@ export type Stop = {
   id: string;
   trip_id: string;
   city_id: string;
+  title?: string;
+  description?: string;
+  budget?: number;
+  category?: string;
   arrive_date: string;
   leave_date: string;
   order: number;

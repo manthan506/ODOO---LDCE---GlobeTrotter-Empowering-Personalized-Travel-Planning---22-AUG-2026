@@ -1,14 +1,11 @@
-'use client';
-
-import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { Navbar } from '@/components/layout/Navbar';
 import { ItineraryView } from '@/components/itinerary/ItineraryView';
 
 export default function ItineraryViewPage({ params }: { params: { tripId: string } }) {
   return (
-    <ProtectedRoute>
+    <main className="min-h-screen bg-slate-50">
       <Navbar />
       <ItineraryView tripId={params.tripId} />
-    </ProtectedRoute>
+    </main>
   );
 }

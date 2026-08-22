@@ -10,6 +10,10 @@ export interface IStop extends Document {
   _id: mongoose.Types.ObjectId;
   tripId: mongoose.Types.ObjectId;
   cityId: mongoose.Types.ObjectId;
+  title?: string;
+  description?: string;
+  budget?: number;
+  category?: string;
   arriveDate: Date;
   leaveDate: Date;
   order: number;
@@ -45,6 +49,22 @@ const StopSchema = new Schema<IStop>(
       type: Schema.Types.ObjectId,
       ref: 'City',
       required: [true, 'City ID is required'],
+    },
+    title: {
+      type: String,
+      default: '',
+    },
+    description: {
+      type: String,
+      default: '',
+    },
+    budget: {
+      type: Number,
+      default: 0,
+    },
+    category: {
+      type: String,
+      default: 'city',
     },
     arriveDate: {
       type: Date,

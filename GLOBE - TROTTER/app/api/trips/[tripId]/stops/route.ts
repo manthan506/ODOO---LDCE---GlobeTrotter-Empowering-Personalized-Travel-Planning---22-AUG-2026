@@ -12,6 +12,10 @@ const addStopSchema = z.object({
   cityId: z.string().min(1, 'City is required'),
   arriveDate: z.string().min(1, 'Arrival date is required'),
   leaveDate: z.string().min(1, 'Leave date is required'),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  budget: z.number().optional(),
+  category: z.string().optional(),
   order: z.number().optional(),
 });
 
@@ -42,6 +46,10 @@ export async function GET(
         id: stop._id.toString(),
         trip_id: stop.tripId.toString(),
         city_id: stop.cityId.toString(),
+        title: stop.title || `Stop: ${city?.name || 'Destination'}`,
+        description: stop.description || 'All the necessary information about this section (travel, accommodation, and curated activities).',
+        budget: stop.budget || 0,
+        category: stop.category || 'city',
         arrive_date: stop.arriveDate.toISOString().split('T')[0],
         leave_date: stop.leaveDate.toISOString().split('T')[0],
         order: stop.order,
@@ -121,7 +129,7 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { cityId, arriveDate, leaveDate, order } = result.data;
+    const { cityId, arriveDate, leaveDate, title, description, budget, category, order } = result.data;
 
     let stopOrder = order;
     if (stopOrder === undefined) {
@@ -132,6 +140,10 @@ export async function POST(
     const stop = await Stop.create({
       tripId: trip._id,
       cityId: new mongoose.Types.ObjectId(cityId),
+      title: title || '',
+      description: description || '',
+      budget: budget || 0,
+      category: category || 'city',
       arriveDate: new Date(arriveDate),
       leaveDate: new Date(leaveDate),
       order: stopOrder,
@@ -143,6 +155,10 @@ export async function POST(
         id: stop._id.toString(),
         trip_id: stop.tripId.toString(),
         city_id: stop.cityId.toString(),
+        title: stop.title,
+        description: stop.description,
+        budget: stop.budget,
+        category: stop.category,
         arrive_date: stop.arriveDate.toISOString().split('T')[0],
         leave_date: stop.leaveDate.toISOString().split('T')[0],
         order: stop.order,
