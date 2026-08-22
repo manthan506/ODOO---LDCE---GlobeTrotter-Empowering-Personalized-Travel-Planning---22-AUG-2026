@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { Mail, Lock, User, ArrowRight, Loader2, Compass, Sparkles, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, Compass, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 interface AuthFormProps {
@@ -14,7 +14,7 @@ interface AuthFormProps {
 export function AuthForm({ mode }: AuthFormProps) {
   const isSignup = mode === 'signup';
   const router = useRouter();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInDemo } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -36,10 +36,18 @@ export function AuthForm({ mode }: AuthFormProps) {
     setLoading(true);
     try {
       if (isSignup) {
-        await signUp(email.trim(), password, name.trim());
+        const res = await signUp(name.trim(), email.trim(), password);
+        if (res.error) {
+          toast.error(res.error);
+          return;
+        }
         toast.success('Account created successfully! Welcome to GlobeTrotter.');
       } else {
-        await signIn(email.trim(), password);
+        const res = await signIn(email.trim(), password);
+        if (res.error) {
+          toast.error(res.error);
+          return;
+        }
         toast.success('Welcome back!');
       }
       router.push('/dashboard');
@@ -53,18 +61,15 @@ export function AuthForm({ mode }: AuthFormProps) {
   const handleDemoLogin = async () => {
     setDemoLoading(true);
     try {
-      // Demo credentials for judges / video exhibition
-      try {
-        await signIn('demo@globetrotter.io', 'DemoPass123!');
-        toast.success('Logged in with Exhibition Demo Account ✨');
-      } catch {
-        // If demo user doesn't exist yet in DB, sign them up automatically
-        await signUp('demo@globetrotter.io', 'DemoPass123!', 'Exhibition Demo Traveler');
-        toast.success('Created & logged into Exhibition Demo Account ✨');
+      const res = await signInDemo();
+      if (res.error) {
+        toast.error(res.error);
+        return;
       }
+      toast.success('Logged in with Exhibition Demo Account ✨');
       router.push('/dashboard');
     } catch (err: any) {
-      toast.error('Demo login error. Please create a standard account.');
+      toast.error('Failed to log in with demo account');
     } finally {
       setDemoLoading(false);
     }
@@ -94,7 +99,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               {isSignup
-                ? 'Sign up for a clean, personalized travel planner'
+                ? 'Sign up for a fresh, personalized travel planner'
                 : 'Login to access your saved trips and workspaces'}
             </p>
           </div>
