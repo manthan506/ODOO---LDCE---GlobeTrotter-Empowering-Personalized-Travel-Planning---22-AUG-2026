@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { Compass, Loader2, ArrowRight, Mail, Lock, User as UserIcon, Zap } from 'lucide-react';
+import { Compass, Loader2, ArrowRight, Mail, Lock, User as UserIcon, Zap, Camera, Phone, MapPin, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
@@ -12,14 +12,33 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const searchParams = useSearchParams();
   const redirectTarget = searchParams.get('redirect') || '/dashboard';
 
-  const { signIn, signUp, refetchUser } = useAuth();
-  const [name, setName] = useState('');
+  const { signIn, refetchUser } = useAuth();
+
+  // Registration Screen (Screen 2) fields
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [city, setCity] = useState('');
+  const [country, setCountry] = useState('');
+  const [additionalInfo, setAdditionalInfo] = useState('');
+  const [photoUrl, setPhotoUrl] = useState(
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80'
+  );
+
+  // Login Screen (Screen 1) fields
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
 
   const isSignup = mode === 'signup';
+
+  const sampleAvatars = [
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
+  ];
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,17 +49,31 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
     setLoading(true);
     try {
       if (isSignup) {
-        if (!name.trim()) {
-          toast.error('Please enter your name');
-          setLoading(false);
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName,
+            lastName,
+            email,
+            phoneNumber,
+            city,
+            country,
+            additionalInfo,
+            photoUrl,
+            password,
+          }),
+          credentials: 'include',
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error || 'Registration failed');
           return;
         }
-        const res = await signUp(name, email, password);
-        if (res.error) {
-          toast.error(res.error);
-          return;
-        }
-        toast.success('Account created — welcome to GlobeTrotter!');
+
+        toast.success('Registration successful — welcome to GlobeTrotter!');
+        await refetchUser();
       } else {
         const res = await signIn(email, password);
         if (res.error) {
@@ -84,25 +117,26 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50/50 via-white to-slate-50 px-4 py-8">
-      <div className="w-full max-w-[420px]">
-        {/* Header / Brand */}
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50/60 via-slate-50 to-white px-4 py-10">
+      <div className={`w-full ${isSignup ? 'max-w-[560px]' : 'max-w-[420px]'}`}>
+        
+        {/* Brand Header */}
         <div className="mb-6 text-center">
           <Link href="/" className="inline-flex items-center gap-2.5 group">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition">
-              <Compass size={28} strokeWidth={2.2} />
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition">
+              <Compass size={24} strokeWidth={2.3} />
             </div>
             <span className="text-2xl font-bold tracking-tight text-slate-900">
               GlobeTrotter
             </span>
           </Link>
-          <h2 className="mt-4 text-xl font-bold tracking-tight text-slate-900">
-            {isSignup ? 'Create your account' : 'Welcome back, traveler'}
+          <h2 className="mt-3 text-xl font-black tracking-tight text-slate-900">
+            {isSignup ? 'Registration Screen (Screen 2)' : 'Login Screen (Screen 1)'}
           </h2>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="text-xs text-slate-500">
             {isSignup
-              ? 'Start designing your personalized multi-city journey'
-              : 'Sign in to access your itineraries and budgets'}
+              ? 'Create your personalized travel profile and itinerary planner'
+              : 'Sign in to access your itineraries, budgets, and saved journeys'}
           </p>
         </div>
 
@@ -111,7 +145,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
           type="button"
           onClick={() => handleSocialLogin('demo')}
           disabled={!!socialLoading}
-          className="mb-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black shadow-md shadow-amber-500/20 transition active:scale-[0.99] disabled:opacity-60"
+          className="mb-5 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black shadow-md shadow-amber-500/20 transition active:scale-[0.99] disabled:opacity-60"
         >
           {socialLoading === 'demo' ? (
             <Loader2 size={16} className="animate-spin" />
@@ -123,90 +157,217 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
           )}
         </button>
 
-        {/* Auth Card */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xl shadow-slate-200/50">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Auth Card matching Excalidraw Wireframe */}
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/60">
+          
+          {/* Top Avatar Photo Circle (Excalidraw Photo Circle) */}
+          <div className="flex flex-col items-center justify-center mb-6">
+            <div className="relative group">
+              <div className="h-20 w-20 rounded-full border-2 border-slate-300 overflow-hidden bg-slate-100 shadow-sm flex items-center justify-center">
+                <img
+                  src={photoUrl}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-slate-900 text-white text-[10px] font-bold border border-white shadow-xs">
+                <Camera size={12} />
+              </div>
+            </div>
+            <span className="text-[11px] font-bold text-slate-500 mt-1.5 uppercase tracking-wider">Photo</span>
+
             {isSignup && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Full Name</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                    <UserIcon size={18} />
+              <div className="flex items-center gap-2 mt-2">
+                {sampleAvatars.map((url, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setPhotoUrl(url)}
+                    className={`h-7 w-7 rounded-full border-2 overflow-hidden transition ${
+                      photoUrl === url ? 'border-blue-600 scale-110' : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={url} alt="avatar" className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* SCREEN 2: REGISTRATION SCREEN 2-COLUMN INPUT BOX */}
+            {isSignup ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 space-y-3.5">
+                
+                {/* First Name & Last Name (Row 1) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">First Name</label>
+                    <input
+                      required
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="First Name"
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
                   </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Last Name</label>
+                    <input
+                      required
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Last Name"
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                </div>
+
+                {/* Email Address & Phone Number (Row 2) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Email Address</label>
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email Address"
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="+91 98765 43210"
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                </div>
+
+                {/* City & Country (Row 3) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">City</label>
+                    <input
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="City"
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Country</label>
+                    <input
+                      type="text"
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      placeholder="Country"
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Password</label>
                   <input
                     required
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                    placeholder="Alex Traveler"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Create a secure password (min 6 chars)"
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
+                </div>
+
+                {/* Additional Information .... (Row 4) */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Additional Information ....</label>
+                  <textarea
+                    rows={3}
+                    value={additionalInfo}
+                    onChange={(e) => setAdditionalInfo(e.target.value)}
+                    placeholder="Travel preferences, dietary restrictions, preferred destinations..."
+                    className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
+                  />
+                </div>
+              </div>
+            ) : (
+              /* SCREEN 1: LOGIN SCREEN */
+              <div className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Username / Email</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                      <Mail size={16} />
+                    </div>
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Username / Email"
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3 text-xs font-medium text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">Password</label>
+                    <a
+                      href="#forgot"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toast.info('Demo password reset: Enter email to receive instructions');
+                      }}
+                      className="text-[11px] font-semibold text-blue-600 hover:underline"
+                    >
+                      Forgot Password?
+                    </a>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                      <Lock size={16} />
+                    </div>
+                    <input
+                      required
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Password"
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3 text-xs font-medium text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
                 </div>
               </div>
             )}
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Email address</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                  <Mail size={18} />
-                </div>
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                  placeholder="alex@globetrotter.io"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-slate-700">Password</label>
-                {!isSignup && (
-                  <a
-                    href="#forgot"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toast.info('Password reset instructions sent to email (Demo)');
-                    }}
-                    className="text-xs font-medium text-blue-600 hover:underline"
-                  >
-                    Forgot Password?
-                  </a>
+            {/* CTA Button matching Excalidraw ("Login Button" or "Register Users") */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:opacity-95 active:scale-[0.99] disabled:opacity-60"
+              >
+                {loading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <>
+                    {isSignup ? 'Register Users' : 'Login Button'}
+                    <ArrowRight size={16} />
+                  </>
                 )}
-              </div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                  <Lock size={18} />
-                </div>
-                <input
-                  required
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                  placeholder={isSignup ? 'At least 6 characters' : 'Enter your password'}
-                />
-              </div>
+              </button>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-sm font-semibold text-white shadow-md shadow-blue-500/25 transition hover:opacity-95 active:scale-[0.99] disabled:opacity-60"
-            >
-              {loading ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <>
-                  {isSignup ? 'Get Started' : 'Login'}
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </button>
           </form>
 
           {/* Social Auth 1-Click Action Buttons */}
