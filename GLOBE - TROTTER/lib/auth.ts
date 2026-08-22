@@ -10,7 +10,6 @@ export interface TokenPayload {
   userId: string;
   email: string;
   role: string;
-  name?: string;
 }
 
 export function signToken(payload: TokenPayload): string {

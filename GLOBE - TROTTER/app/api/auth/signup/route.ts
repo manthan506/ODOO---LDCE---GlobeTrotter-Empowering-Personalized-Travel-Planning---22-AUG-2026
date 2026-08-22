@@ -6,15 +6,8 @@ import User from '@/models/User';
 import { signToken, AUTH_COOKIE_NAME } from '@/lib/auth';
 
 const signupSchema = z.object({
-  name: z.string().optional(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  phoneNumber: z.string().optional(),
-  city: z.string().optional(),
-  country: z.string().optional(),
-  additionalInfo: z.string().optional(),
-  photoUrl: z.string().optional(),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
@@ -30,15 +23,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const data = result.data;
-    const email = data.email.toLowerCase();
-    const displayName =
-      data.name ||
-      (data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : data.firstName || email.split('@')[0]);
-
+    const { name, email, password } = result.data;
     await connectDB();
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return NextResponse.json(
         { error: 'An account with this email already exists' },
@@ -47,18 +35,11 @@ export async function POST(req: Request) {
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(data.password, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await User.create({
-      name: displayName,
-      firstName: data.firstName || '',
-      lastName: data.lastName || '',
-      email,
-      phoneNumber: data.phoneNumber || '',
-      city: data.city || '',
-      country: data.country || '',
-      additionalInfo: data.additionalInfo || '',
-      photoUrl: data.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+      name,
+      email: email.toLowerCase(),
       password: hashedPassword,
       role: 'user',
     });

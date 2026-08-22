@@ -5,13 +5,6 @@ export interface IUser extends Document {
   email: string;
   password: string;
   name: string;
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
-  city?: string;
-  country?: string;
-  additionalInfo?: string;
-  photoUrl?: string;
   role: 'user' | 'admin';
   createdAt: Date;
   updatedAt: Date;
@@ -35,16 +28,6 @@ const UserSchema = new Schema<IUser>(
       type: String,
       required: [true, 'Name is required'],
       trim: true,
-    },
-    firstName: { type: String, trim: true },
-    lastName: { type: String, trim: true },
-    phoneNumber: { type: String, trim: true },
-    city: { type: String, trim: true },
-    country: { type: String, trim: true },
-    additionalInfo: { type: String, trim: true },
-    photoUrl: {
-      type: String,
-      default: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
     },
     role: {
       type: String,

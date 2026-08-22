@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   User,
@@ -16,48 +15,16 @@ import {
   Building,
   Flag,
   Shield,
-  Edit3,
-  Check,
-  X,
-  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function ProfileContent() {
-  const { user, signOut, refetchUser } = useAuth();
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(user?.name || '');
-  const [saving, setSaving] = useState(false);
+  const { user, signOut } = useAuth();
 
-  const userName = user?.name || user?.email?.split('@')[0] || 'Alex Traveler';
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/users/${user.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-        credentials: 'include',
-      });
-      if (res.ok) {
-        toast.success('Profile updated successfully!');
-        setEditing(false);
-        if (refetchUser) await refetchUser();
-      } else {
-        throw new Error('Failed to update profile');
-      }
-    } catch (err) {
-      toast.error('Could not update profile');
-    } finally {
-      setSaving(false);
-    }
-  };
+  const userName = user?.name || user?.email?.split('@')[0] || 'J. Snow';
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 sm:px-6 space-y-6">
+    <div className="mx-auto max-w-xl px-4 py-6 sm:px-6">
       {/* Profile Header Card matching Screen 12 */}
       <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm text-center">
         {/* Background gradient banner */}
@@ -72,30 +39,17 @@ export function ProfileContent() {
           />
           <button
             type="button"
-            onClick={() => setEditing(true)}
+            onClick={() => toast.info('Avatar change (demo)')}
             className="absolute bottom-0 right-0 grid h-7 w-7 place-items-center rounded-full bg-slate-900 text-white border-2 border-white shadow-sm hover:bg-slate-800"
-            title="Edit Profile"
           >
             <Camera size={13} />
           </button>
         </div>
 
-        <div className="flex items-center justify-center gap-2">
-          <h2 className="text-xl font-bold text-slate-900">{userName}</h2>
-          <button
-            onClick={() => {
-              setName(user?.name || '');
-              setEditing(true);
-            }}
-            className="text-slate-400 hover:text-blue-600 transition"
-            title="Edit Name"
-          >
-            <Edit3 size={14} />
-          </button>
-        </div>
-        <p className="text-xs text-slate-500 mt-0.5">{user?.email || 'alex@globetrotter.io'}</p>
+        <h2 className="text-xl font-bold text-slate-900">{userName}</h2>
+        <p className="text-xs text-slate-500 mt-0.5">{user?.email || 'traveler@globetrotter.io'}</p>
         <span className="text-[11px] font-semibold text-blue-600 mt-1 inline-block">
-          📍 Explorer • Verified Traveler
+          📍 17 km from your location
         </span>
 
         {/* Persona tags (Nomad, Explorer) */}
@@ -125,50 +79,8 @@ export function ProfileContent() {
         </div>
       </div>
 
-      {/* Edit Profile Modal */}
-      {editing && (
-        <div className="rounded-3xl border border-blue-200 bg-blue-50/50 p-5 shadow-sm space-y-3 animate-in fade-in-50">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-slate-900 uppercase">Edit Profile Details</h4>
-            <button onClick={() => setEditing(false)} className="text-slate-400 hover:text-slate-600">
-              <X size={16} />
-            </button>
-          </div>
-          <form onSubmit={handleUpdateProfile} className="space-y-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Display Name</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 outline-none focus:border-blue-500"
-                placeholder="Enter your name"
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setEditing(false)}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
       {/* Your Travel Profile Section */}
-      <div className="space-y-3">
+      <div className="mt-6 space-y-4">
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
           Your Travel Profile
         </h3>
@@ -225,7 +137,7 @@ export function ProfileContent() {
       </div>
 
       {/* Your Preferences Section */}
-      <div className="space-y-3">
+      <div className="mt-6 space-y-4">
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
           Your Preferences
         </h3>
@@ -260,7 +172,7 @@ export function ProfileContent() {
       </div>
 
       {/* Sign Out Button */}
-      <div className="pt-2">
+      <div className="mt-8">
         <button
           onClick={signOut}
           className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50/50 py-3.5 text-xs font-bold text-red-600 hover:bg-red-50 hover:border-red-300 transition"
