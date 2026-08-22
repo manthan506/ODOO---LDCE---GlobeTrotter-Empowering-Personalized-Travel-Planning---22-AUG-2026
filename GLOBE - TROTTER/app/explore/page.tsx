@@ -1,14 +1,11 @@
-'use client';
-
-import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { Navbar } from '@/components/layout/Navbar';
 import { ExploreContent } from '@/components/explore/ExploreContent';
 
 export default function ExplorePage() {
   return (
-    <ProtectedRoute>
+    <main className="min-h-screen bg-slate-50">
       <Navbar />
       <ExploreContent />
-    </ProtectedRoute>
+    </main>
   );
 }
