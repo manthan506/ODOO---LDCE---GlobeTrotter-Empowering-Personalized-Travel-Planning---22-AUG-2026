@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   User,
@@ -134,8 +134,6 @@ export function ProfileContent() {
   const { signOut } = useAuth();
   const { userProfile, updateUserProfile, savedDestinations, removeSavedDestination } = useTripSync();
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   // Profile Form state
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(userProfile.name);
@@ -145,21 +143,6 @@ export function ProfileContent() {
   const [language, setLanguage] = useState(userProfile.language);
   const [currency, setCurrency] = useState(userProfile.currency);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        if (dataUrl) {
-          updateUserProfile({ avatar: dataUrl });
-          toast.success('Your real profile photo has been uploaded and updated across the whole app!');
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,15 +170,6 @@ export function ProfileContent() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 pb-28 space-y-8">
-      {/* Hidden File Input for Real Photo Uploads */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/*"
-        className="hidden"
-      />
-
       {/* ============================================================ */}
       {/* 1. USER PROFILE HEADER (Screen 7 Wireframe)                  */}
       {/* Left: Image of the User | Right: User Details & Edit Option  */}
@@ -212,23 +186,21 @@ export function ProfileContent() {
               />
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  const newImg = prompt('Enter new avatar image URL:', userProfile.avatar);
+                  if (newImg) {
+                    updateUserProfile({ avatar: newImg });
+                    toast.success('Avatar updated!');
+                  }
+                }}
                 className="absolute bottom-1 right-1 grid h-9 w-9 place-items-center rounded-full bg-slate-900 text-white border-2 border-white shadow-md hover:bg-blue-600 transition cursor-pointer"
-                title="Upload Real Photo from Computer"
+                title="Change Photo"
               >
                 <Camera size={16} />
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="mt-2 text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              <Camera size={12} /> Upload Real Photo
-            </button>
-
-            <div className="mt-2 flex items-center gap-1.5">
+            <div className="mt-3 flex items-center gap-1.5">
               <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-[10px] font-black text-blue-700 uppercase tracking-wider">
                 Pro Explorer
               </span>
@@ -293,7 +265,7 @@ export function ProfileContent() {
 
                   <div className="rounded-xl bg-white p-2.5 border border-slate-200">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Saved Spots</span>
-                    <p className="text-xs font-bold text-purple-600 mt-0.5">{savedDestinations.length} Cities</p>
+                    <p className="text-xs font-bold text-purple-600 mt-0.5">{savedDests.length} Cities</p>
                   </div>
                 </div>
               </div>
@@ -317,8 +289,8 @@ export function ProfileContent() {
                     <input
                       type="text"
                       required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
                       className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 font-bold outline-none focus:border-blue-500 focus:bg-white"
                     />
                   </div>
@@ -328,8 +300,8 @@ export function ProfileContent() {
                     <input
                       type="email"
                       required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={userEmail}
+                      onChange={(e) => setUserEmail(e.target.value)}
                       className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
                     />
                   </div>
@@ -340,8 +312,8 @@ export function ProfileContent() {
                     <label className="block text-xs font-bold text-slate-700 mb-1">Location:</label>
                     <input
                       type="text"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
+                      value={userLocation}
+                      onChange={(e) => setUserLocation(e.target.value)}
                       className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
                     />
                   </div>
@@ -381,8 +353,8 @@ export function ProfileContent() {
                   <label className="block text-xs font-bold text-slate-700 mb-1">Travel Bio & Preferences:</label>
                   <textarea
                     rows={2}
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
+                    value={userBio}
+                    onChange={(e) => setUserBio(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
                   />
                 </div>

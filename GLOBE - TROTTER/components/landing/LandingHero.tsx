@@ -2,11 +2,8 @@
 
 import Link from 'next/link';
 import { ArrowRight, Compass, Star, MapPin, Sparkles, Plane, ExternalLink, ShieldCheck, Heart } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
 
-export function LandingHero({ onOpenAuth }: { onOpenAuth?: (mode?: 'signin' | 'signup') => void }) {
-  const { user } = useAuth();
-
+export function LandingHero() {
   const scrollToPlanner = () => {
     const el = document.getElementById('search-planner');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -15,13 +12,6 @@ export function LandingHero({ onOpenAuth }: { onOpenAuth?: (mode?: 'signin' | 's
   const scrollToDestinations = () => {
     const el = document.getElementById('destinations');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handlePlanClick = (e: React.MouseEvent) => {
-    if (!user && onOpenAuth) {
-      e.preventDefault();
-      onOpenAuth('signup');
-    }
   };
 
   return (
@@ -74,7 +64,6 @@ export function LandingHero({ onOpenAuth }: { onOpenAuth?: (mode?: 'signin' | 's
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3.5 pt-2">
               <Link
                 href="/trips/new"
-                onClick={handlePlanClick}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-7 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-500/40 transition active:scale-95 cursor-pointer"
               >
                 <span>Plan Your Trip</span>

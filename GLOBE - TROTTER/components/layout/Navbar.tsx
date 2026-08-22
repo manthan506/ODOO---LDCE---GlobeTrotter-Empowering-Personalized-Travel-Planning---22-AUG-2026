@@ -44,6 +44,7 @@ export function Navbar() {
     { href: '/budget', label: 'Budget', icon: Wallet },
     { href: '/explore', label: 'Explore', icon: Search },
     { href: '/community', label: 'Community', icon: Globe2 },
+    { href: '/profile', label: 'Profile', icon: UserIcon },
   ];
 
   return (
@@ -104,19 +105,11 @@ export function Navbar() {
                 <div className="relative">
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
-                    className="flex items-center gap-2 rounded-xl p-1 pr-2 hover:bg-slate-50 transition border border-transparent hover:border-slate-200 cursor-pointer"
+                    className="flex items-center gap-2 rounded-xl p-1 pr-2 hover:bg-slate-50 transition border border-transparent hover:border-slate-200"
                   >
-                    {userProfile.avatar ? (
-                      <img
-                        src={userProfile.avatar}
-                        alt={userProfile.name}
-                        className="h-8 w-8 rounded-full object-cover border border-slate-200 shadow-xs"
-                      />
-                    ) : (
-                      <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-bold text-white shadow-xs">
-                        {(userProfile.name || user.name || user.email || 'M')[0].toUpperCase()}
-                      </span>
-                    )}
+                    <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-bold text-white shadow-xs">
+                      {(userProfile.name || user.name || user.email || 'M')[0].toUpperCase()}
+                    </span>
                     <span className="hidden text-xs font-bold text-slate-700 md:block">
                       {userProfile.name || user.name || user.email?.split('@')[0]}
                     </span>
