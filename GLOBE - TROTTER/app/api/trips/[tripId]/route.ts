@@ -66,6 +66,20 @@ export async function GET(
         arrive_date: stop.arriveDate.toISOString().split('T')[0],
         leave_date: stop.leaveDate.toISOString().split('T')[0],
         order: stop.order,
+        lodging: stop.lodging || {},
+        reservations: (stop.reservations || []).map((r: any) => ({
+          id: r._id ? r._id.toString() : undefined,
+          type: r.type,
+          name: r.name,
+          time: r.time,
+          confirmationCode: r.confirmationCode,
+        })),
+        attachments: (stop.attachments || []).map((a: any) => ({
+          id: a._id ? a._id.toString() : undefined,
+          name: a.name,
+          url: a.url,
+          type: a.type,
+        })),
         cities: cityDoc
           ? {
               id: cityDoc._id.toString(),
@@ -73,6 +87,9 @@ export async function GET(
               country: cityDoc.country,
               cost_index: cityDoc.costIndex,
               image_url: cityDoc.imageUrl || null,
+              description: cityDoc.description || '',
+              lat: cityDoc.lat || 48.8566,
+              lng: cityDoc.lng || 2.3522,
             }
           : undefined,
         stop_activities: stop.activities.map((sa) => {
@@ -91,6 +108,9 @@ export async function GET(
                   duration_min: actDoc.duration,
                   category: actDoc.category,
                   image_url: actDoc.imageUrl || null,
+                  description: actDoc.description || '',
+                  includes: actDoc.includes || [],
+                  best_time: actDoc.bestTime || '',
                 }
               : undefined,
           };

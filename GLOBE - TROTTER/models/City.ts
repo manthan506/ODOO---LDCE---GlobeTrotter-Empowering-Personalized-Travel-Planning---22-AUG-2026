@@ -8,6 +8,8 @@ export interface ICity extends Document {
   costIndex: number;
   imageUrl?: string;
   description?: string;
+  lat?: number;
+  lng?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +44,14 @@ const CitySchema = new Schema<ICity>(
     description: {
       type: String,
       default: '',
+    },
+    lat: {
+      type: Number,
+      default: 48.8566,
+    },
+    lng: {
+      type: Number,
+      default: 2.3522,
     },
   },
   {

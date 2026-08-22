@@ -24,10 +24,24 @@ import {
   List as ListIcon,
   Trash2,
   CheckCircle2,
+  Navigation,
+  Hotel,
+  CheckSquare,
+  BookOpen,
+  Mail,
+  ExternalLink,
 } from 'lucide-react';
 import Link from 'next/link';
-import type { TripMember, Expense } from '@/types';
+import type { TripMember, Expense, Stop } from '@/types';
 import { BudgetBreakdown } from '@/components/itinerary/BudgetBreakdown';
+import { LodgingCard } from '@/components/itinerary/LodgingCard';
+import { ReservationsCard } from '@/components/itinerary/ReservationsCard';
+import { AttachmentsCard } from '@/components/itinerary/AttachmentsCard';
+import { TripMapView } from '@/components/trip/TripMapView';
+import { FlightStatusCard } from '@/components/trip/FlightStatusCard';
+import { GmailImportModal } from '@/components/trip/GmailImportModal';
+import { PackingChecklist } from '@/components/trip/PackingChecklist';
+import { TravelGuides } from '@/components/trip/TravelGuides';
 
 const formatINR = (amount: number) => `₹${Math.round(amount).toLocaleString('en-IN')}`;
 
@@ -36,9 +50,10 @@ export function ItineraryView({ tripId }: { tripId: string }) {
   const { expenses, refetch: refetchExpenses } = useExpenses(tripId);
   const { members, refetch: refetchMembers } = useTripMembers(tripId);
 
-  const [activeTab, setActiveTab] = useState<'itinerary' | 'budget' | 'members'>('itinerary');
+  const [activeTab, setActiveTab] = useState<'itinerary' | 'map' | 'lodging' | 'budget' | 'packing'>('itinerary');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showGmailModal, setShowGmailModal] = useState(false);
   const [shareSlug, setShareSlug] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [shareLoading, setShareLoading] = useState(false);
@@ -85,6 +100,33 @@ export function ItineraryView({ tripId }: { tripId: string }) {
     toast.success('Public trip link copied to clipboard!');
   };
 
+  const handleImportedReservations = async (foundReservations: any[]) => {
+    if (!trip?.stops || trip.stops.length === 0) {
+      toast.info('Add a stop to attach reservations.');
+      return;
+    }
+    const firstStopId = trip.stops[0].id;
+    const existing = trip.stops[0].reservations || [];
+    const formatted = foundReservations.map((r) => ({
+      type: r.type === 'flight' ? 'Train' : r.type === 'hotel' ? 'Hotel' : 'Museum',
+      name: r.title,
+      time: r.date.split('·')[1]?.trim() || '14:30',
+      confirmationCode: r.code,
+    }));
+
+    try {
+      await fetch(`/api/stops/${firstStopId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reservations: [...existing, ...formatted] }),
+        credentials: 'include',
+      });
+      refetch();
+    } catch {
+      console.error('Error attaching imported reservations');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-20">
@@ -115,19 +157,29 @@ export function ItineraryView({ tripId }: { tripId: string }) {
     0
   );
 
-  const totalTripCost = expenses.reduce((acc, curr) => acc + curr.amount, 0) || totalActivityCost || 154000;
+  const totalTripCost = expenses.reduce((acc, curr) => acc + curr.amount, 0) || totalActivityCost || 110000;
+  const firstCityName = sortedStops[0]?.cities?.name || 'Paris';
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-      {/* Top Breadcrumb and Actions matching Screen 7 */}
-      <div className="flex items-center justify-between mb-4">
+    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 space-y-6">
+      {/* Top Breadcrumb and Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/trips"
           className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-900 transition"
         >
           <ArrowLeft size={16} /> My Trips
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Gmail Scanner trigger button */}
+          <button
+            onClick={() => setShowGmailModal(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/70 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition"
+          >
+            <Mail size={14} /> Sync Gmail
+          </button>
+
+          {/* Share button */}
           <button
             onClick={() => {
               fetchShare();
@@ -137,6 +189,8 @@ export function ItineraryView({ tripId }: { tripId: string }) {
           >
             <Share2 size={14} /> Share
           </button>
+
+          {/* Edit stops */}
           <Link
             href={`/trips/${tripId}/plan`}
             className="flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition"
@@ -147,7 +201,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
       </div>
 
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 p-6 text-white shadow-lg mb-6">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 p-6 text-white shadow-lg">
         <div className="relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-md">
@@ -163,41 +217,78 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         </div>
       </div>
 
-      {/* Main Tabs (Itinerary, Budget Breakdown, Trip Members) */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-6">
-        <div className="flex items-center gap-2">
+      {/* Flight Status Widget tied to first stop */}
+      <FlightStatusCard firstStopCity={firstCityName} startDate={trip.start_date} />
+
+      {/* Navigation Tabs */}
+      <div className="flex items-center justify-between border-b border-slate-200 pb-3 overflow-x-auto">
+        <div className="flex items-center gap-1.5 min-w-max">
           <button
             onClick={() => setActiveTab('itinerary')}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
+            className={`rounded-xl px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 ${
               activeTab === 'itinerary'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            Itinerary Timeline
+            <ListIcon size={14} /> Itinerary
           </button>
+
+          <button
+            onClick={() => setActiveTab('map')}
+            className={`rounded-xl px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 ${
+              activeTab === 'map'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Navigation size={14} /> Route Map
+          </button>
+
+          <button
+            onClick={() => setActiveTab('lodging')}
+            className={`rounded-xl px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 ${
+              activeTab === 'lodging'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Hotel size={14} /> Lodging & Bookings
+          </button>
+
           <button
             onClick={() => setActiveTab('budget')}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
+            className={`rounded-xl px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 ${
               activeTab === 'budget'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            Budget Breakdown
+            <DollarSign size={14} /> Budget (₹)
+          </button>
+
+          <button
+            onClick={() => setActiveTab('packing')}
+            className={`rounded-xl px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 ${
+              activeTab === 'packing'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <CheckSquare size={14} /> Packing & Guide
           </button>
         </div>
 
-        {/* List View / Calendar View toggle (Screen 7 top pill) */}
+        {/* List View / Calendar View toggle */}
         {activeTab === 'itinerary' && (
-          <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+          <div className="hidden sm:flex rounded-xl bg-slate-100 p-1 border border-slate-200 ml-2 flex-shrink-0">
             <button
               onClick={() => setViewMode('list')}
               className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
                 viewMode === 'list' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600'
               }`}
             >
-              <ListIcon size={12} /> List View
+              List
             </button>
             <button
               onClick={() => setViewMode('calendar')}
@@ -205,13 +296,13 @@ export function ItineraryView({ tripId }: { tripId: string }) {
                 viewMode === 'calendar' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600'
               }`}
             >
-              <CalendarIcon size={12} /> Calendar View
+              Calendar
             </button>
           </div>
         )}
       </div>
 
-      {/* TAB 1: ITINERARY (Screen 7) */}
+      {/* TAB 1: ITINERARY TIMELINE */}
       {activeTab === 'itinerary' && (
         <div className="space-y-6">
           {sortedStops.length === 0 ? (
@@ -230,13 +321,12 @@ export function ItineraryView({ tripId }: { tripId: string }) {
             <div className="space-y-4">
               {sortedStops.map((stop, index) => {
                 const arrive = new Date(stop.arrive_date);
-                const leave = new Date(stop.leave_date);
                 const activities = stop.stop_activities || [];
 
                 return (
                   <div
                     key={stop.id}
-                    className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+                    className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4"
                   >
                     <div className="flex items-start gap-4">
                       {/* Left Numbered Circle & Timeline connector line */}
@@ -293,11 +383,31 @@ export function ItineraryView({ tripId }: { tripId: string }) {
                         </div>
                       </div>
                     </div>
+
+                    {/* Integrated Stop Mini-Cards: Lodging, Reservations, Attachments */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
+                      <LodgingCard
+                        stopId={stop.id}
+                        lodging={stop.lodging}
+                        cityName={stop.cities?.name}
+                        onUpdated={refetch}
+                      />
+                      <ReservationsCard
+                        stopId={stop.id}
+                        reservations={stop.reservations}
+                        onUpdated={refetch}
+                      />
+                      <AttachmentsCard
+                        stopId={stop.id}
+                        attachments={stop.attachments}
+                        onUpdated={refetch}
+                      />
+                    </div>
                   </div>
                 );
               })}
 
-              {/* Total Estimated Cost Bar matching Screen 7 */}
+              {/* Total Estimated Cost Bar */}
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex items-center justify-between">
                 <div>
                   <span className="text-[11px] text-slate-400 font-semibold uppercase">Total Estimated Cost</span>
@@ -315,7 +425,61 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         </div>
       )}
 
-      {/* TAB 2: BUDGET BREAKDOWN (Screen 11) */}
+      {/* TAB 2: ROUTE MAP & OPTIMIZATION */}
+      {activeTab === 'map' && (
+        <TripMapView
+          stops={sortedStops}
+          tripId={tripId}
+          onStopsReordered={refetch}
+        />
+      )}
+
+      {/* TAB 3: LODGING & BOOKINGS OVERVIEW */}
+      {activeTab === 'lodging' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-900">Accommodations & Reservations</h3>
+            <button
+              onClick={() => setShowGmailModal(true)}
+              className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+            >
+              <Mail size={13} /> Scan from Gmail
+            </button>
+          </div>
+
+          {sortedStops.map((stop) => (
+            <div key={stop.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                <MapPin size={16} className="text-blue-600" />
+                <h4 className="text-sm font-bold text-slate-900">
+                  {stop.cities?.name}, {stop.cities?.country}
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <LodgingCard
+                  stopId={stop.id}
+                  lodging={stop.lodging}
+                  cityName={stop.cities?.name}
+                  onUpdated={refetch}
+                />
+                <ReservationsCard
+                  stopId={stop.id}
+                  reservations={stop.reservations}
+                  onUpdated={refetch}
+                />
+                <AttachmentsCard
+                  stopId={stop.id}
+                  attachments={stop.attachments}
+                  onUpdated={refetch}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* TAB 4: BUDGET BREAKDOWN */}
       {activeTab === 'budget' && (
         <BudgetBreakdown
           tripId={tripId}
@@ -326,6 +490,21 @@ export function ItineraryView({ tripId }: { tripId: string }) {
           }}
         />
       )}
+
+      {/* TAB 5: PACKING & TRAVEL GUIDE */}
+      {activeTab === 'packing' && (
+        <div className="space-y-6">
+          <PackingChecklist tripName={trip.name} />
+          <TravelGuides activeCity={firstCityName} />
+        </div>
+      )}
+
+      {/* Gmail Import Modal */}
+      <GmailImportModal
+        isOpen={showGmailModal}
+        onClose={() => setShowGmailModal(false)}
+        onImportReservations={handleImportedReservations}
+      />
 
       {/* Share Modal */}
       {showShareModal && (

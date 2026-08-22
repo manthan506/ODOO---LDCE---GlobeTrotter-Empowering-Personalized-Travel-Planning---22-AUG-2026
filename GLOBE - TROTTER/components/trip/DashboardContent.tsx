@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTrips } from '@/hooks/useTrips';
 import { TripCard } from '@/components/trip/TripCard';
+import { FlightDealsCard } from '@/components/trip/FlightDealsCard';
 import {
   MapPin,
   Plus,
@@ -30,13 +31,12 @@ export function DashboardContent() {
   const [search, setSearch] = useState('');
 
   const userName = user?.name || user?.email?.split('@')[0] || 'Traveler';
-
   const upcomingTrip = trips.length > 0 ? trips[0] : null;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 space-y-6">
       {/* Top Greeting & Notification matching Screen 3 */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Hi, {userName}! 👋
@@ -55,7 +55,7 @@ export function DashboardContent() {
       </div>
 
       {/* Search Bar with Mic & Filter */}
-      <div className="relative mb-6">
+      <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
         <input
           value={search}
@@ -75,7 +75,7 @@ export function DashboardContent() {
       </div>
 
       {/* Quick Action Category Pills (Screen 3) */}
-      <div className="grid grid-cols-4 gap-2.5 sm:gap-4 mb-8">
+      <div className="grid grid-cols-4 gap-2.5 sm:gap-4">
         <Link
           href="/trips"
           className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl bg-blue-50/70 border border-blue-100 hover:border-blue-300 hover:bg-blue-50 transition text-center group"
@@ -103,7 +103,7 @@ export function DashboardContent() {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-amber-500 text-white mb-2 shadow-xs group-hover:scale-105 transition">
             <Lightbulb size={18} />
           </div>
-          <span className="text-xs font-bold text-slate-800">Inspiration</span>
+          <span className="text-xs font-bold text-slate-800">Community</span>
         </Link>
 
         <Link
@@ -118,7 +118,7 @@ export function DashboardContent() {
       </div>
 
       {/* Upcoming Trips Card with Progress Bar (Screen 3) */}
-      <div className="mb-8">
+      <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-bold text-slate-900">Upcoming Trips</h2>
           <Link href="/trips" className="text-xs font-bold text-blue-600 hover:underline">
@@ -144,16 +144,16 @@ export function DashboardContent() {
                 <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
                   {upcomingTrip.name}
                 </h3>
-                <p className="text-xs text-slate-500">4 Cities • 12 Days Planned</p>
+                <p className="text-xs text-slate-500">Curated Multi-City Route</p>
 
                 {/* Progress bar */}
                 <div className="pt-2">
                   <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-1">
                     <span>Itinerary Planning</span>
-                    <span className="text-blue-600">60% Planned</span>
+                    <span className="text-blue-600">65% Planned</span>
                   </div>
                   <div className="h-2 w-full max-w-xs rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full w-[60%] rounded-full bg-gradient-to-r from-blue-500 to-indigo-600" />
+                    <div className="h-full w-[65%] rounded-full bg-gradient-to-r from-blue-500 to-indigo-600" />
                   </div>
                 </div>
               </div>
@@ -185,6 +185,9 @@ export function DashboardContent() {
           </div>
         )}
       </div>
+
+      {/* Flight Deals Card */}
+      <FlightDealsCard />
 
       {/* Popular Destinations Carousel (Screen 3) */}
       <div>

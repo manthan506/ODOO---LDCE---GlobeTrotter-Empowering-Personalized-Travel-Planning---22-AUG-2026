@@ -11,6 +11,34 @@ const updateStopSchema = z.object({
   arriveDate: z.string().optional(),
   leaveDate: z.string().optional(),
   order: z.number().optional(),
+  lodging: z
+    .object({
+      name: z.string().optional(),
+      checkIn: z.string().optional(),
+      checkOut: z.string().optional(),
+      confirmationCode: z.string().optional(),
+      address: z.string().optional(),
+    })
+    .optional(),
+  reservations: z
+    .array(
+      z.object({
+        type: z.string().optional(),
+        name: z.string(),
+        time: z.string().optional(),
+        confirmationCode: z.string().optional(),
+      })
+    )
+    .optional(),
+  attachments: z
+    .array(
+      z.object({
+        name: z.string(),
+        url: z.string(),
+        type: z.string().optional(),
+      })
+    )
+    .optional(),
 });
 
 export async function PUT(
@@ -48,14 +76,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { arriveDate, leaveDate, order } = result.data;
+    const { arriveDate, leaveDate, order, lodging, reservations, attachments } = result.data;
     if (arriveDate !== undefined) stop.arriveDate = new Date(arriveDate);
     if (leaveDate !== undefined) stop.leaveDate = new Date(leaveDate);
     if (order !== undefined) stop.order = order;
+    if (lodging !== undefined) stop.lodging = lodging;
+    if (reservations !== undefined) stop.reservations = reservations as any;
+    if (attachments !== undefined) stop.attachments = attachments as any;
 
     await stop.save();
 
-    return NextResponse.json({ message: 'Stop updated successfully' }, { status: 200 });
+    return NextResponse.json({ message: 'Stop updated successfully', stop }, { status: 200 });
   } catch (error) {
     console.error('Update stop error:', error);
     return NextResponse.json(
