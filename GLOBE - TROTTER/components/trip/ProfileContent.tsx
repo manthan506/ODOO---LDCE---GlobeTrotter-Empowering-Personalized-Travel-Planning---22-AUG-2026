@@ -128,11 +128,14 @@ const SAVED_DESTINATIONS = [
   { id: 'sd-6', name: 'Barcelona', country: 'Spain', img: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80' },
 ];
 
+import { useState, useRef } from 'react';
 import { useTripSync } from '@/context/TripSyncContext';
 
 export function ProfileContent() {
   const { signOut } = useAuth();
   const { userProfile, updateUserProfile, savedDestinations, removeSavedDestination } = useTripSync();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Profile Form state
   const [isEditing, setIsEditing] = useState(false);
@@ -143,6 +146,21 @@ export function ProfileContent() {
   const [language, setLanguage] = useState(userProfile.language);
   const [currency, setCurrency] = useState(userProfile.currency);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          updateUserProfile({ avatar: dataUrl });
+          toast.success('Your real profile photo has been uploaded and updated across the whole app!');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,6 +188,15 @@ export function ProfileContent() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 pb-28 space-y-8">
+      {/* Hidden File Input for Real Photo Uploads */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+
       {/* ============================================================ */}
       {/* 1. USER PROFILE HEADER (Screen 7 Wireframe)                  */}
       {/* Left: Image of the User | Right: User Details & Edit Option  */}
@@ -186,21 +213,23 @@ export function ProfileContent() {
               />
               <button
                 type="button"
-                onClick={() => {
-                  const newImg = prompt('Enter new avatar image URL:', userProfile.avatar);
-                  if (newImg) {
-                    updateUserProfile({ avatar: newImg });
-                    toast.success('Avatar updated!');
-                  }
-                }}
+                onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-1 right-1 grid h-9 w-9 place-items-center rounded-full bg-slate-900 text-white border-2 border-white shadow-md hover:bg-blue-600 transition cursor-pointer"
-                title="Change Photo"
+                title="Upload Real Photo from Computer"
               >
                 <Camera size={16} />
               </button>
             </div>
 
-            <div className="mt-3 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="mt-2 text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <Camera size={12} /> Upload Real Photo
+            </button>
+
+            <div className="mt-2 flex items-center gap-1.5">
               <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-[10px] font-black text-blue-700 uppercase tracking-wider">
                 Pro Explorer
               </span>
