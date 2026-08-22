@@ -265,7 +265,7 @@ export function ProfileContent() {
 
                   <div className="rounded-xl bg-white p-2.5 border border-slate-200">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Saved Spots</span>
-                    <p className="text-xs font-bold text-purple-600 mt-0.5">{savedDests.length} Cities</p>
+                    <p className="text-xs font-bold text-purple-600 mt-0.5">5 Cities</p>
                   </div>
                 </div>
               </div>
