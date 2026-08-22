@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   '/dashboard',
   '/explore',
   '/trips',
+  '/trips/new',
   '/login',
   '/signup',
   '/community',
