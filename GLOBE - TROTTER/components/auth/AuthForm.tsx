@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Compass, Loader2, ArrowRight, Mail, Lock, User as UserIcon, Zap } from 'lucide-react';
 import Link from 'next/link';
@@ -9,6 +9,9 @@ import { useAuth } from '@/context/AuthContext';
 
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTarget = searchParams.get('redirect') || '/dashboard';
+
   const { signIn, signUp, refetchUser } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -46,7 +49,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         }
         toast.success('Welcome back!');
       }
-      router.push('/dashboard');
+      router.push(redirectTarget);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Authentication failed';
       toast.error(message);
@@ -62,7 +65,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       if (res.ok) {
         toast.success('Logged in as Demo Traveler (Alex) with pre-loaded European Tour!');
         await refetchUser();
-        router.push('/dashboard');
+        router.push(redirectTarget);
       } else {
         throw new Error('Could not login as demo');
       }
