@@ -56,6 +56,7 @@ import { RouteOptimizerView } from '@/components/trip/RouteOptimizerView';
 import { SplitItineraryView } from '@/components/itinerary/SplitItineraryView';
 import { OfflineAccessView } from '@/components/trip/OfflineAccessView';
 import { ReservationsHub } from '@/components/itinerary/ReservationsHub';
+import { LodgingComparisonView } from '@/components/itinerary/LodgingComparisonView';
 
 export function ItineraryView({ tripId }: { tripId: string }) {
   const { trip, loading, refetch } = useTrip(tripId);
@@ -276,19 +277,9 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         <ReservationsHub trip={trip} tripId={tripId} />
       )}
 
-      {/* 9. Lodging (Screenshot 9) */}
+      {/* 9. Lodging (Screenshot 9 - Phase 9) */}
       {activeTab === 'lodging' && (
-        <div className="space-y-4">
-          {sortedStops.map((stop) => (
-            <LodgingCard
-              key={stop.id}
-              stopId={stop.id}
-              lodging={stop.lodging}
-              cityName={stop.cities?.name}
-              onUpdated={refetch}
-            />
-          ))}
-        </div>
+        <LodgingComparisonView trip={trip} tripId={tripId} />
       )}
 
       {/* 10. Packing (Screenshot 10) */}
