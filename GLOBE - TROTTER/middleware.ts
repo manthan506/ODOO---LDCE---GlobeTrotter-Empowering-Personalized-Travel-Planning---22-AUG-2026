@@ -6,6 +6,9 @@ export const AUTH_COOKIE_NAME = 'auth_token';
 // Public routes that don't require authentication
 const PUBLIC_PATHS = [
   '/',
+  '/dashboard',
+  '/explore',
+  '/trips',
   '/login',
   '/signup',
   '/community',
