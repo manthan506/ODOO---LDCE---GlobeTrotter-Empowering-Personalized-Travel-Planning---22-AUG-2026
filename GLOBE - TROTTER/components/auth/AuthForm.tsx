@@ -435,65 +435,6 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             </button>
           </form>
 
-          {/* Quick Pre-fill Demo Profiles for Evaluators */}
-          <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200" />
-            </div>
-            <div className="relative flex justify-center text-xs text-slate-400">
-              <span className="bg-white px-2">Quick Demo Shortcuts</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                if (isSignup) {
-                  setFirstName('Alex');
-                  setLastName('Nomad');
-                  setEmail('alex@globetrotter.io');
-                  setPhone('+91 98765 12345');
-                  setCity('Ahmedabad');
-                  setCountry('India');
-                  setAdditionalInfo('Love mountain trekking, street food tours, and budget travel.');
-                  setPassword('password123');
-                } else {
-                  setEmail('alex@globetrotter.io');
-                  setPassword('password123');
-                }
-                toast.success('Pre-filled Alex Nomad demo details!');
-              }}
-              className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 text-xs font-bold text-slate-700 transition hover:bg-slate-100"
-            >
-              <CheckCircle2 size={15} className="text-blue-600" />
-              Alex Nomad
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (isSignup) {
-                  setFirstName('Sarah');
-                  setLastName('Explorer');
-                  setEmail('sarah@globetrotter.io');
-                  setPhone('+1 415 555 2671');
-                  setCity('San Francisco');
-                  setCountry('USA');
-                  setAdditionalInfo('Cultural heritage, art museums, luxury stays.');
-                  setPassword('password123');
-                } else {
-                  setEmail('sarah@globetrotter.io');
-                  setPassword('password123');
-                }
-                toast.success('Pre-filled Sarah Explorer demo details!');
-              }}
-              className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 text-xs font-bold text-slate-700 transition hover:bg-slate-100"
-            >
-              <CheckCircle2 size={15} className="text-indigo-600" />
-              Sarah Explorer
-            </button>
-          </div>
-
           {/* Footer Switch Link */}
           <p className="mt-6 text-center text-xs text-slate-500 font-medium">
             {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
