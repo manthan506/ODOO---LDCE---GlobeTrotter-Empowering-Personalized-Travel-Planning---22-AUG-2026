@@ -14,20 +14,10 @@ import {
   Search,
   Mic,
   MicOff,
-  SlidersHorizontal,
   Luggage,
   Sparkles,
-  Lightbulb,
-  Wallet,
   ArrowRight,
-  TrendingUp,
   Bell,
-  CheckCircle2,
-  Layers,
-  ArrowRightLeft,
-  Users,
-  CheckSquare,
-  Ticket,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -107,7 +97,7 @@ export function DashboardContent() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 space-y-6">
-      {/* Top Greeting & Notification matching Screen 3 */}
+      {/* Top Greeting & Notification */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
@@ -155,7 +145,7 @@ export function DashboardContent() {
         </div>
       </div>
 
-      {/* Quick Action Category Pills (Screen 3) */}
+      {/* Quick Action Category Pills */}
       <div className="grid grid-cols-4 gap-2.5 sm:gap-4">
         <Link
           href="/trips"
@@ -164,7 +154,7 @@ export function DashboardContent() {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-600 text-white mb-2 shadow-xs group-hover:scale-105 transition">
             <Luggage size={18} />
           </div>
-          <span className="text-xs font-bold text-slate-800">Trips</span>
+          <span className="text-xs font-bold text-slate-800">My Trips</span>
         </Link>
 
         <Link
@@ -174,7 +164,7 @@ export function DashboardContent() {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 text-white mb-2 shadow-xs group-hover:scale-105 transition">
             <Sparkles size={18} />
           </div>
-          <span className="text-xs font-bold text-slate-800">Activities</span>
+          <span className="text-xs font-bold text-slate-800">Explore</span>
         </Link>
 
         <Link
@@ -203,7 +193,7 @@ export function DashboardContent() {
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-              Upcoming Adventure
+              Active Adventure
             </span>
             <Link
               href={`/trips/${upcomingTrip.id}`}
@@ -229,89 +219,11 @@ export function DashboardContent() {
               </p>
             </div>
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200">
-              Active Plan
+              In Progress
             </span>
           </div>
         </div>
       )}
-
-      {/* "Features to replace all your other tools" matching Screenshot 12 */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
-        <div className="text-center space-y-1">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            Features to replace all your other tools
-          </h2>
-          <p className="text-xs text-slate-500">
-            The all-in-one travel planner built for individuals and group adventures
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[
-            {
-              title: 'Add places from guides with 1 click',
-              desc: "We crawled the web so you don't have to. Easily add mentioned places to your plan.",
-              icon: Sparkles,
-              color: 'text-amber-500 bg-amber-50',
-            },
-            {
-              title: 'Expense tracking and splitting',
-              desc: 'Keep track of your budget and split the cost fairly between your tripmates.',
-              icon: ArrowRightLeft,
-              color: 'text-emerald-500 bg-emerald-50',
-            },
-            {
-              title: 'Collaborate with friends in real time',
-              desc: 'Plan along with your friends with live syncing, active cursors, and collaborative editing.',
-              icon: Users,
-              color: 'text-blue-500 bg-blue-50',
-            },
-            {
-              title: 'Checklists for anything',
-              desc: 'Stay organized with a packing list, to-do list, shopping list, any kind of list.',
-              icon: CheckSquare,
-              color: 'text-purple-500 bg-purple-50',
-            },
-            {
-              title: 'Get personalized recommendations',
-              desc: 'Find the best places to visit with smart recommendations based on your itinerary.',
-              icon: Lightbulb,
-              color: 'text-rose-500 bg-rose-50',
-            },
-            {
-              title: 'Import flight and hotel reservations',
-              desc: 'Track confirmation vouchers, gates, and schedules organized in one clean dashboard.',
-              icon: Ticket,
-              color: 'text-indigo-500 bg-indigo-50',
-            },
-          ].map((feat, idx) => (
-            <div
-              key={idx}
-              className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-2 hover:border-slate-300 transition"
-            >
-              <div className="flex items-center gap-3">
-                <div className={`grid h-8 w-8 place-items-center rounded-xl ${feat.color}`}>
-                  <feat.icon size={16} />
-                </div>
-                <h4 className="text-xs font-bold text-slate-900">{feat.title}</h4>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed pl-11">
-                {feat.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom CTA Buttons matching Screenshot 12 */}
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            href="/trips/new"
-            className="w-full sm:w-auto rounded-full bg-[#ff5a36] hover:bg-[#e04826] px-8 py-3 text-xs font-black text-white shadow-md shadow-orange-500/25 transition active:scale-95 text-center"
-          >
-            Start planning ➔
-          </Link>
-        </div>
-      </div>
 
       {/* Flight Deals in INR */}
       <FlightDealsCard />

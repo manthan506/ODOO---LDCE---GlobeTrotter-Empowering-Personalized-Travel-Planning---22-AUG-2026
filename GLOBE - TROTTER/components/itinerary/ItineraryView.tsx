@@ -36,7 +36,6 @@ import {
   Train,
   Bookmark,
   TrendingDown,
-  Bot,
   Route,
   WifiOff,
   Ticket,
@@ -44,9 +43,6 @@ import {
 import Link from 'next/link';
 import type { TripMember, Expense, Stop } from '@/types';
 import { BudgetBreakdown } from '@/components/itinerary/BudgetBreakdown';
-import { LodgingCard } from '@/components/itinerary/LodgingCard';
-import { ReservationsCard } from '@/components/itinerary/ReservationsCard';
-import { AttachmentsCard } from '@/components/itinerary/AttachmentsCard';
 import { TripMapView } from '@/components/trip/TripMapView';
 import { FlightStatusCard } from '@/components/trip/FlightStatusCard';
 import { PackingChecklist } from '@/components/trip/PackingChecklist';
@@ -63,13 +59,12 @@ export function ItineraryView({ tripId }: { tripId: string }) {
   const { expenses, refetch: refetchExpenses } = useExpenses(tripId);
   const { members, refetch: refetchMembers } = useTripMembers(tripId);
 
-  // Active top navigation tab matching Wanderlog 12-icon top bar
+  // Active top navigation tab
   const [activeTab, setActiveTab] = useState<
     | 'budgeting'
     | 'map'
     | 'collaboration'
     | 'flight_status'
-    | 'ai_assistant'
     | 'route_optimization'
     | 'itinerary'
     | 'offline_access'
@@ -143,16 +138,14 @@ export function ItineraryView({ tripId }: { tripId: string }) {
   }
 
   const sortedStops = [...(trip.stops ?? [])].sort((a, b) => a.order - b.order);
-  const currentStop = sortedStops[selectedDayIdx] || sortedStops[0];
-  const firstCityName = sortedStops[0]?.cities?.name || 'Paris';
+  const destinationCity = sortedStops[0]?.cities?.name || trip.name || 'Delhi';
 
-  // Wanderlog 12 Top Tabs
+  // 11 Real Features
   const topTabs = [
     { id: 'budgeting', label: 'Budgeting', icon: DollarSign },
     { id: 'map', label: 'Map view', icon: Navigation },
     { id: 'collaboration', label: 'Collaboration', icon: Users },
     { id: 'flight_status', label: 'Flight status', icon: Plane },
-    { id: 'ai_assistant', label: 'AI Assistant', icon: Bot },
     { id: 'route_optimization', label: 'Route optimization', icon: Route },
     { id: 'itinerary', label: 'Itinerary', icon: ListIcon },
     { id: 'offline_access', label: 'Offline access', icon: WifiOff },
@@ -193,7 +186,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         </div>
       </div>
 
-      {/* Wanderlog 12-Icon Feature Bar matching Desktop Screenshots */}
+      {/* 11-Icon Feature Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
         {topTabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -220,9 +213,9 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         })}
       </div>
 
-      {/* RENDER ACTIVE TAB CONTENT */}
+      {/* RENDER DYNAMIC TAB CONTENT */}
 
-      {/* 1. Budgeting (Screenshot 1 - Phase 1 Active) */}
+      {/* 1. Budgeting */}
       {activeTab === 'budgeting' && (
         <BudgetBreakdown
           tripId={tripId}
@@ -234,62 +227,64 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         />
       )}
 
-      {/* 2. Map view (Screenshot 2) */}
+      {/* 2. Map view */}
       {activeTab === 'map' && (
         <TripMapView
           stops={sortedStops}
           tripId={tripId}
+          tripName={destinationCity}
           onStopsReordered={refetch}
         />
       )}
 
-      {/* 3. Collaboration (Screenshot 3 - Phase 3) */}
+      {/* 3. Collaboration */}
       {activeTab === 'collaboration' && (
-        <CollaborationWorkspace trip={trip} tripId={tripId} />
+        <CollaborationWorkspace trip={trip} tripId={tripId} destinationCity={destinationCity} />
       )}
 
-      {/* 4. Flight status (Screenshot 4) */}
+      {/* 4. Flight status */}
       {activeTab === 'flight_status' && (
-        <FlightStatusCard firstStopCity={firstCityName} startDate={trip.start_date} />
+        <FlightStatusCard firstStopCity={destinationCity} startDate={trip.start_date} />
       )}
 
-      {/* 5. Route optimization (Screenshot 5 - Phase 5) */}
+      {/* 5. Route optimization */}
       {activeTab === 'route_optimization' && (
         <RouteOptimizerView
           stops={sortedStops}
           tripId={tripId}
+          destinationCity={destinationCity}
           onStopsReordered={refetch}
         />
       )}
 
-      {/* 6. Itinerary (Screenshot 6 - Phase 6) */}
+      {/* 6. Itinerary */}
       {activeTab === 'itinerary' && (
-        <SplitItineraryView trip={trip} tripId={tripId} />
+        <SplitItineraryView trip={trip} tripId={tripId} destinationCity={destinationCity} />
       )}
 
-      {/* 7. Offline access (Screenshot 7 - Phase 7) */}
+      {/* 7. Offline access */}
       {activeTab === 'offline_access' && (
         <OfflineAccessView currentTripName={trip.name} />
       )}
 
-      {/* 8. Reservations (Screenshot 8 - Phase 8) */}
+      {/* 8. Reservations */}
       {activeTab === 'reservations' && (
-        <ReservationsHub trip={trip} tripId={tripId} />
+        <ReservationsHub trip={trip} tripId={tripId} destinationCity={destinationCity} />
       )}
 
-      {/* 9. Lodging (Screenshot 9 - Phase 9) */}
+      {/* 9. Lodging */}
       {activeTab === 'lodging' && (
-        <LodgingComparisonView trip={trip} tripId={tripId} />
+        <LodgingComparisonView trip={trip} tripId={tripId} destinationCity={destinationCity} />
       )}
 
-      {/* 10. Packing (Screenshot 10) */}
+      {/* 10. Packing */}
       {activeTab === 'packing' && (
         <PackingChecklist tripName={trip.name} />
       )}
 
-      {/* 11. Travel Guides (Screenshot 11) */}
+      {/* 11. Travel Guides */}
       {activeTab === 'guides' && (
-        <TravelGuides activeCity={firstCityName} />
+        <TravelGuides activeCity={destinationCity} />
       )}
 
       {/* Share Modal */}

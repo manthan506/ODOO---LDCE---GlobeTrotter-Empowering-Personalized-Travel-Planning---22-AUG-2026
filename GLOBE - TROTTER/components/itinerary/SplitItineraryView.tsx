@@ -17,90 +17,77 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TripWithDetails, Stop } from '@/types';
+import { getDestinationInfo } from '@/lib/destinationData';
 
 interface SplitItineraryViewProps {
   trip?: TripWithDetails | null;
   tripId: string;
+  destinationCity?: string;
 }
 
-export function SplitItineraryView({ trip, tripId }: SplitItineraryViewProps) {
-  const [selectedDate, setSelectedDate] = useState('Saturday, 9/21');
+export function SplitItineraryView({
+  trip,
+  tripId,
+  destinationCity = 'Delhi',
+}: SplitItineraryViewProps) {
+  const dest = getDestinationInfo(destinationCity || trip?.name);
+  const [selectedDate, setSelectedDate] = useState('Saturday, Sep 1');
   const [activePin, setActivePin] = useState<number | null>(1);
 
-  const activities = [
-    {
-      id: 'a1',
-      number: 1,
-      title: 'Byodo-In Temple',
-      description: 'Replica of a historic Japanese Buddhist temple featuring manicured grounds & meditation sit...',
-      image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&q=80',
-      walkInfo: '2 min walk • 0.1 mi • Directions',
-      x: '30%',
-      y: '58%',
-    },
-    {
-      id: 'a2',
-      number: 2,
-      title: 'Ho‘omaluhia Botanical Garden',
-      description: '400 acres of tropical plants along with a man-made freshwater lake, hiking trails & camping.',
-      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&q=80',
-      walkInfo: '15 min drive • 8.4 mi • Directions',
-      x: '62%',
-      y: '28%',
-    },
-    {
-      id: 'a3',
-      number: 3,
-      title: 'Lanikai Beach & Pillbox Trail',
-      description: 'Iconic turquoise bay with fine white sand and ridge hike offering panoramic windward views.',
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80',
-      walkInfo: '8 min drive • 3.2 mi • Directions',
-      x: '45%',
-      y: '65%',
-    },
-    {
-      id: 'a4',
-      number: 4,
-      title: 'Diamond Head State Monument',
-      description: 'Historic volcanic crater trail with breathtaking Pacific coastline lookout summit.',
-      image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80',
-      walkInfo: '12 min drive • 5.1 mi • Directions',
-      x: '75%',
-      y: '68%',
-    },
-  ];
+  const activities = dest.activities.map((act, idx) => ({
+    id: `act-${idx}`,
+    number: idx + 1,
+    title: act.name,
+    description: act.description,
+    image: act.image,
+    walkInfo: act.walkInfo,
+    x: `${25 + (idx % 2) * 35}%`,
+    y: `${30 + idx * 18}%`,
+  }));
+
+  const primaryFlight = dest.flights[0] || {
+    fromCode: 'BOM',
+    toCode: dest.airportCode,
+    arrTime: '10:10am',
+  };
+
+  const primaryHotel = dest.hotels[0] || {
+    name: `Grand Hotel ${dest.name}`,
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
-      {/* Subtitle matching Screenshot 6 */}
+      {/* Subtitle with dynamic destination */}
       <div className="text-center pb-2">
-        <h2 className="text-sm font-bold text-slate-500">Plan the best group itinerary</h2>
+        <h2 className="text-sm font-bold text-slate-500">
+          Daily Itinerary & Timelines for {dest.name}, {dest.country}
+        </h2>
       </div>
 
-      {/* Main Split-Screen Browser Canvas matching Screenshot 6 */}
+      {/* Main Split-Screen Browser Canvas */}
       <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-12 min-h-[560px]">
         {/* LEFT COLUMN: Itinerary Timeline (7 cols) */}
         <div className="lg:col-span-7 p-6 sm:p-8 space-y-5 border-b lg:border-b-0 lg:border-r border-slate-200 overflow-y-auto max-h-[640px]">
-          {/* Header Row: Saturday, 9/21 with 3-dots */}
+          {/* Header Row */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-xl font-black text-slate-900">{selectedDate}</h3>
+            <h3 className="text-xl font-black text-slate-900">{selectedDate} ({dest.name})</h3>
             <button className="text-slate-400 hover:text-slate-700">
               <MoreHorizontal size={18} />
             </button>
           </div>
 
-          {/* Quick Action Buttons: Auto-fill day & Optimize route (Screenshot 6) */}
+          {/* Quick Action Buttons */}
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => toast.success('Auto-filled best spots for Saturday')}
+                onClick={() => toast.success(`Auto-filled top recommended spots for ${dest.name}`)}
                 className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 px-3 py-1.5 text-xs font-bold transition"
               >
                 <Wand2 size={13} /> Auto-fill day
               </button>
 
               <button
-                onClick={() => toast.success('Route optimized: 1 hr 30 min, 19.8 mi')}
+                onClick={() => toast.success(`Route optimized for ${dest.name}: 1 hr 15 min travel time`)}
                 className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 text-xs font-bold transition shadow-xs"
               >
                 <Route size={13} className="text-blue-600" /> Optimize route
@@ -108,42 +95,44 @@ export function SplitItineraryView({ trip, tripId }: SplitItineraryViewProps) {
             </div>
 
             <span className="text-[11px] font-mono text-slate-400 font-semibold">
-              1 hr 30 min, 19.8 mi
+              1 hr 15 min, 14.2 km
             </span>
           </div>
 
-          {/* Flight Card (Screenshot 6: SFO -> HNL Arrives 9:30am) */}
+          {/* Flight Card */}
           <div className="rounded-2xl border border-slate-200 bg-[#fbfcfd] p-3.5 flex items-center justify-between text-xs">
             <div className="flex items-center gap-3">
               <div className="grid h-8 w-8 place-items-center rounded-xl bg-blue-50 text-blue-600">
                 <Plane size={16} />
               </div>
-              <span className="font-bold text-slate-900">SFO ➔ HNL</span>
+              <span className="font-bold text-slate-900">
+                {primaryFlight.fromCode} ➔ {primaryFlight.toCode}
+              </span>
             </div>
-            <span className="text-slate-500 font-semibold text-[11px]">Arrives 9:30am</span>
+            <span className="text-slate-500 font-semibold text-[11px]">
+              Arrives {primaryFlight.arrTime}
+            </span>
           </div>
 
-          {/* Hotel Check-in Card (Screenshot 6: Waikiki Grand Hotel Check in) */}
+          {/* Hotel Check-in Card */}
           <div className="rounded-2xl border border-slate-200 bg-[#fbfcfd] p-3.5 flex items-center justify-between text-xs">
             <div className="flex items-center gap-3">
               <div className="grid h-8 w-8 place-items-center rounded-xl bg-purple-50 text-purple-600">
                 <Hotel size={16} />
               </div>
-              <span className="font-bold text-slate-900">Waikiki Grand Hotel</span>
+              <span className="font-bold text-slate-900">{primaryHotel.name}</span>
             </div>
-            <span className="text-slate-500 font-semibold text-[11px]">Check in</span>
+            <span className="text-slate-500 font-semibold text-[11px]">Check-in 14:00</span>
           </div>
 
-          {/* Activities List with Walking Direction Badges */}
+          {/* Activities List */}
           <div className="space-y-4 pt-1">
             {activities.map((act) => (
               <div key={act.id} className="space-y-2">
-                {/* Walking directions pill (Screenshot 6) */}
                 <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium pl-2">
-                  <span>🚶 {act.walkInfo}</span>
+                  <span>🚶 {act.walkInfo} • Directions</span>
                 </div>
 
-                {/* Activity Card */}
                 <div
                   onClick={() => setActivePin(act.number)}
                   className={`rounded-2xl border p-4 flex items-center justify-between gap-4 cursor-pointer transition ${
@@ -175,13 +164,12 @@ export function SplitItineraryView({ trip, tripId }: SplitItineraryViewProps) {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Interactive Live Map (5 cols) */}
+        {/* RIGHT COLUMN: Interactive Live Map */}
         <div className="lg:col-span-5 relative bg-[#e2e8f0] h-[350px] lg:h-auto overflow-hidden">
-          {/* Map Image */}
           <div
             className="absolute inset-0 bg-cover bg-center opacity-85"
             style={{
-              backgroundImage: `url('https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1200&q=80')`,
+              backgroundImage: `url('${dest.coverImage}')`,
             }}
           />
           <div className="absolute inset-0 bg-blue-900/10 backdrop-blur-[0.5px] pointer-events-none" />
@@ -197,7 +185,7 @@ export function SplitItineraryView({ trip, tripId }: SplitItineraryViewProps) {
             />
           </svg>
 
-          {/* Synchronized Waypoint Pins (Screenshot 6: Pins 1, 2, 3, 4, 5) */}
+          {/* Synchronized Waypoint Pins for Destination */}
           {activities.map((act) => (
             <div
               key={act.id}
@@ -210,14 +198,6 @@ export function SplitItineraryView({ trip, tripId }: SplitItineraryViewProps) {
               {act.number}
             </div>
           ))}
-
-          {/* Additional Map Waypoint 5 */}
-          <div
-            className="absolute z-20 grid h-7 w-7 place-items-center rounded-full bg-blue-500 text-white font-black text-xs shadow-lg ring-2 ring-white cursor-pointer"
-            style={{ left: '55%', top: '48%' }}
-          >
-            5
-          </div>
         </div>
       </div>
     </div>

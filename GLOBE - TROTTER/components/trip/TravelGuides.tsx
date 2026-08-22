@@ -18,8 +18,10 @@ import {
   MapPin,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getDestinationInfo } from '@/lib/destinationData';
 
-export function TravelGuides({ activeCity = 'Oahu' }: { activeCity?: string }) {
+export function TravelGuides({ activeCity = 'Delhi' }: { activeCity?: string }) {
+  const dest = getDestinationInfo(activeCity);
   const [following, setFollowing] = useState(false);
   const [addedPlaces, setAddedPlaces] = useState<string[]>([]);
 
@@ -27,8 +29,8 @@ export function TravelGuides({ activeCity = 'Oahu' }: { activeCity?: string }) {
     setFollowing(!following);
     toast.success(
       following
-        ? 'Unfollowed guide'
-        : 'Following Jenny Wilson! New travel recommendations will appear in your feed.'
+        ? `Unfollowed guide`
+        : `Following ${dest.guide.curator}! New travel recommendations for ${dest.name} will appear in your feed.`
     );
   };
 
@@ -38,55 +40,25 @@ export function TravelGuides({ activeCity = 'Oahu' }: { activeCity?: string }) {
       return;
     }
     setAddedPlaces([...addedPlaces, placeName]);
-    toast.success(`✓ Added ${placeName} directly into your trip itinerary!`);
+    toast.success(`✓ Added ${placeName} directly into your ${dest.name} trip itinerary!`);
   };
-
-  const curatedPlaces = [
-    {
-      id: 'cp1',
-      name: 'Café Kaila & Breakfast Bar',
-      category: 'Hidden gem • Café • +2 more',
-      note: 'Mentioned on 5 other member lists',
-      desc: 'A charming spot known for its cozy atmosphere, artisan Belgian waffles, and fresh local fruits.',
-      image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&q=80',
-      tag: 'Best Breakfast',
-    },
-    {
-      id: 'cp2',
-      name: 'Lanikai Pillbox Ridge Trail',
-      category: 'Scenic hike • Viewpoint',
-      note: 'Top rated in 2025 by locals',
-      desc: 'Short scenic ridge hike overlooking turquoise Mokulua Islands with breathtaking sunrise views.',
-      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&q=80',
-      tag: 'Must Visit',
-    },
-    {
-      id: 'cp3',
-      name: 'Haleiwa North Shore Seafood',
-      category: 'Authentic dining • Seafood',
-      note: 'Featured on Travel Channel',
-      desc: 'Fresh garlic butter shrimp plates, grilled mahi mahi, and Hawaiian shaved ice.',
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80',
-      tag: 'Local Favorite',
-    },
-  ];
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
-      {/* Subtitle matching Screenshot 11 */}
+      {/* Subtitle with dynamic destination */}
       <div className="text-center pb-2">
         <h2 className="text-sm font-bold text-slate-500">
-          Get inspired by global guides with expert tips and recommendations
+          Curated community travel guide for {dest.name}, {dest.country}
         </h2>
       </div>
 
       {/* Main Guide Frame Card */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
-        {/* Hero Guide Cover matching Screenshot 11 */}
+        {/* Hero Guide Cover with Real Destination Photo */}
         <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white min-h-[220px] flex flex-col justify-end p-6 sm:p-8 shadow-md">
           <img
-            src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80"
-            alt="Travel Guide Cover"
+            src={dest.coverImage}
+            alt={`${dest.name} Travel Guide`}
             className="absolute inset-0 h-full w-full object-cover opacity-65"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
@@ -95,19 +67,19 @@ export function TravelGuides({ activeCity = 'Oahu' }: { activeCity?: string }) {
             <span className="rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
               Featured Guide
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black">{activeCity} Explorer: Jenny’s Top Picks</h1>
+            <h1 className="text-2xl sm:text-3xl font-black">{dest.guide.title}</h1>
           </div>
         </div>
 
-        {/* Guide Author Row (Screenshot 11) */}
+        {/* Guide Author Row */}
         <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4 border border-slate-100">
           <div className="flex items-center gap-3.5">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-tr from-amber-400 to-rose-400 text-sm font-bold text-white shadow-xs">
-              JW
+            <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-sm font-bold text-white shadow-xs">
+              {dest.guide.curator.split(' ').map((n) => n[0]).join('')}
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900">Jenny Wilson</h4>
-              <p className="text-xs text-slate-500">Local Food & Culture Curator • 24 Trips</p>
+              <h4 className="text-sm font-bold text-slate-900">{dest.guide.curator}</h4>
+              <p className="text-xs text-slate-500">{dest.guide.curatorRole}</p>
             </div>
           </div>
 
@@ -125,24 +97,26 @@ export function TravelGuides({ activeCity = 'Oahu' }: { activeCity?: string }) {
 
         {/* Author Bio */}
         <p className="text-xs text-slate-600 italic px-1 leading-relaxed">
-          &ldquo;Aloha! Here are my personal favorite spots to visit around {activeCity}. From hidden cozy bistros to historic sunrise hikes, easily add these spots directly to your plan!&rdquo;
+          &ldquo;{dest.guide.bio}&rdquo;
         </p>
 
-        {/* Curated Recommendations with 1-Click "Add to plan" (Screenshot 11 & Mobile Feature 1) */}
+        {/* Curated Recommendations for the Destination */}
         <div className="space-y-4 pt-2">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-              ✓ Handpicked Dining & Sights (1-Click Add)
+              ✓ Handpicked Spots in {dest.name} (1-Click Add)
             </h4>
-            <span className="text-[11px] text-slate-400 font-medium">3 Curated Places</span>
+            <span className="text-[11px] text-slate-400 font-medium">
+              {dest.guide.highlights.length} Curated Sights
+            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {curatedPlaces.map((item, idx) => {
+            {dest.guide.highlights.map((item, idx) => {
               const isAdded = addedPlaces.includes(item.name);
               return (
                 <div
-                  key={item.id}
+                  key={idx}
                   className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3 flex flex-col justify-between hover:border-blue-300 transition"
                 >
                   <div className="space-y-3">
@@ -168,7 +142,7 @@ export function TravelGuides({ activeCity = 'Oahu' }: { activeCity?: string }) {
                     </div>
                   </div>
 
-                  {/* 1-Click Add to Plan Button (Mobile Feature 1) */}
+                  {/* 1-Click Add to Plan Button */}
                   <button
                     onClick={() => handleAddToPlan(item.name)}
                     className={`w-full flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition active:scale-95 ${
