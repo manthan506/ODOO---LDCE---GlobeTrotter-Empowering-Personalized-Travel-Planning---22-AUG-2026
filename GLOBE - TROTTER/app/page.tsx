@@ -24,91 +24,28 @@ import {
   Mail,
   User as UserIcon,
   X,
-  ChevronRight,
+  ChevronDown,
+  ArrowUpDown,
+  ArrowUpRight,
+  Shield,
   Eye,
   EyeOff,
-  Globe2,
-  ArrowUpRight,
-  Wallet,
+  Globe,
+  ArrowLeftRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-
-const formatINR = (val: number) => `₹${Math.round(val).toLocaleString('en-IN')}`;
-
-const POPULAR_DESTINATIONS = [
-  {
-    id: 'dest-1',
-    name: 'Paris, France',
-    price: 42000,
-    rating: 4.9,
-    reviews: '5.2k',
-    tag: 'Culture & Romantic',
-    image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
-    description: 'Louvre museum, Seine sunset yacht dinner, and Eiffel Tower champagne views.',
-  },
-  {
-    id: 'dest-2',
-    name: 'Swiss Alps, Switzerland',
-    price: 52000,
-    rating: 4.9,
-    reviews: '4.8k',
-    tag: 'Alpine Mountain Thrills',
-    image: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=800&q=80',
-    description: 'Glacier Express first class train, Jungfraujoch summit & tandem paragliding.',
-  },
-  {
-    id: 'dest-3',
-    name: 'Rome, Italy',
-    price: 35000,
-    rating: 4.8,
-    reviews: '6.1k',
-    tag: 'Historic Landmarks & Food',
-    image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&q=80',
-    description: 'Colosseum gladiator arena, Vatican Sistine Chapel, and Trastevere pasta walks.',
-  },
-  {
-    id: 'dest-4',
-    name: 'Bali, Indonesia',
-    price: 28000,
-    rating: 4.8,
-    reviews: '3.9k',
-    tag: 'Tropical Beaches & Rice Fields',
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
-    description: 'Ubud sacred monkey sanctuaries, Mount Batur sunrise volcano hike & coral isles.',
-  },
-  {
-    id: 'dest-5',
-    name: 'Tokyo, Japan',
-    price: 48000,
-    rating: 4.9,
-    reviews: '5.4k',
-    tag: 'Futuristic City & Shrines',
-    image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80',
-    description: 'Shibuya Crossing, Mount Fuji bullet train passes & Tsukiji wagyu tastings.',
-  },
-  {
-    id: 'dest-6',
-    name: 'Barcelona, Spain',
-    price: 32000,
-    rating: 4.8,
-    reviews: '4.2k',
-    tag: 'Mediterranean Beach & Art',
-    image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
-    description: 'Sagrada Familia fast-track, Park Güell, and Gothic Quarter sangria tastings.',
-  },
-];
 
 export default function LandingPage() {
   const { user, signIn, signUp } = useAuth();
   const router = useRouter();
 
-  // Booking Widget Form State
-  const [activeWidgetTab, setActiveWidgetTab] = useState<'flights' | 'hotels' | 'cars' | 'cruises' | 'activities'>('flights');
-  const [fromCity, setFromCity] = useState('Mumbai, India (BOM)');
-  const [toCity, setToCity] = useState('Paris, France (CDG)');
-  const [departDate, setDepartDate] = useState('Sep 10, 2026');
-  const [returnDate, setReturnDate] = useState('Sep 28, 2026');
+  // Widget State
+  const [activeTab, setActiveTab] = useState<'flights' | 'hotels' | 'cars' | 'cruises'>('flights');
+  const [fromCity, setFromCity] = useState('New York, USA');
+  const [toCity, setToCity] = useState('Anywhere');
+  const [departDate, setDepartDate] = useState('May 24, 2026');
+  const [returnDate, setReturnDate] = useState('May 31, 2026');
   const [travelers, setTravelers] = useState('2 Adults, 1 Child');
 
   // Auth Modal State
@@ -120,7 +57,7 @@ export default function LandingPage() {
   const [authSubmitting, setAuthSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Favorites state
+  // Favorites
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
 
   const toggleFavorite = (id: string, name: string, e: React.MouseEvent) => {
@@ -133,20 +70,26 @@ export default function LandingPage() {
     });
   };
 
-  const handleWidgetSearch = (e: React.FormEvent) => {
+  const handleSwapCities = () => {
+    const temp = fromCity;
+    setFromCity(toCity === 'Anywhere' ? 'Paris, France' : toCity);
+    setToCity(temp);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (user) {
       router.push('/trips/new');
     } else {
       setShowAuthModal(true);
-      toast.info('Sign in or create an account to customize this itinerary!');
+      toast.info('Sign in to view personalized routes & instant budget estimation!');
     }
   };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!authEmail || !authPassword) {
-      toast.error('Please enter all required fields.');
+      toast.error('Please fill in all fields.');
       return;
     }
 
@@ -154,16 +97,15 @@ export default function LandingPage() {
     try {
       if (authMode === 'login') {
         await signIn(authEmail, authPassword);
-        toast.success('Welcome back to GlobeTrotter! 🌍');
       } else {
         await signUp(authEmail, authPassword, authName || authEmail.split('@')[0]);
-        toast.success('Account created successfully! Welcome aboard 🚀');
       }
+      toast.success('Welcome to GlobeTrotter! 🌍');
       setShowAuthModal(false);
       router.push('/dashboard');
-    } catch (err: any) {
-      // Demo fallback: Instant login for demonstration
-      toast.success('Signed in as Demo Traveler!');
+    } catch {
+      // Demo fallback
+      toast.success('Signed in as Demo Traveler! Welcome aboard 🚀');
       setShowAuthModal(false);
       router.push('/dashboard');
     } finally {
@@ -171,133 +113,134 @@ export default function LandingPage() {
     }
   };
 
-  const handleDemoInstantAccess = async () => {
+  const handleDemoInstantLogin = async () => {
     try {
       await signIn('manthan@globetrotter.io', 'password123');
     } catch {
-      // fallback
+      // ignore
     }
-    toast.success('Instant Demo Access granted! Redirecting to Dashboard...');
+    toast.success('Instant Demo Access granted! Redirecting...');
     setShowAuthModal(false);
     router.push('/dashboard');
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 font-sans text-slate-100 selection:bg-blue-500 selection:text-white">
+    <div className="relative min-h-screen bg-[#0B5FD7] font-sans selection:bg-blue-400 selection:text-white flex flex-col justify-between overflow-x-hidden">
       {/* ============================================================ */}
-      {/* 1. TOP NAVIGATION HEADER (Inspiration Image 2)               */}
+      {/* 1. PANORAMIC WORLD LANDMARKS HERO BACKDROP (Inspiration 1 & 2)*/}
       {/* ============================================================ */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-slate-950/80 backdrop-blur-xl transition-all">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-8">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition duration-300">
-              <Compass size={24} strokeWidth={2.3} className="group-hover:rotate-45 transition duration-500" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-black tracking-tight text-white leading-none">
-                GlobeTrotter
-              </span>
-              <span className="text-[10px] text-blue-300 font-medium tracking-wide mt-0.5">
-                Empowering Personalized Travel
-              </span>
-            </div>
-          </Link>
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        {/* Sky / Landmark Image */}
+        <img
+          src="/images/landing-hero-globe.jpg"
+          alt="World Landmarks Backdrop"
+          className="h-full w-full object-cover object-center scale-100 sm:scale-105"
+        />
+        {/* Soft Blue Atmospheric Vignette & Contrast Gradients */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#00398A]/75 via-[#004EB5]/35 to-[#002B6D]/80" />
+      </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-8 text-xs font-bold text-slate-300">
-            <Link href="#home" className="text-white hover:text-blue-400 transition">
-              Home
+      {/* Main Container */}
+      <div className="relative z-10 flex flex-col min-h-screen justify-between">
+        {/* ============================================================ */}
+        {/* 2. TOP NAVBAR (Matching GlobalVista Inspiration Image 2)     */}
+        {/* ============================================================ */}
+        <header className="w-full pt-5 px-6 sm:px-12 lg:px-16">
+          <div className="mx-auto flex max-w-7xl items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-3 text-white group">
+              <div className="grid h-10 w-10 place-items-center rounded-full bg-white/20 backdrop-blur-md border border-white/40 text-white shadow-md">
+                <Globe size={22} className="group-hover:rotate-45 transition duration-500" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-none font-serif">
+                  GlobeTrotter
+                </span>
+                <span className="text-[10px] text-blue-100/90 font-medium tracking-wide mt-0.5">
+                  Your Journey, Our Expertise
+                </span>
+              </div>
             </Link>
-            <Link href="#destinations" className="hover:text-white transition">
-              Destinations
-            </Link>
-            <Link href="#features" className="hover:text-white transition">
-              Features
-            </Link>
-            <Link href="/community" className="hover:text-white transition">
-              Community Trips
-            </Link>
-          </nav>
 
-          {/* Right Action / Auth Buttons */}
-          <div className="flex items-center gap-3">
-            {user ? (
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-500/25 hover:opacity-95 transition active:scale-95"
-              >
-                Go to Dashboard <ArrowRight size={14} />
+            {/* Nav Links */}
+            <nav className="hidden md:flex items-center gap-9 text-xs sm:text-sm font-semibold text-white/90">
+              <div className="relative flex flex-col items-center">
+                <Link href="/" className="text-white font-bold transition">
+                  Home
+                </Link>
+                <span className="h-0.5 w-4 bg-white rounded-full mt-1" />
+              </div>
+              <a href="#destinations" className="text-white/80 hover:text-white transition">
+                Destinations
+              </a>
+              <Link href="/trips" className="text-white/80 hover:text-white transition">
+                Packages
               </Link>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode('login');
-                    setShowAuthModal(true);
-                  }}
-                  className="rounded-2xl border border-white/20 bg-white/5 px-4 py-2 text-xs font-bold text-white backdrop-blur-md hover:bg-white/15 transition cursor-pointer"
+              <Link href="/community" className="text-white/80 hover:text-white transition">
+                Community
+              </Link>
+            </nav>
+
+            {/* Auth / Action Button */}
+            <div className="flex items-center gap-3">
+              {user ? (
+                <Link
+                  href="/dashboard"
+                  className="rounded-full bg-white px-5 py-2 text-xs font-bold text-blue-700 shadow-md hover:bg-blue-50 transition active:scale-95"
                 >
-                  Log In
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode('signup');
-                    setShowAuthModal(true);
-                  }}
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-500/30 hover:opacity-95 transition active:scale-95 cursor-pointer"
-                >
-                  Get Started <ArrowRight size={14} />
-                </button>
-              </>
-            )}
+                  Dashboard →
+                </Link>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('login');
+                      setShowAuthModal(true);
+                    }}
+                    className="hidden sm:inline-flex rounded-full bg-white/15 px-5 py-2 text-xs font-bold text-white border border-white/30 backdrop-blur-md hover:bg-white/25 transition cursor-pointer"
+                  >
+                    Log In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('signup');
+                      setShowAuthModal(true);
+                    }}
+                    className="rounded-full bg-white px-5 py-2 text-xs font-bold text-blue-700 shadow-md hover:bg-blue-50 transition active:scale-95 cursor-pointer"
+                  >
+                    Sign Up
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* ============================================================ */}
-      {/* 2. HERO SECTION WITH RICH LANDMARKS & SKY (Inspiration 1 & 2) */}
-      {/* ============================================================ */}
-      <section id="home" className="relative overflow-hidden pt-12 pb-24 lg:pt-20 lg:pb-36">
-        {/* Background Artwork Layer (Globe + Iconic Landmarks + Clouds) */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <img
-            src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&q=85"
-            alt="World Travel Panorama"
-            className="h-full w-full object-cover opacity-25 scale-105 transition duration-1000"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/90 to-slate-950" />
-          {/* Subtle glowing ambient lighting */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[800px] rounded-full bg-blue-600/20 blur-[140px]" />
-          <div className="absolute top-1/3 right-10 h-[400px] w-[400px] rounded-full bg-indigo-600/15 blur-[120px]" />
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-8 text-center space-y-8">
-          {/* AI Badge Pill */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/15 px-4 py-1.5 text-xs font-bold text-blue-200 backdrop-blur-md shadow-inner animate-in fade-in slide-in-from-top-3">
-            <Sparkles size={14} className="text-yellow-400 animate-pulse" />
-            AI-POWERED MULTI-CITY TRAVEL PLANNER
+        {/* ============================================================ */}
+        {/* 3. HERO CONTENT & HEADLINE (Matching Image 2)                */}
+        {/* ============================================================ */}
+        <main className="mx-auto w-full max-w-6xl px-4 sm:px-8 py-8 sm:py-12 flex flex-col items-center text-center">
+          {/* AI Planner Pill */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-4 py-1.5 text-xs font-semibold text-white backdrop-blur-md shadow-sm mb-4 animate-in fade-in slide-in-from-top-2">
+            <Sparkles size={13} className="text-white" />
+            AI-POWERED TRAVEL PLANNER
           </div>
 
-          {/* Main Hero Headline */}
-          <div className="max-w-4xl mx-auto space-y-4">
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1]">
-              Explore the World <br className="hidden sm:inline" />
-              <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
-                With Confidence
-              </span>
-            </h1>
+          {/* Bold Centered Headline */}
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.1] drop-shadow-md">
+            Explore the World <br />
+            With Confidence
+          </h1>
 
-            <p className="mx-auto max-w-2xl text-sm sm:text-lg text-slate-300 font-medium leading-relaxed">
-              Seamless global travel planning, personalized multi-city routes, and intelligent budgeting in <strong>₹ INR</strong> — all in one unified workspace.
-            </p>
-          </div>
+          {/* Subtitle */}
+          <p className="mt-3 max-w-2xl text-xs sm:text-base text-blue-50 font-normal leading-relaxed drop-shadow-xs">
+            Seamless global travel planning, personalized experiences, and trusted booking — all in one place.
+          </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+          {/* CTA Buttons Row */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"
               onClick={() => {
@@ -307,448 +250,392 @@ export default function LandingPage() {
                   setShowAuthModal(true);
                 }
               }}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-4 text-sm font-black text-white shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition duration-300 active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0066FF] hover:bg-[#0055D4] px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-blue-900/40 transition active:scale-95 cursor-pointer"
             >
-              Start Your Journey <ArrowRight size={17} strokeWidth={2.5} />
+              Start Your Journey <ArrowRight size={16} strokeWidth={2.5} />
             </button>
 
             <a
               href="#destinations"
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 py-4 text-sm font-bold text-white backdrop-blur-md hover:bg-white/20 transition duration-300 active:scale-95"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 px-6 py-3 text-xs sm:text-sm font-semibold text-white backdrop-blur-md transition active:scale-95"
             >
-              View Destinations <ArrowUpRight size={17} />
+              <Compass size={16} /> View Destinations
             </a>
           </div>
 
           {/* ============================================================ */}
-          {/* 3. INTERACTIVE FLOATING GLASSMORPHISM BOOKING WIDGET (Image 2) */}
+          {/* 4. FROSTED GLASS BOOKING WIDGET (Image 2 Replica)            */}
           {/* ============================================================ */}
-          <div className="mt-12 rounded-3xl border border-white/20 bg-white/10 p-5 sm:p-7 shadow-2xl backdrop-blur-2xl text-left space-y-5 animate-in fade-in slide-in-from-bottom-6">
-            {/* Category Tabs: Flights, Hotels, Cars, Cruises, Activities */}
-            <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
-              {[
-                { id: 'flights', label: 'Flights', icon: Plane },
-                { id: 'hotels', label: 'Hotels & Stays', icon: Hotel },
-                { id: 'cars', label: 'Transfers', icon: Car },
-                { id: 'cruises', label: 'Cruises', icon: Ship },
-                { id: 'activities', label: 'Experiences', icon: Sparkles },
-              ].map((tab) => {
-                const IconComponent = tab.icon;
-                const isActive = activeWidgetTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveWidgetTab(tab.id as any)}
-                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
-                        : 'text-slate-300 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    <IconComponent size={15} />
-                    {tab.label}
-                  </button>
-                );
-              })}
+          <div className="mt-8 sm:mt-10 w-full rounded-3xl border border-white/40 bg-white/20 p-4 sm:p-6 shadow-2xl backdrop-blur-xl text-left space-y-4">
+            {/* Top Category Tabs: Flights, Hotels, Cars, Cruises */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('flights')}
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                  activeTab === 'flights'
+                    ? 'bg-white text-blue-600 shadow-md'
+                    : 'text-white/90 hover:bg-white/10'
+                }`}
+              >
+                <Plane size={14} /> Flights
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('hotels')}
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                  activeTab === 'hotels'
+                    ? 'bg-white text-blue-600 shadow-md'
+                    : 'text-white/90 hover:bg-white/10'
+                }`}
+              >
+                <Hotel size={14} /> Hotels
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('cars')}
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                  activeTab === 'cars'
+                    ? 'bg-white text-blue-600 shadow-md'
+                    : 'text-white/90 hover:bg-white/10'
+                }`}
+              >
+                <Car size={14} /> Cars
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('cruises')}
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                  activeTab === 'cruises'
+                    ? 'bg-white text-blue-600 shadow-md'
+                    : 'text-white/90 hover:bg-white/10'
+                }`}
+              >
+                <Ship size={14} /> Cruises
+              </button>
             </div>
 
-            {/* Input Search Form Row */}
-            <form onSubmit={handleWidgetSearch} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+            {/* Continuous White Input Form Bar */}
+            <form
+              onSubmit={handleSearchSubmit}
+              className="grid grid-cols-1 md:grid-cols-12 rounded-2xl bg-white p-2 sm:p-2.5 shadow-xl items-center divide-y md:divide-y-0 md:divide-x divide-slate-100 gap-y-2 md:gap-y-0"
+            >
               {/* From */}
-              <div className="lg:col-span-3 rounded-2xl border border-white/15 bg-slate-900/80 p-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                  From:
-                </span>
-                <div className="flex items-center gap-2 text-xs font-bold text-white">
-                  <MapPin size={14} className="text-blue-400 flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={fromCity}
-                    onChange={(e) => setFromCity(e.target.value)}
-                    className="w-full bg-transparent text-white outline-none font-bold placeholder:text-slate-500"
-                    placeholder="Departure city..."
-                  />
+              <div className="md:col-span-3 px-3 py-1 flex items-center justify-between">
+                <div className="w-full">
+                  <span className="text-[10px] text-slate-400 font-semibold block leading-none">
+                    From
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <MapPin size={14} className="text-slate-400 flex-shrink-0" />
+                    <input
+                      type="text"
+                      value={fromCity}
+                      onChange={(e) => setFromCity(e.target.value)}
+                      className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
+                      placeholder="Departure City"
+                    />
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={handleSwapCities}
+                  className="grid h-6 w-6 place-items-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition flex-shrink-0 ml-1"
+                  title="Swap"
+                >
+                  <ArrowLeftRight size={11} />
+                </button>
               </div>
 
-              {/* To Destination */}
-              <div className="lg:col-span-3 rounded-2xl border border-white/15 bg-slate-900/80 p-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                  To (Anywhere):
+              {/* To */}
+              <div className="md:col-span-3 px-3 py-1">
+                <span className="text-[10px] text-slate-400 font-semibold block leading-none">
+                  To
                 </span>
-                <div className="flex items-center gap-2 text-xs font-bold text-white">
-                  <Globe2 size={14} className="text-emerald-400 flex-shrink-0" />
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Globe size={14} className="text-slate-400 flex-shrink-0" />
                   <input
                     type="text"
                     value={toCity}
                     onChange={(e) => setToCity(e.target.value)}
-                    className="w-full bg-transparent text-white outline-none font-bold placeholder:text-slate-500"
-                    placeholder="Destination or Multi-city..."
+                    className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
+                    placeholder="Anywhere"
                   />
                 </div>
               </div>
 
-              {/* Dates */}
-              <div className="lg:col-span-2 rounded-2xl border border-white/15 bg-slate-900/80 p-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                  Depart:
+              {/* Depart */}
+              <div className="md:col-span-2 px-3 py-1">
+                <span className="text-[10px] text-slate-400 font-semibold block leading-none">
+                  Depart
                 </span>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                  <Calendar size={13} className="text-blue-400" />
+                <div className="flex items-center gap-1.5 mt-0.5 text-xs font-bold text-slate-800">
+                  <Calendar size={13} className="text-slate-400 flex-shrink-0" />
                   <input
                     type="text"
                     value={departDate}
                     onChange={(e) => setDepartDate(e.target.value)}
-                    className="w-full bg-transparent text-white outline-none text-xs"
+                    className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
                   />
                 </div>
               </div>
 
-              <div className="lg:col-span-2 rounded-2xl border border-white/15 bg-slate-900/80 p-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                  Travelers:
+              {/* Return */}
+              <div className="md:col-span-2 px-3 py-1">
+                <span className="text-[10px] text-slate-400 font-semibold block leading-none">
+                  Return
                 </span>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                  <Users size={13} className="text-purple-400" />
+                <div className="flex items-center gap-1.5 mt-0.5 text-xs font-bold text-slate-800">
+                  <Calendar size={13} className="text-slate-400 flex-shrink-0" />
                   <input
                     type="text"
-                    value={travelers}
-                    onChange={(e) => setTravelers(e.target.value)}
-                    className="w-full bg-transparent text-white outline-none text-xs"
+                    value={returnDate}
+                    onChange={(e) => setReturnDate(e.target.value)}
+                    className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
                   />
                 </div>
               </div>
 
-              {/* Search Button */}
-              <div className="lg:col-span-2">
+              {/* Travelers & Search Button */}
+              <div className="md:col-span-2 px-2 py-1 flex items-center gap-2">
+                <div className="w-full min-w-0">
+                  <span className="text-[10px] text-slate-400 font-semibold block leading-none">
+                    Travelers
+                  </span>
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-800 mt-0.5 truncate">
+                    <span className="truncate">{travelers}</span>
+                    <ChevronDown size={12} className="text-slate-400 flex-shrink-0" />
+                  </div>
+                </div>
+
                 <button
                   type="submit"
-                  className="flex h-full min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-500 px-5 text-xs font-black text-white shadow-lg shadow-blue-600/40 transition duration-300 active:scale-95 cursor-pointer"
+                  className="flex h-11 items-center justify-center gap-1 rounded-xl bg-[#0066FF] hover:bg-[#0055D4] px-5 text-xs font-bold text-white shadow-md transition active:scale-95 flex-shrink-0 cursor-pointer"
                 >
-                  <Search size={16} strokeWidth={2.5} /> Search Trips
+                  <Search size={14} strokeWidth={2.5} /> Search
                 </button>
               </div>
             </form>
 
-            {/* AI Suggestions For You (Horizontal Strip matching Image 2) */}
+            {/* AI Suggestions Strip (Image 2 Replica) */}
             <div className="pt-2">
-              <div className="flex items-center justify-between mb-3 text-xs">
-                <div className="flex items-center gap-1.5 font-bold text-blue-200">
-                  <Sparkles size={13} className="text-yellow-400" />
+              <div className="flex items-center justify-between mb-2 text-xs font-bold text-white drop-shadow-xs">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles size={12} className="text-yellow-300" />
                   AI SUGGESTIONS FOR YOU
-                </div>
-                <a href="#destinations" className="text-[11px] font-bold text-slate-400 hover:text-white transition">
+                </span>
+                <a href="#destinations" className="text-[11px] font-semibold text-white/80 hover:text-white transition">
                   See more ideas →
                 </a>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { name: 'Bali, Indonesia', cost: 'from ₹28,000', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80' },
-                  { name: 'Swiss Alps, Switzerland', cost: 'from ₹52,000', img: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=400&q=80' },
-                  { name: 'Rome, Italy', cost: 'from ₹35,000', img: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&q=80' },
-                  { name: 'Paris, France', cost: 'from ₹42,000', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80' },
-                ].map((sug, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      setToCity(sug.name);
-                      toast.info(`Selected destination: ${sug.name}`);
-                    }}
-                    className="group flex cursor-pointer items-center gap-2.5 rounded-2xl border border-white/10 bg-slate-900/80 p-2 hover:border-blue-400 hover:bg-slate-900 transition"
-                  >
-                    <img src={sug.img} alt={sug.name} className="h-10 w-10 rounded-xl object-cover flex-shrink-0" />
-                    <div className="min-w-0 pr-1">
-                      <h4 className="text-xs font-bold text-white truncate group-hover:text-blue-300 transition">
-                        {sug.name}
-                      </h4>
-                      <span className="text-[10px] font-semibold text-emerald-400 block">{sug.cost}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+                  { id: 'sug-1', name: 'Bali, Indonesia', price: '$899', inr: '₹28,000', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80' },
+                  { id: 'sug-2', name: 'Santorini, Greece', price: '$1,299', inr: '₹42,000', img: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400&q=80' },
+                  { id: 'sug-3', name: 'Dubai, UAE', price: '$1,099', inr: '₹35,000', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&q=80' },
+                  { id: 'sug-4', name: 'Maldives', price: '$1,499', inr: '₹52,000', img: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400&q=80' },
+                ].map((item) => {
+                  const isFav = !!favorites[item.id];
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        setToCity(item.name);
+                        toast.info(`Selected ${item.name}`);
+                      }}
+                      className="group flex cursor-pointer items-center justify-between rounded-2xl border border-white/40 bg-white/90 backdrop-blur-md p-2 hover:bg-white transition shadow-sm"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img
+                          src={item.img}
+                          alt={item.name}
+                          className="h-10 w-10 rounded-xl object-cover flex-shrink-0"
+                        />
+                        <div className="min-w-0 pr-1">
+                          <h4 className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-600 transition">
+                            {item.name}
+                          </h4>
+                          <span className="text-[10px] font-semibold text-slate-500 block">
+                            from {item.price} <span className="text-emerald-600 font-bold">({item.inr})</span>
+                          </span>
+                        </div>
+                      </div>
 
-      {/* ============================================================ */}
-      {/* 4. TRUST & GUARANTEE PROOF BAR (Matching Image 2 Footer Strip) */}
-      {/* ============================================================ */}
-      <section className="border-y border-white/10 bg-slate-900/60 py-8 px-4 sm:px-8 backdrop-blur-md">
-        <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-6 text-center sm:text-left">
-          <div className="flex items-center gap-3.5 justify-center sm:justify-start">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-500/20 text-blue-400 flex-shrink-0 border border-blue-400/20">
-              <ShieldCheck size={22} />
-            </div>
-            <div>
-              <h4 className="text-xs font-black text-white">Best Price & Budget Guarantee</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Accurate ₹ INR planning with zero surprises.</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3.5 justify-center sm:justify-start">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500/20 text-emerald-400 flex-shrink-0 border border-emerald-400/20">
-              <Clock size={22} />
-            </div>
-            <div>
-              <h4 className="text-xs font-black text-white">24/7 Smart Route Assistant</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Instant day-by-day scheduling in seconds.</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3.5 justify-center sm:justify-start">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-purple-500/20 text-purple-400 flex-shrink-0 border border-purple-400/20">
-              <Wallet size={22} />
-            </div>
-            <div>
-              <h4 className="text-xs font-black text-white">Split & Track Expenses</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Multiplayer collaboration & shared logs.</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3.5 justify-center sm:justify-start">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-500/20 text-amber-400 flex-shrink-0 border border-amber-400/20">
-              <Star size={22} />
-            </div>
-            <div>
-              <h4 className="text-xs font-black text-white">Trusted by Travelers</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">1,420+ curated itineraries planned.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/* 5. FEATURED DESTINATIONS SHOWCASE (#destinations)            */}
-      {/* ============================================================ */}
-      <section id="destinations" className="py-20 px-4 sm:px-8 max-w-6xl mx-auto space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/10 pb-6">
-          <div>
-            <span className="rounded-md bg-blue-500/20 px-2.5 py-0.5 text-xs font-black text-blue-300 uppercase tracking-wider border border-blue-400/20">
-              Top Trending Routes
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-white mt-1.5">
-              Popular Global Destinations
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Curated itineraries with estimated expenses in ₹ INR and verified activities.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (user) router.push('/explore');
-              else setShowAuthModal(true);
-            }}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:text-blue-300"
-          >
-            Explore all destinations <ChevronRight size={14} />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {POPULAR_DESTINATIONS.map((dest) => {
-            const isFav = !!favorites[dest.id];
-            return (
-              <div
-                key={dest.id}
-                onClick={() => {
-                  if (user) router.push('/trips/new');
-                  else setShowAuthModal(true);
-                }}
-                className="group relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/90 shadow-lg hover:border-blue-500/50 hover:shadow-2xl transition duration-500 cursor-pointer flex flex-col justify-between"
-              >
-                <div>
-                  <div className="relative h-56 w-full overflow-hidden bg-slate-800">
-                    <img
-                      src={dest.image}
-                      alt={dest.name}
-                      className="h-full w-full object-cover group-hover:scale-105 transition duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-black/20 to-transparent" />
-
-                    {/* Top tags */}
-                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                      <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-white border border-white/15">
-                        {dest.tag}
-                      </span>
                       <button
                         type="button"
-                        onClick={(e) => toggleFavorite(dest.id, dest.name, e)}
-                        className={`grid h-8 w-8 place-items-center rounded-full backdrop-blur-md transition ${
-                          isFav ? 'bg-red-600 text-white' : 'bg-black/50 text-white hover:bg-black/80'
-                        }`}
+                        onClick={(e) => toggleFavorite(item.id, item.name, e)}
+                        className={`p-1 text-slate-400 hover:text-red-500 transition ${isFav ? 'text-red-500' : ''}`}
                       >
-                        <Heart size={15} fill={isFav ? 'currentColor' : 'none'} />
+                        <Heart size={14} fill={isFav ? 'currentColor' : 'none'} />
                       </button>
                     </div>
-
-                    {/* Bottom Title & Rating */}
-                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
-                      <div>
-                        <h3 className="text-base sm:text-lg font-bold drop-shadow-xs">{dest.name}</h3>
-                        <span className="text-[11px] text-slate-300 flex items-center gap-1">
-                          <Star size={12} fill="gold" className="text-yellow-400" /> {dest.rating} ({dest.reviews} reviews)
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[9px] uppercase font-bold text-slate-400 block">Est. Budget</span>
-                        <p className="text-sm sm:text-base font-black text-emerald-400">{formatINR(dest.price)}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-5 space-y-2 text-xs text-slate-300">
-                    <p className="leading-relaxed line-clamp-2">{dest.description}</p>
-                  </div>
-                </div>
-
-                <div className="p-5 pt-0 border-t border-white/5">
-                  <div className="flex items-center justify-between pt-3 text-xs font-bold text-blue-400 group-hover:text-blue-300">
-                    <span>Plan Itinerary for this city</span>
-                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          </div>
+        </main>
+
+        {/* ============================================================ */}
+        {/* 5. CRISP WHITE TRUST BAR (Matching Image 2 Footer Strip)      */}
+        {/* ============================================================ */}
+        <div className="w-full bg-white border-t border-slate-100 py-6 px-4 sm:px-12 shadow-md">
+          <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-6 text-slate-800">
+            {/* 1 */}
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Best Price Guarantee</h4>
+                <p className="text-[11px] text-slate-500">We match the best prices</p>
+              </div>
+            </div>
+
+            {/* 2 */}
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+                <Clock size={20} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">24/7 Travel Support</h4>
+                <p className="text-[11px] text-slate-500">Always here when you need us</p>
+              </div>
+            </div>
+
+            {/* 3 */}
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+                <Shield size={20} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Secure Booking</h4>
+                <p className="text-[11px] text-slate-500">Your data is 100% protected</p>
+              </div>
+            </div>
+
+            {/* 4 */}
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+                <Star size={20} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Trusted by Millions</h4>
+                <p className="text-[11px] text-slate-500">10M+ happy travelers worldwide</p>
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
       {/* ============================================================ */}
-      {/* 6. FEATURES SHOWCASE (#features)                             */}
+      {/* 6. POPULAR DESTINATIONS SECTION (#destinations)              */}
       {/* ============================================================ */}
-      <section id="features" className="py-20 px-4 sm:px-8 bg-slate-900/40 border-t border-white/10">
-        <div className="max-w-6xl mx-auto space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="rounded-md bg-indigo-500/20 px-3 py-1 text-xs font-black text-indigo-300 uppercase tracking-wider border border-indigo-400/20">
-              Complete Travel Toolkit
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white">
-              Everything You Need to Travel Smarter
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              Built for solo backpackers, couples, and group travel planners.
-            </p>
+      <section id="destinations" className="relative z-10 bg-slate-900 py-20 px-4 sm:px-12 text-white border-t border-slate-800">
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-800 pb-6">
+            <div>
+              <span className="rounded-md bg-blue-500/20 px-2.5 py-0.5 text-xs font-bold text-blue-400 uppercase tracking-wider">
+                Explore Destinations
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-2">
+                Popular Multi-City Journeys
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                Hand-curated itineraries with synchronized activities and estimated ₹ INR budgets.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (user) router.push('/explore');
+                else setShowAuthModal(true);
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:text-blue-300"
+            >
+              Browse All Experiences →
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                icon: Compass,
-                title: 'Multi-City Itinerary Builder',
-                desc: 'Construct day-wise modular sections with travel dates, hotel lodges, and sequential route arrows.',
+                id: 'dest-paris',
+                name: 'Paris & French Riviera',
+                country: 'France',
+                budget: '₹42,000',
+                rating: 4.9,
+                reviews: '5.2k',
+                img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
+                desc: 'Louvre fast-track, Eiffel Tower sunset champagne, and Seine river cruises.',
               },
               {
-                icon: Wallet,
-                title: 'Real-Time ₹ INR Budget Tracker',
-                desc: 'Stay on budget with automated category breakdowns across flights, stays, food, and overbudget warnings.',
+                id: 'dest-swiss',
+                name: 'Swiss Alps & Glacier Trails',
+                country: 'Switzerland',
+                budget: '₹52,000',
+                rating: 4.9,
+                reviews: '4.8k',
+                img: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=800&q=80',
+                desc: 'Jungfraujoch Top of Europe, Glacier Express scenic rail, and alpine hikes.',
               },
               {
-                icon: Calendar,
-                title: '7-Column Calendar & Timeline',
-                desc: 'Visualize your entire journey across months, drag-and-drop activities, and view daily expenditures.',
+                id: 'dest-rome',
+                name: 'Rome & Amalfi Coast',
+                country: 'Italy',
+                budget: '₹35,000',
+                rating: 4.8,
+                reviews: '6.1k',
+                img: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&q=80',
+                desc: 'Colosseum underground arena, Vatican Museums, and authentic Trastevere tastings.',
               },
-              {
-                icon: Users,
-                title: 'Community Public Sharing',
-                desc: 'Explore authentic itineraries curated by fellow globetrotters. Clone complete trips in 1-click.',
-              },
-              {
-                icon: Sparkles,
-                title: 'Experience & Activity Search',
-                desc: 'Filter activities by interest (adventure, museum, dining) and duration with instant stop assignment.',
-              },
-              {
-                icon: ShieldCheck,
-                title: 'Multiplayer Real-Time Presence',
-                desc: 'Collaborate live with your travel companions with real-time avatars and split group expense logs.',
-              },
-            ].map((feat, idx) => {
-              const IconComp = feat.icon;
-              return (
-                <div
-                  key={idx}
-                  className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 space-y-3 hover:border-blue-500/40 transition duration-300"
-                >
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-400/20">
-                    <IconComp size={24} />
+            ].map((card) => (
+              <div
+                key={card.id}
+                onClick={() => {
+                  if (user) router.push('/trips/new');
+                  else setShowAuthModal(true);
+                }}
+                className="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 p-4 shadow-lg hover:border-blue-500/50 transition duration-300 cursor-pointer space-y-3"
+              >
+                <div className="relative h-48 w-full overflow-hidden rounded-2xl bg-slate-800">
+                  <img
+                    src={card.img}
+                    alt={card.name}
+                    className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                  <span className="absolute top-2.5 right-2.5 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-white/10">
+                    {card.budget}
+                  </span>
+                  <div className="absolute bottom-2.5 left-2.5 text-white">
+                    <h3 className="text-base font-bold drop-shadow-xs">{card.name}</h3>
+                    <span className="text-[11px] text-slate-300">{card.country}</span>
                   </div>
-                  <h3 className="text-base font-bold text-white">{feat.title}</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">{feat.desc}</p>
                 </div>
-              );
-            })}
+
+                <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                  {card.desc}
+                </p>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs font-bold text-blue-400 group-hover:text-blue-300">
+                  <span>Start planning this trip</span>
+                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ============================================================ */}
-      {/* 7. BOTTOM CALL TO ACTION BANNER                              */}
-      {/* ============================================================ */}
-      <section className="py-20 px-4 sm:px-8">
-        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 p-8 sm:p-14 text-center text-white shadow-2xl space-y-6">
-          <div className="relative z-10 max-w-2xl mx-auto space-y-3">
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
-              Ready to Design Your Next Unforgettable Trip?
-            </h2>
-            <p className="text-xs sm:text-sm text-blue-100 font-medium">
-              Join thousands of travelers crafting smart, budget-conscious multi-city itineraries today.
-            </p>
-          </div>
-
-          <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode('signup');
-                setShowAuthModal(true);
-              }}
-              className="rounded-2xl bg-white px-8 py-3.5 text-xs font-black text-blue-900 shadow-xl hover:bg-blue-50 hover:scale-105 transition duration-300 active:scale-95 cursor-pointer"
-            >
-              Get Started for Free →
-            </button>
-            <button
-              type="button"
-              onClick={handleDemoInstantAccess}
-              className="rounded-2xl border border-white/30 bg-white/10 px-6 py-3.5 text-xs font-bold text-white backdrop-blur-md hover:bg-white/20 transition cursor-pointer"
-            >
-              ⚡ Explore Demo Account
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/* 8. FOOTER                                                    */}
-      {/* ============================================================ */}
-      <footer className="border-t border-white/10 bg-slate-950 py-10 px-4 sm:px-8 text-xs text-slate-500">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div className="flex items-center gap-2.5">
-            <div className="grid h-7 w-7 place-items-center rounded-xl bg-blue-600 text-white">
-              <Compass size={16} />
-            </div>
-            <span className="font-bold text-slate-300">GlobeTrotter</span>
-            <span>• Hackathon Edition 2026</span>
-          </div>
-
-          <div className="flex items-center gap-6 text-slate-400">
-            <Link href="/explore" className="hover:text-white transition">Explore Cities</Link>
-            <Link href="/community" className="hover:text-white transition">Community Trips</Link>
-            <Link href="/budget" className="hover:text-white transition">Budget Tracker</Link>
-          </div>
-
-          <p className="text-[11px] text-slate-500">
-            Empowering Personalized Multi-City Travel Planning.
-          </p>
-        </div>
-      </footer>
-
-      {/* ============================================================ */}
-      {/* 9. SIGN IN / SIGN UP POPUP MODAL (Mindfully Integrated)      */}
+      {/* 7. AUTH POPUP MODAL (Sign In / Sign Up)                      */}
       {/* ============================================================ */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-xl animate-in fade-in">
@@ -764,22 +651,22 @@ export default function LandingPage() {
             {/* Modal Header */}
             <div className="text-center space-y-1.5">
               <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 mb-2">
-                <Compass size={24} />
+                <Globe size={24} />
               </div>
               <h3 className="text-xl font-black text-white">
-                {authMode === 'login' ? 'Welcome to GlobeTrotter' : 'Create Traveler Account'}
+                {authMode === 'login' ? 'Sign In to GlobeTrotter' : 'Create Traveler Account'}
               </h3>
               <p className="text-xs text-slate-400">
                 {authMode === 'login'
-                  ? 'Sign in to access your itineraries and synchronized budget.'
-                  : 'Start planning multi-city journeys with real-time tracking.'}
+                  ? 'Access your saved trips, calendar timeline, and budget planner.'
+                  : 'Start planning personalized multi-city journeys with live budget tracking.'}
               </p>
             </div>
 
             {/* 1-Click Instant Demo Login Banner */}
             <button
               type="button"
-              onClick={handleDemoInstantAccess}
+              onClick={handleDemoInstantLogin}
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3 text-xs font-black text-white shadow-md shadow-emerald-600/30 hover:opacity-95 transition active:scale-98 cursor-pointer"
             >
               ⚡ 1-Click Instant Demo Login (Manthan)
@@ -819,7 +706,7 @@ export default function LandingPage() {
                     required
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
-                    placeholder="e.g. traveler@globetrotter.io"
+                    placeholder="e.g. manthan@globetrotter.io"
                     className="h-11 w-full rounded-xl border border-white/15 bg-slate-800/80 pl-9 pr-3 text-xs text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:bg-slate-800"
                   />
                 </div>
@@ -850,7 +737,7 @@ export default function LandingPage() {
               <button
                 type="submit"
                 disabled={authSubmitting}
-                className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-500 text-xs font-black text-white shadow-lg shadow-blue-500/30 transition active:scale-98 disabled:opacity-50 cursor-pointer"
+                className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#0066FF] hover:bg-[#0055D4] text-xs font-black text-white shadow-lg shadow-blue-500/30 transition active:scale-98 disabled:opacity-50 cursor-pointer"
               >
                 {authSubmitting ? 'Authenticating...' : authMode === 'login' ? 'Sign In →' : 'Create Account →'}
               </button>
@@ -871,7 +758,7 @@ export default function LandingPage() {
                 </p>
               ) : (
                 <p>
-                  Already registered?{' '}
+                  Already have an account?{' '}
                   <button
                     type="button"
                     onClick={() => setAuthMode('login')}
