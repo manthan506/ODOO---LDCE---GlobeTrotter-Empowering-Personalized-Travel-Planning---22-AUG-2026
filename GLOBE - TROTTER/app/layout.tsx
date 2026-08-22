@@ -19,6 +19,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
+      <head>
+        <link rel="stylesheet" href="/output.css" />
+      </head>
       <body className={`${inter.className} font-sans antialiased`}>
         <AuthProvider>
           {children}
