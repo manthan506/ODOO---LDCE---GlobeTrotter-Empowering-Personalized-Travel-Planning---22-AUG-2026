@@ -23,6 +23,7 @@ import {
   UserPlus,
   PieChart as PieChartIcon,
   Check,
+  Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Expense, TripWithDetails } from '@/types';
@@ -60,7 +61,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
   const [showAddTripmateModal, setShowAddTripmateModal] = useState(false);
 
   // Edit budget state in INR
-  const [newBudgetCap, setNewBudgetCap] = useState(trip?.budget_cap?.toString() || '300000');
+  const [newBudgetCap, setNewBudgetCap] = useState(trip?.budget_cap?.toString() || '150000');
 
   // Add tripmate state
   const [tripmateName, setTripmateName] = useState('');
@@ -149,7 +150,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
 
       if (!res.ok) throw new Error('Failed to add expense');
 
-      toast.success('Expense added successfully');
+      toast.success('Expense added to trip budget');
       setAmount('');
       setDescription('');
       setShowAddModal(false);
@@ -202,69 +203,30 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
   const formatINR = (val: number) =>
     '₹' + Math.round(val).toLocaleString('en-IN');
 
-  // Default seed expense items in INR matching Screenshot 1
-  const defaultExpenses = [
-    {
-      id: 'e1',
-      title: 'DEL to CDG Flights',
-      category: 'Flights',
-      date: 'Feb 15',
-      amount: 74500,
-      icon: Plane,
-      avatars: ['https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&q=80'],
-    },
-    {
-      id: 'e2',
-      title: 'Grand Hotel Central Lodging',
-      category: 'Lodging',
-      date: 'Feb 15',
-      amount: 102500,
-      icon: Hotel,
-      avatars: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&q=80'],
-    },
-    {
-      id: 'e3',
-      title: 'Dinner at Le Bistro Montmartre',
-      category: 'Food',
-      date: 'Feb 14',
-      amount: 14800,
-      icon: Utensils,
-      avatars: [
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&q=80',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&q=80',
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&q=80',
-      ],
-    },
-    {
-      id: 'e4',
-      title: 'Evening Wine & Tapas Bar',
-      category: 'Drinks',
-      date: 'Feb 14',
-      amount: 5600,
-      icon: Wine,
-      avatars: ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&q=80'],
-    },
-  ];
+  // Real live calculated total from database
+  const totalCost = budgetData?.totalCost ?? expenses.reduce((acc, curr) => acc + curr.amount, 0);
+  const currentBudgetCap = trip?.budget_cap || budgetData?.budgetCap || 150000;
 
-  const totalCost = expenses.length > 0
-    ? expenses.reduce((acc, curr) => acc + curr.amount, 0)
-    : 197400;
+  // Real category breakdown from database
+  const chartData = budgetData?.breakdown && budgetData.breakdown.length > 0
+    ? budgetData.breakdown
+    : [];
 
-  const currentBudgetCap = trip?.budget_cap || 300000;
-
-  const chartData = [
-    { category: 'Flights', amount: 74500, percentage: 38, color: '#3B82F6' },
-    { category: 'Lodging', amount: 102500, percentage: 52, color: '#6366F1' },
-    { category: 'Food & Drinks', amount: 20400, percentage: 10, color: '#F59E0B' },
-  ];
+  const sortedExpenses = [...expenses].sort((a, b) => {
+    if (sortBy === 'amount') return b.amount - a.amount;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      {/* Central Browser Frame Card matching Screenshot 1 in INR */}
+      {/* Central Browser Frame Card */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
         {/* Top Header: Budgeting Title + Add Expense Button */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-black text-slate-900">Budgeting</h2>
+          <div>
+            <h2 className="text-2xl font-black text-slate-900">Trip Budgeting</h2>
+            <p className="text-xs text-slate-500">Live expense tracking & splitting for {trip?.name || 'this trip'}</p>
+          </div>
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-1.5 rounded-full bg-[#ff5a36] hover:bg-[#e04826] px-4 py-2 text-xs font-bold text-white shadow-md shadow-orange-500/20 transition active:scale-98"
@@ -273,15 +235,16 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
           </button>
         </div>
 
-        {/* Balance Card Section in INR (₹) */}
+        {/* Balance Card Section */}
         <div className="rounded-2xl border border-slate-200 bg-[#fbfcfd] p-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-4">
             <div>
-              <h1 className="text-4xl font-black text-slate-900 tracking-tight font-mono">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Total Spent</span>
+              <h1 className="text-4xl font-black text-slate-900 tracking-tight font-mono mt-0.5">
                 {formatINR(totalCost)}
               </h1>
               <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-1">
-                <span>Budget: {formatINR(currentBudgetCap)}</span>
+                <span>Budget Cap: {formatINR(currentBudgetCap)}</span>
                 <Pencil
                   size={12}
                   className="cursor-pointer hover:text-slate-700"
@@ -308,14 +271,14 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
             </div>
           </div>
 
-          {/* Right Side Links (View breakdown, Add tripmate, Settings) */}
+          {/* Right Side Links */}
           <div className="flex flex-col gap-2.5 text-xs font-semibold text-slate-600 border-t md:border-t-0 md:border-l border-slate-200 pt-4 md:pt-0 md:pl-6">
             <button
               onClick={() => setShowBreakdownModal(true)}
               className="flex items-center gap-2 hover:text-slate-900 transition text-left"
             >
               <PieChartIcon size={14} className="text-slate-400" />
-              <span>View breakdown</span>
+              <span>View breakdown ({chartData.length} categories)</span>
             </button>
 
             <button
@@ -327,63 +290,52 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
             </button>
 
             <button
-              onClick={() => toast.info('Budget currency and alert settings')}
+              onClick={() => toast.info('Currency set to INR (₹)')}
               className="flex items-center gap-2 hover:text-slate-900 transition text-left"
             >
               <Settings size={14} className="text-slate-400" />
-              <span>Settings</span>
+              <span>Settings (INR ₹)</span>
             </button>
           </div>
         </div>
 
-        {/* Expenses List Section (Sort: Date) */}
+        {/* Expenses List Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-base font-bold text-slate-900">Expenses</h3>
-            <div className="flex items-center gap-1 text-xs text-slate-500 font-semibold cursor-pointer">
-              <span>Sort: {sortBy === 'date' ? 'Date' : 'Amount'}</span>
-              <span>▾</span>
+            <h3 className="text-base font-bold text-slate-900">
+              Itemized Expenses ({expenses.length})
+            </h3>
+            <div className="flex items-center gap-1 text-xs text-slate-500 font-semibold">
+              <button
+                onClick={() => setSortBy(sortBy === 'date' ? 'amount' : 'date')}
+                className="hover:text-slate-900 flex items-center gap-1"
+              >
+                <span>Sort: {sortBy === 'date' ? 'Date' : 'Amount'}</span>
+                <span>▾</span>
+              </button>
             </div>
           </div>
 
-          {/* List of itemized expenses in INR */}
+          {/* List of itemized expenses from database */}
           <div className="divide-y divide-slate-100">
             {expenses.length === 0 ? (
-              defaultExpenses.map((exp) => (
-                <div key={exp.id} className="py-3.5 flex items-center justify-between text-xs group">
-                  <div className="flex items-center gap-3.5">
-                    <div className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-700">
-                      <exp.icon size={16} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900">{exp.title}</h4>
-                      <span className="text-[10px] text-slate-400">
-                        {exp.date} • {exp.category}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {exp.avatars && exp.avatars.length > 1 && (
-                      <div className="flex items-center -space-x-1.5">
-                        {exp.avatars.map((av, idx) => (
-                          <img
-                            key={idx}
-                            src={av}
-                            alt="Avatar"
-                            className="h-5 w-5 rounded-full object-cover ring-2 ring-white"
-                          />
-                        ))}
-                      </div>
-                    )}
-                    <span className="text-xs font-bold text-slate-900 font-mono">
-                      {formatINR(exp.amount)}
-                    </span>
-                  </div>
+              <div className="py-12 text-center space-y-2">
+                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600 mx-auto">
+                  <Wallet size={22} />
                 </div>
-              ))
+                <h4 className="text-sm font-bold text-slate-800">No expenses recorded yet</h4>
+                <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                  Keep track of flights, hotels, food and activities by clicking &ldquo;+ Add expense&rdquo;.
+                </p>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline"
+                >
+                  <Plus size={13} /> Add first expense
+                </button>
+              </div>
             ) : (
-              expenses.map((exp) => (
+              sortedExpenses.map((exp) => (
                 <div key={exp.id} className="py-3.5 flex items-center justify-between text-xs group">
                   <div className="flex items-center gap-3.5">
                     <div className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-700">
@@ -403,10 +355,10 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                     </span>
                     <button
                       onClick={() => handleDeleteExpense(exp.id)}
-                      className="text-slate-300 hover:text-red-600 transition"
-                      title="Delete"
+                      className="text-slate-300 hover:text-red-600 transition p-1"
+                      title="Delete expense"
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
@@ -434,7 +386,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                   value={newBudgetCap}
                   onChange={(e) => setNewBudgetCap(e.target.value)}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm outline-none focus:border-blue-500 focus:bg-white"
-                  placeholder="300000"
+                  placeholder="150000"
                 />
               </div>
               <div className="flex gap-2">
@@ -457,7 +409,7 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
         </div>
       )}
 
-      {/* Modal 2: Debt Summary in INR */}
+      {/* Modal 2: Debt Summary */}
       {showDebtSummaryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
@@ -466,50 +418,44 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
                 <div className="grid h-8 w-8 place-items-center rounded-xl bg-blue-50 text-blue-600">
                   <Users size={16} />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">Group Debt Summary</h3>
+                <h3 className="text-base font-bold text-slate-900">Group Debt Split</h3>
               </div>
               <button onClick={() => setShowDebtSummaryModal(false)} className="text-slate-400 hover:text-slate-700">
                 <X size={16} />
               </button>
             </div>
 
-            <p className="text-xs text-slate-500">
-              Total group spending: <strong className="text-slate-900">{formatINR(totalCost)}</strong> across 4 tripmates ({formatINR(totalCost / 4)} each).
-            </p>
-
-            <div className="space-y-2.5">
-              {[
-                { from: 'Rose Chen', to: 'You', amount: 39500, status: 'owes' },
-                { from: 'James Levi', to: 'You', amount: 25400, status: 'owes' },
-                { from: 'You', to: 'Lianne Jones', amount: 11800, status: 'you owe' },
-              ].map((debt, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between rounded-2xl bg-slate-50 p-3.5 border border-slate-100 text-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900">{debt.from}</span>
-                    <span className="text-[10px] text-slate-400">→</span>
-                    <span className="font-bold text-slate-900">{debt.to}</span>
+            {totalCost === 0 ? (
+              <div className="py-6 text-center text-xs text-slate-500 space-y-1">
+                <p>No group expenses recorded yet.</p>
+                <p className="text-[11px] text-slate-400">Add an expense to calculate automatic fair-share splits.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-500">
+                  Total trip spending: <strong className="text-slate-900">{formatINR(totalCost)}</strong>.
+                </p>
+                <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100 text-xs space-y-2">
+                  <div className="flex items-center justify-between font-semibold text-slate-800">
+                    <span>Your Share (1 person)</span>
+                    <span className="font-mono font-bold text-slate-900">{formatINR(totalCost)}</span>
                   </div>
-                  <div className="text-right">
-                    <span className="font-mono font-bold text-slate-900 block">{formatINR(debt.amount)}</span>
-                    <span className={`text-[9px] font-bold uppercase ${debt.status === 'owes' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                      {debt.status}
-                    </span>
+                  <div className="flex items-center justify-between text-slate-500 text-[11px] pt-1 border-t border-slate-200">
+                    <span>Split between 2 tripmates</span>
+                    <span className="font-mono font-bold text-slate-700">{formatINR(totalCost / 2)} each</span>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
 
             <button
               onClick={() => {
-                toast.success('Settlement request sent to all tripmates');
+                toast.success('Settlement status verified');
                 setShowDebtSummaryModal(false);
               }}
               className="w-full rounded-2xl bg-slate-900 hover:bg-slate-800 py-2.5 text-xs font-bold text-white transition"
             >
-              Settle Up with Group
+              Close
             </button>
           </div>
         </div>
@@ -526,44 +472,52 @@ export function BudgetBreakdown({ tripId, trip, onExpenseAdded }: BudgetBreakdow
               </button>
             </div>
 
-            <div className="relative h-48 w-full flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={75}
-                    paddingAngle={4}
-                    dataKey="amount"
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => [formatINR(value), 'Cost']} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[10px] text-slate-400 font-medium">Total</span>
-                <span className="text-xs font-bold text-slate-800">{formatINR(totalCost)}</span>
+            {chartData.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-500">
+                No spending data logged yet. Add expenses to view category breakdown.
               </div>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              {chartData.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
-                  <div className="flex items-center gap-2">
-                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="font-semibold text-slate-800">{item.category}</span>
+            ) : (
+              <>
+                <div className="relative h-48 w-full flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={75}
+                        paddingAngle={4}
+                        dataKey="amount"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => [formatINR(value), 'Cost']} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-[10px] text-slate-400 font-medium">Total</span>
+                    <span className="text-xs font-bold text-slate-800">{formatINR(totalCost)}</span>
                   </div>
-                  <span className="font-mono font-bold text-slate-900">
-                    {formatINR(item.amount)} ({item.percentage}%)
-                  </span>
                 </div>
-              ))}
-            </div>
+
+                <div className="space-y-2 text-xs">
+                  {chartData.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                      <div className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="font-semibold text-slate-800 capitalize">{item.category}</span>
+                      </div>
+                      <span className="font-mono font-bold text-slate-900">
+                        {formatINR(item.amount)} ({item.percentage}%)
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
