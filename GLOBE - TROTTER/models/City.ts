@@ -28,8 +28,7 @@ const CitySchema = new Schema<ICity>(
     },
     region: {
       type: String,
-      enum: ['Europe', 'Asia', 'Americas', 'Africa', 'Oceania', 'Middle East'],
-      default: 'Europe',
+      default: 'Asia',
     },
     costIndex: {
       type: Number,
@@ -47,11 +46,11 @@ const CitySchema = new Schema<ICity>(
     },
     lat: {
       type: Number,
-      default: 48.8566,
+      default: 28.6139,
     },
     lng: {
       type: Number,
-      default: 2.3522,
+      default: 77.209,
     },
   },
   {

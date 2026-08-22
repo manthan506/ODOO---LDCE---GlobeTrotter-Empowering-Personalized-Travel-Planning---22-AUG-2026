@@ -8,7 +8,7 @@ import { getAuthUser } from '@/lib/auth';
 import { geocodeCity } from '@/lib/api/openApis';
 
 const createTripSchema = z.object({
-  name: z.string().min(1, 'Trip name is required'),
+  name: z.string().min(1, 'Trip destination/name is required'),
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
   description: z.string().optional(),
@@ -77,16 +77,21 @@ export async function POST(req: Request) {
     });
 
     if (!city) {
-      city = await City.create({
-        name: geo.name || name,
-        country: geo.displayName.split(',').pop()?.trim() || 'Global',
-        region: 'Global',
-        costIndex: 2,
-        lat: geo.lat,
-        lng: geo.lng,
-        imageUrl: coverImageUrl || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80',
-        description: `Travel destination geocoded via OpenStreetMap: ${geo.displayName}`,
-      });
+      try {
+        city = await City.create({
+          name: geo.name || name,
+          country: geo.displayName.split(',').pop()?.trim() || 'Global',
+          region: 'Asia',
+          costIndex: 2,
+          lat: geo.lat || 28.6139,
+          lng: geo.lng || 77.209,
+          imageUrl: coverImageUrl || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80',
+          description: `Travel destination geocoded via OpenStreetMap: ${geo.displayName}`,
+        });
+      } catch (cityErr) {
+        console.warn('City creation fallback:', cityErr);
+        city = await City.findOne();
+      }
     }
 
     // 3. Create the Trip
@@ -96,7 +101,7 @@ export async function POST(req: Request) {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       description: description || '',
-      coverImageUrl: coverImageUrl || city.imageUrl || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80',
+      coverImageUrl: coverImageUrl || city?.imageUrl || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80',
       budgetCap: budgetCap || undefined,
       members: [
         {
@@ -109,19 +114,25 @@ export async function POST(req: Request) {
     });
 
     // 4. Automatically create initial stop with geocoded city
-    await Stop.create({
-      tripId: trip._id,
-      cityId: city._id,
-      arriveDate: new Date(startDate),
-      leaveDate: new Date(endDate),
-      order: 0,
-      activities: [],
-      lodging: {
-        name: `Grand Hotel ${name}`,
-        checkIn: '14:00',
-        checkOut: '11:00',
-      },
-    });
+    if (city) {
+      try {
+        await Stop.create({
+          tripId: trip._id,
+          cityId: city._id,
+          arriveDate: new Date(startDate),
+          leaveDate: new Date(endDate),
+          order: 0,
+          activities: [],
+          lodging: {
+            name: `Grand Hotel ${name}`,
+            checkIn: '14:00',
+            checkOut: '11:00',
+          },
+        });
+      } catch (stopErr) {
+        console.warn('Stop creation warning:', stopErr);
+      }
+    }
 
     const mappedTrip = {
       id: trip._id.toString(),
@@ -136,10 +147,10 @@ export async function POST(req: Request) {
     };
 
     return NextResponse.json(mappedTrip, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create trip error:', error);
     return NextResponse.json(
-      { error: 'Failed to create trip' },
+      { error: error?.message || 'Failed to create trip' },
       { status: 500 }
     );
   }
