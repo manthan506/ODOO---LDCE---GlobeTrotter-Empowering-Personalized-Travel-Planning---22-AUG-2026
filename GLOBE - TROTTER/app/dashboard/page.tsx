@@ -1,5 +1,3 @@
-'use client';
-
 import { Navbar } from '@/components/layout/Navbar';
 import { DashboardContent } from '@/components/trip/DashboardContent';
 
