@@ -110,7 +110,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         }
         toast.success('Welcome back to GlobeTrotter! 👋');
       }
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Authentication failed';
       toast.error(message);
@@ -226,13 +226,11 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
                 <button
                   type="button"
                   onClick={async () => {
-                    setEmail('alex@globetrotter.io');
-                    setPassword('password123');
                     setLoading(true);
                     const res = await signIn('alex@globetrotter.io', 'password123');
                     if (res.error) { toast.error(res.error); setLoading(false); return; }
                     toast.success('Logged in as Alex Nomad 🌍');
-                    router.push('/dashboard');
+                    window.location.href = '/dashboard';
                   }}
                   className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-sm font-bold text-white shadow hover:opacity-90 transition"
                 >
@@ -242,13 +240,11 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
                 <button
                   type="button"
                   onClick={async () => {
-                    setEmail('admin@globetrotter.io');
-                    setPassword('admin123');
                     setLoading(true);
                     const res = await signIn('admin@globetrotter.io', 'admin123');
                     if (res.error) { toast.error(res.error); setLoading(false); return; }
                     toast.success('Logged in as Admin 🛡️');
-                    router.push('/admin');
+                    window.location.href = '/admin';
                   }}
                   className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-sm font-bold text-white shadow hover:opacity-90 transition"
                 >
