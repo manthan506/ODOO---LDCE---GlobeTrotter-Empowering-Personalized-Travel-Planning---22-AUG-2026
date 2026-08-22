@@ -24,6 +24,7 @@ import {
   Globe2,
   Lock,
   ChevronRight,
+  ChevronLeft,
   TrendingUp,
   BarChart3,
   Layers,
@@ -38,11 +39,9 @@ import {
   User,
   Eye,
   SlidersHorizontal,
-  ArrowLeftRight,
-  Anchor,
-  HelpCircle,
-  PhoneCall,
-  Award,
+  Plus,
+  Send,
+  ExternalLink,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -54,18 +53,12 @@ export default function LandingPage() {
   const { masterTrip, totalCalculatedCost, userProfile, addSavedDestination } = useTripSync();
   const router = useRouter();
 
-  // Search Widget State matching template
-  const [searchTab, setSearchTab] = useState<'flights' | 'hotels' | 'cars' | 'cruises' | 'itineraries'>('flights');
-  const [origin, setOrigin] = useState('New York, USA');
-  const [destination, setDestination] = useState('Anywhere (Paris, Swiss Alps, Rome)');
-  const [departDate, setDepartDate] = useState('May 24, 2026');
-  const [returnDate, setReturnDate] = useState('May 31, 2026');
-  const [travelersCount, setTravelersCount] = useState('2 Adults, 1 Child');
+  // Search Bar State
+  const [destinationQuery, setDestinationQuery] = useState('');
+  const [travelDates, setTravelDates] = useState('Sep 10 – Sep 28, 2026');
+  const [travelersCount, setTravelersCount] = useState('2 Travelers');
 
-  // Liked / Saved suggestion cards
-  const [likedSuggestions, setLikedSuggestions] = useState<Record<string, boolean>>({});
-
-  // Auth Modal State (Sign-in / Sign-up)
+  // Auth Modal State
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   const [authEmail, setAuthEmail] = useState('');
@@ -73,19 +66,14 @@ export default function LandingPage() {
   const [authName, setAuthName] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Newsletter State
+  // Newsletter
   const [newsletterEmail, setNewsletterEmail] = useState('');
 
-  const handleSwapLocations = () => {
-    const temp = origin;
-    setOrigin(destination.includes('(') ? 'Paris, France' : destination);
-    setDestination(temp);
-    toast.info('Swapped origin and destination');
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(`Searching ${searchTab} to ${destination}!`);
+    if (destinationQuery) {
+      toast.success(`Exploring destinations matching "${destinationQuery}"!`);
+    }
     router.push('/explore');
   };
 
@@ -125,78 +113,61 @@ export default function LandingPage() {
     }
   };
 
-  const toggleLike = (id: string, name: string, country: string, img: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setLikedSuggestions((prev) => ({ ...prev, [id]: !prev[id] }));
-    addSavedDestination({ id, name, country, img });
+  const openAuth = (mode: 'login' | 'signup') => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 font-sans selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-600 selection:text-white">
       {/* ============================================================ */}
-      {/* 1. HERO SECTION WITH EXACT AI ARTWORK BACKGROUND & TEMPLATE  */}
+      {/* 1. TOP HEADER & NAVBAR (Exact Mockup Match)                  */}
       {/* ============================================================ */}
-      <div className="relative min-h-screen w-full overflow-hidden bg-sky-500 pb-16">
-        {/* Exact AI-Generated 3D Earth & Landmark Panorama Background */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="/images/globe-landmarks-hero.jpg"
-            alt="Globe Landmark Panorama"
-            className="h-full w-full object-cover object-center"
-          />
-          {/* Subtle gradient vignette to ensure crisp UI contrast */}
-          <div className="absolute inset-0 bg-gradient-to-b from-sky-900/40 via-sky-800/20 to-sky-950/70" />
-        </div>
-
-        {/* ------------------------------------------------------------ */}
-        {/* TOP HEADER & NAVBAR (Matching GlobalVista Template)          */}
-        {/* ------------------------------------------------------------ */}
-        <header className="relative z-20 mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Brand Logo matching template */}
-          <Link href="/" className="flex items-center gap-2.5 text-white group">
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-white/15 backdrop-blur-md border border-white/30 text-white shadow-md group-hover:scale-105 transition duration-300">
-              <Globe2 size={24} className="animate-spin-slow text-white" />
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-2xs">
+        <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* Brand Logo */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition">
+              <Compass size={20} strokeWidth={2.5} />
             </div>
-            <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-white leading-none drop-shadow-md">
-                GlobalVista
-              </span>
-              <span className="text-[10px] text-sky-100 font-medium tracking-wide drop-shadow-xs mt-0.5">
-                Your Journey, Our Expertise
-              </span>
-            </div>
+            <span className="text-xl font-extrabold tracking-tight text-slate-900">
+              GlobeTrotter
+            </span>
           </Link>
 
-          {/* Nav Links matching template */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-white/90">
-            <Link href="/" className="relative text-white font-bold drop-shadow-sm pb-1">
+          {/* Nav Items */}
+          <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-600">
+            <Link href="/" className="text-blue-600 font-bold">
               Home
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-white" />
             </Link>
-            <Link href="/explore" className="hover:text-white transition drop-shadow-sm">
+            <Link href="#features" className="hover:text-slate-900 transition">
+              Features
+            </Link>
+            <Link href="/explore" className="hover:text-slate-900 transition">
               Destinations
             </Link>
-            <Link href="/trips" className="hover:text-white transition drop-shadow-sm">
-              Packages & Itineraries
+            <Link href="/trips" className="hover:text-slate-900 transition">
+              Itinerary Planner
             </Link>
-            <Link href="/community" className="hover:text-white transition drop-shadow-sm">
+            <Link href="/budget" className="hover:text-slate-900 transition">
+              Pricing & Budget (₹)
+            </Link>
+            <Link href="/community" className="hover:text-slate-900 transition">
               Community
-            </Link>
-            <Link href="#features" className="hover:text-white transition drop-shadow-sm">
-              Features
             </Link>
           </nav>
 
-          {/* Right Action & Auth Buttons */}
+          {/* Right Language & Auth Controls */}
           <div className="flex items-center gap-3">
-            <div className="hidden sm:inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold text-white backdrop-blur-md drop-shadow-sm">
-              <span>🇮🇳 ₹ INR</span>
+            <div className="hidden sm:flex items-center gap-1 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl px-2.5 py-1.5 hover:bg-slate-50 cursor-pointer">
+              <Globe2 size={14} className="text-slate-500" />
+              <span>EN (₹ INR)</span>
             </div>
 
             {user ? (
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-500 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-900/30 transition hover:scale-105 active:scale-95"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95"
               >
                 Dashboard ➔
               </Link>
@@ -204,525 +175,792 @@ export default function LandingPage() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setAuthMode('login');
-                    setShowAuthModal(true);
-                  }}
-                  className="rounded-full border border-white/30 bg-white/10 hover:bg-white/20 px-4 py-2 text-xs font-bold text-white backdrop-blur-md transition cursor-pointer"
+                  onClick={() => openAuth('login')}
+                  className="rounded-xl border border-slate-300 hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 transition"
                 >
-                  Sign In
+                  Login
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setAuthMode('signup');
-                    setShowAuthModal(true);
-                  }}
-                  className="rounded-full bg-blue-600 hover:bg-blue-500 px-5 py-2 text-xs font-extrabold text-white shadow-lg shadow-blue-900/40 transition hover:scale-105 active:scale-95 cursor-pointer"
+                  onClick={() => openAuth('signup')}
+                  className="rounded-xl bg-[#0f172a] hover:bg-slate-800 px-4 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95"
                 >
                   Sign Up
                 </button>
               </div>
             )}
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* ------------------------------------------------------------ */}
-        {/* HERO CENTER TEXT & CALL TO ACTION                            */}
-        {/* ------------------------------------------------------------ */}
-        <div className="relative z-10 mx-auto max-w-5xl px-4 pt-6 sm:pt-10 text-center">
-          {/* AI Badge Pill matching template */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-slate-900/40 px-4 py-1 text-xs font-bold text-white backdrop-blur-md shadow-md mb-4 animate-in fade-in slide-in-from-bottom-2">
-            <Sparkles size={13} className="text-yellow-400" />
-            <span className="tracking-wide">AI-POWERED TRAVEL PLANNER</span>
-          </div>
-
-          {/* Main Title matching template */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight drop-shadow-lg leading-tight">
-            Explore the World <br />
-            With Confidence
-          </h1>
-
-          {/* Subtitle matching template */}
-          <p className="mt-3 text-xs sm:text-base text-white/90 font-medium max-w-2xl mx-auto drop-shadow-md leading-relaxed">
-            Seamless global travel planning, personalized experiences, and trusted booking — all in one place.
-          </p>
-
-          {/* Two Hero CTAs matching template */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3.5">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode('signup');
-                setShowAuthModal(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-500 px-7 py-3 text-xs sm:text-sm font-extrabold text-white shadow-xl shadow-blue-900/40 transition hover:scale-105 active:scale-95 cursor-pointer"
-            >
-              Start Your Journey ➔
-            </button>
-
-            <Link
-              href="/trips"
-              className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 hover:bg-white/25 px-6 py-3 text-xs sm:text-sm font-bold text-white backdrop-blur-md transition hover:scale-105 active:scale-95 drop-shadow-md"
-            >
-              <MapPin size={15} /> View Destinations ➔
-            </Link>
-          </div>
-
-          {/* ------------------------------------------------------------ */}
-          {/* FLOATING GLASSMORPHIC SEARCH CARD (Exact GlobalVista Layout) */}
-          {/* ------------------------------------------------------------ */}
-          <div className="mt-10 mx-auto max-w-4xl rounded-3xl border border-white/40 bg-white/20 p-5 sm:p-6 shadow-2xl backdrop-blur-xl text-left animate-in fade-in slide-in-from-bottom-6">
-            {/* Top Navigation Tabs */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              {[
-                { key: 'flights', label: 'Flights', icon: Plane },
-                { key: 'hotels', label: 'Hotels', icon: Hotel },
-                { key: 'cars', label: 'Cars', icon: Car },
-                { key: 'cruises', label: 'Cruises', icon: Anchor },
-                { key: 'itineraries', label: 'Modular Itineraries', icon: Compass },
-              ].map((tab) => {
-                const IconComponent = tab.icon;
-                const isActive = searchTab === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setSearchTab(tab.key as any)}
-                    className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-extrabold transition cursor-pointer ${
-                      isActive
-                        ? 'bg-white text-blue-600 shadow-md'
-                        : 'text-white/90 hover:bg-white/15'
-                    }`}
-                  >
-                    <IconComponent size={14} />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Input Fields Row */}
-            <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center rounded-2xl bg-white/25 border border-white/40 p-2.5 backdrop-blur-md">
-              {/* From */}
-              <div className="lg:col-span-3 px-2 py-1">
-                <span className="block text-[10px] font-bold text-white/80 uppercase tracking-wider">
-                  From
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <MapPin size={14} className="text-white/70 flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={origin}
-                    onChange={(e) => setOrigin(e.target.value)}
-                    className="w-full bg-transparent text-xs font-black text-white placeholder:text-white/60 outline-none truncate"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSwapLocations}
-                    className="p-1 rounded-full text-white/70 hover:text-white hover:bg-white/10"
-                    title="Swap locations"
-                  >
-                    <ArrowLeftRight size={13} />
-                  </button>
-                </div>
+      {/* ============================================================ */}
+      {/* 2. HERO SECTION WITH EXACT SPLIT ARTWORK & FLOATING SEARCH   */}
+      {/* ============================================================ */}
+      <section className="relative overflow-hidden pt-8 pb-16 bg-gradient-to-b from-blue-50/40 via-white to-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* LEFT HERO TEXT COLUMN */}
+            <div className="lg:col-span-6 space-y-5 text-left">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-200/80 px-3.5 py-1 text-xs font-bold text-blue-600 shadow-2xs">
+                <Plane size={13} className="text-blue-600" />
+                <span>Plan Smarter, Travel Better</span>
               </div>
 
-              {/* To */}
-              <div className="lg:col-span-3 px-2 py-1 border-t sm:border-t-0 sm:border-l border-white/20">
-                <span className="block text-[10px] font-bold text-white/80 uppercase tracking-wider">
-                  To
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Compass size={14} className="text-white/70 flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    className="w-full bg-transparent text-xs font-black text-white placeholder:text-white/60 outline-none truncate"
-                  />
-                </div>
-              </div>
+              {/* Main Headline matching mockup */}
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+                Your Journey, <br />
+                <span className="text-blue-600">Perfectly</span> Planned
+              </h1>
 
-              {/* Depart */}
-              <div className="lg:col-span-2 px-2 py-1 border-t lg:border-t-0 lg:border-l border-white/20">
-                <span className="block text-[10px] font-bold text-white/80 uppercase tracking-wider">
-                  Depart
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Calendar size={14} className="text-white/70 flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={departDate}
-                    onChange={(e) => setDepartDate(e.target.value)}
-                    className="w-full bg-transparent text-xs font-black text-white outline-none truncate"
-                  />
-                </div>
-              </div>
+              {/* Subtitle */}
+              <p className="text-sm sm:text-base text-slate-600 max-w-lg leading-relaxed">
+                GlobeTrotter helps you plan multi-city trips, discover amazing places, build personalized itineraries, manage budgets in ₹ INR, and share your adventures with the world.
+              </p>
 
-              {/* Return */}
-              <div className="lg:col-span-2 px-2 py-1 border-t lg:border-t-0 lg:border-l border-white/20">
-                <span className="block text-[10px] font-bold text-white/80 uppercase tracking-wider">
-                  Return
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Calendar size={14} className="text-white/70 flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={returnDate}
-                    onChange={(e) => setReturnDate(e.target.value)}
-                    className="w-full bg-transparent text-xs font-black text-white outline-none truncate"
-                  />
-                </div>
-              </div>
-
-              {/* Search CTA */}
-              <div className="lg:col-span-2">
+              {/* CTAs */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
                 <button
-                  type="submit"
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-black text-white shadow-lg shadow-blue-900/40 transition hover:scale-102 active:scale-95 cursor-pointer"
+                  type="button"
+                  onClick={() => openAuth('signup')}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 px-5 py-3 text-xs font-bold text-white shadow-md transition active:scale-95 cursor-pointer"
                 >
-                  <Search size={15} /> Search 🔍
+                  Plan Your Trip <ArrowUpRight size={15} />
                 </button>
-              </div>
-            </form>
 
-            {/* ------------------------------------------------------------ */}
-            {/* AI SUGGESTIONS FOR YOU ROW (Exact 4 Cards with Heart & Price) */}
-            {/* ------------------------------------------------------------ */}
-            <div className="mt-4 pt-3.5 border-t border-white/20">
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="flex items-center gap-1.5 text-xs font-extrabold text-white">
-                  <Sparkles size={14} className="text-yellow-300" />
-                  <span>AI SUGGESTIONS FOR YOU</span>
-                </div>
                 <Link
                   href="/explore"
-                  className="text-[11px] font-bold text-white/90 hover:text-white flex items-center gap-1"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-5 py-3 text-xs font-bold text-slate-700 shadow-2xs transition"
                 >
-                  See more ideas →
+                  Explore Destinations <ArrowUpRight size={15} />
                 </Link>
               </div>
 
-              {/* 4 Cards matching the template */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {[
-                  { id: 's-bali', name: 'Bali, Indonesia', country: 'Indonesia', priceUSD: '$899', priceINR: '₹48,000', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80' },
-                  { id: 's-santorini', name: 'Santorini, Greece', country: 'Greece', priceUSD: '$1,299', priceINR: '₹82,000', img: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=400&q=80' },
-                  { id: 's-dubai', name: 'Dubai, UAE', country: 'UAE', priceUSD: '$1,099', priceINR: '₹65,000', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&q=80' },
-                  { id: 's-maldives', name: 'Maldives', country: 'Maldives', priceUSD: '$1,499', priceINR: '₹95,000', img: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400&q=80' },
-                ].map((item) => {
-                  const isLiked = !!likedSuggestions[item.id];
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => {
-                        setDestination(item.name);
-                        toast.info(`Selected ${item.name}`);
-                      }}
-                      className="group flex items-center justify-between rounded-2xl border border-white/30 bg-white/20 p-1.5 pr-2.5 backdrop-blur-md hover:bg-white/30 transition cursor-pointer shadow-xs"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <img
-                          src={item.img}
-                          alt={item.name}
-                          className="h-10 w-10 rounded-xl object-cover flex-shrink-0 group-hover:scale-105 transition duration-300"
-                        />
-                        <div className="min-w-0">
-                          <h4 className="text-[11px] font-extrabold text-white truncate drop-shadow-xs">
-                            {item.name}
-                          </h4>
-                          <span className="text-[10px] font-bold text-emerald-300 block">
-                            from {item.priceINR} ({item.priceUSD})
-                          </span>
-                        </div>
-                      </div>
+              {/* Social Proof with traveler avatars */}
+              <div className="flex items-center gap-3 pt-3">
+                <div className="flex -space-x-2">
+                  <img
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80"
+                    alt="Traveler"
+                    className="h-8 w-8 rounded-full border-2 border-white object-cover"
+                  />
+                  <img
+                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"
+                    alt="Traveler"
+                    className="h-8 w-8 rounded-full border-2 border-white object-cover"
+                  />
+                  <img
+                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80"
+                    alt="Traveler"
+                    className="h-8 w-8 rounded-full border-2 border-white object-cover"
+                  />
+                </div>
+                <p className="text-xs text-slate-600 font-medium">
+                  Join <strong className="text-slate-900 font-bold">25,000+</strong> happy travelers who plan smarter with GlobeTrotter.
+                </p>
+              </div>
+            </div>
 
-                      <button
-                        type="button"
-                        onClick={(e) => toggleLike(item.id, item.name, item.country, item.img, e)}
-                        className={`p-1 rounded-full transition ${isLiked ? 'text-red-400 bg-white/20' : 'text-white/70 hover:text-red-300'}`}
-                      >
-                        <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
-                      </button>
+            {/* RIGHT ARTWORK COLUMN: Exact Globe with Iconic Monuments Artwork */}
+            <div className="lg:col-span-6 relative flex justify-center items-center">
+              <div className="relative w-full max-w-lg aspect-square">
+                {/* Globe + Monuments Artwork (Hero Image) */}
+                <img
+                  src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1000&q=85"
+                  alt="World Monuments Panorama"
+                  className="h-full w-full object-cover rounded-3xl shadow-2xl border-4 border-white"
+                />
+
+                {/* Floating Destination Badge: Rome, Italy (as in mockup) */}
+                <div className="absolute bottom-6 left-6 rounded-2xl bg-white/95 backdrop-blur-md p-3 shadow-xl border border-slate-100 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-3">
+                  <img
+                    src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=150&q=80"
+                    alt="Rome"
+                    className="h-11 w-11 rounded-xl object-cover"
+                  />
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <h4 className="text-xs font-bold text-slate-900">Rome, Italy</h4>
+                      <span className="text-[10px] text-blue-600 font-bold">📍</span>
                     </div>
-                  );
-                })}
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <div className="flex text-amber-400 text-[10px]">
+                        ★★★★★
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-600">4.8 (1.2k reviews)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ============================================================ */}
+          {/* FLOATING SEARCH WIDGET PILL BAR (Exact Mockup Match)         */}
+          {/* ============================================================ */}
+          <div className="mt-10 mx-auto max-w-5xl rounded-2xl bg-white p-3 sm:p-4 shadow-xl border border-slate-200/80">
+            <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+              {/* Field 1: Where to? */}
+              <div className="sm:col-span-4 flex items-center gap-3 px-3 py-2 border-b sm:border-b-0 sm:border-r border-slate-200">
+                <Search size={18} className="text-blue-600 flex-shrink-0" />
+                <div className="w-full">
+                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Where to?
+                  </span>
+                  <input
+                    type="text"
+                    value={destinationQuery}
+                    onChange={(e) => setDestinationQuery(e.target.value)}
+                    placeholder="Search destinations, cities..."
+                    className="w-full text-xs font-semibold text-slate-900 placeholder:text-slate-400 outline-none bg-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Field 2: Travel Dates */}
+              <div className="sm:col-span-4 flex items-center gap-3 px-3 py-2 border-b sm:border-b-0 sm:border-r border-slate-200">
+                <Calendar size={18} className="text-indigo-600 flex-shrink-0" />
+                <div className="w-full">
+                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Travel Dates
+                  </span>
+                  <input
+                    type="text"
+                    value={travelDates}
+                    onChange={(e) => setTravelDates(e.target.value)}
+                    className="w-full text-xs font-semibold text-slate-900 outline-none bg-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Field 3: Travelers */}
+              <div className="sm:col-span-2 flex items-center gap-3 px-3 py-2">
+                <User size={18} className="text-emerald-600 flex-shrink-0" />
+                <div className="w-full">
+                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Travelers
+                  </span>
+                  <input
+                    type="text"
+                    value={travelersCount}
+                    onChange={(e) => setTravelersCount(e.target.value)}
+                    className="w-full text-xs font-semibold text-slate-900 outline-none bg-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="sm:col-span-2">
+                <button
+                  type="submit"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#0b2144] hover:bg-blue-900 text-xs font-bold text-white shadow-md transition active:scale-95 cursor-pointer"
+                >
+                  <Search size={14} /> Search
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* ============================================================ */}
+          {/* 5 VALUE PROPOSITION ICONS STRIP (Exact Mockup Match)         */}
+          {/* ============================================================ */}
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-5 gap-4 text-left">
+            <div className="flex items-start gap-3 p-2">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+                <Compass size={18} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Multi-city Itineraries</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Plan complex trips with ease across multiple cities.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-2">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+                <Wallet size={18} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Smart Budgeting</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Get real-time cost estimates and budget breakdowns in ₹ INR.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-2">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+                <Search size={18} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Discover & Explore</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Find activities, attractions, and hidden gems.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-2">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+                <Calendar size={18} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Visual Itineraries</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">See your trip come to life with beautiful timelines.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-2">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+                <Share2 size={18} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Share & Collaborate</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Share plans and collaborate with friends & family.</p>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* ============================================================ */}
-      {/* 2. BOTTOM WHITE TRUST BAR (Matching GlobalVista Bottom Row)  */}
-      {/* ============================================================ */}
-      <section className="bg-white py-6 border-b border-slate-200 text-slate-800 shadow-xs">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center sm:text-left">
-          {/* 1. Best Price Guarantee */}
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
-              <ShieldCheck size={22} />
-            </div>
-            <div>
-              <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">Best Price Guarantee</h4>
-              <p className="text-[11px] text-slate-500 font-medium">We match the best prices & ₹ INR budgets</p>
-            </div>
-          </div>
-
-          {/* 2. 24/7 Travel Support */}
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
-              <Headphones size={22} />
-            </div>
-            <div>
-              <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">24/7 Travel Support</h4>
-              <p className="text-[11px] text-slate-500 font-medium">Always here when you need us</p>
-            </div>
-          </div>
-
-          {/* 3. Secure Booking */}
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
-              <Lock size={22} />
-            </div>
-            <div>
-              <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">Secure Booking</h4>
-              <p className="text-[11px] text-slate-500 font-medium">Your data is 100% protected</p>
-            </div>
-          </div>
-
-          {/* 4. Trusted by Millions */}
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
-              <Star size={22} fill="#3B82F6" className="text-blue-600" />
-            </div>
-            <div>
-              <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">Trusted by Millions</h4>
-              <p className="text-[11px] text-slate-500 font-medium">10M+ happy travelers worldwide</p>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* ============================================================ */}
-      {/* 3. COMPREHENSIVE FEATURES SPOTLIGHT & MARKETING (All 13)     */}
+      {/* 3. "EVERYTHING YOU NEED, ALL IN ONE PLACE" FEATURE SHOWCASE   */}
+      {/* (Exact Mockup Match: Left Checklist + Right 3 Floating Cards) */}
       {/* ============================================================ */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 bg-slate-950 text-white">
-        <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="rounded-full bg-blue-500/15 border border-blue-400/30 px-3.5 py-1 text-xs font-black text-blue-400 uppercase tracking-wider">
-            All-In-One Travel Suite
-          </span>
-          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-            Every Tool to Build, Budget & Share Your Journey
-          </h2>
-          <p className="text-sm sm:text-base text-slate-400">
-            Engineered with real-time ₹ INR calculations, drag-to-reorder day plans, and 1-click community cloning.
-          </p>
-        </div>
-
-        {/* 6 Feature Marketing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Feature 1: Multi-City Itinerary Builder */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-blue-500/50 hover:bg-slate-900 transition-all space-y-4">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
-              <Compass size={24} />
-            </div>
-            <div>
-              <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-wider">Features #5 & #6</span>
-              <h3 className="text-lg font-bold text-white mt-1">Modular Itinerary Builder</h3>
-              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                Add cities, travel dates, and modular sections. Drag-to-reorder stops effortlessly and preview two-column physical activity & expense timelines.
-              </p>
-            </div>
-            <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-              <Link href="/trips" className="text-xs font-bold text-blue-400 group-hover:text-blue-300 flex items-center gap-1">
-                Open Builder Screen <ChevronRight size={14} />
-              </Link>
-            </div>
-          </div>
-
-          {/* Feature 2: Smart ₹ INR Budget Breakdown */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-emerald-500/50 hover:bg-slate-900 transition-all space-y-4">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30">
-              <Wallet size={24} />
-            </div>
-            <div>
-              <span className="text-[10px] font-extrabold text-emerald-400 uppercase tracking-wider">Feature #9</span>
-              <h3 className="text-lg font-bold text-white mt-1">Real-Time ₹ INR Budget Tracker</h3>
-              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                Visual category progress breakdown across flights, stays, activities, and dining. Includes average daily spend limits and overbudget alerts.
-              </p>
-            </div>
-            <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-              <Link href="/budget" className="text-xs font-bold text-emerald-400 group-hover:text-emerald-300 flex items-center gap-1">
-                Open Budget Screen <ChevronRight size={14} />
-              </Link>
-            </div>
-          </div>
-
-          {/* Feature 3: Trip Calendar & Timeline */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-indigo-500/50 hover:bg-slate-900 transition-all space-y-4">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-              <Calendar size={24} />
-            </div>
-            <div>
-              <span className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-wider">Feature #10</span>
-              <h3 className="text-lg font-bold text-white mt-1">Calendar & Timeline Grid</h3>
-              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                Month-based calendar layout with visual multi-day trip spans (Paris, Swiss Alps, Rome) and expandable day-wise activity schedulers.
-              </p>
-            </div>
-            <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-              <Link href="/calendar" className="text-xs font-bold text-indigo-400 group-hover:text-indigo-300 flex items-center gap-1">
-                View Calendar Grid <ChevronRight size={14} />
-              </Link>
-            </div>
-          </div>
-
-          {/* Feature 4: City & Activity Search */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-amber-500/50 hover:bg-slate-900 transition-all space-y-4">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-600/20 text-amber-400 border border-amber-500/30">
-              <Search size={24} />
-            </div>
-            <div>
-              <span className="text-[10px] font-extrabold text-amber-400 uppercase tracking-wider">Features #7 & #8</span>
-              <h3 className="text-lg font-bold text-white mt-1">City & Experience Discovery</h3>
-              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                Filter activities by interest (Adventure, Culture, Food, Cruises), duration, and rupee cost index with instant "+ Add to Stop" toggling.
-              </p>
-            </div>
-            <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-              <Link href="/explore" className="text-xs font-bold text-amber-400 group-hover:text-amber-300 flex items-center gap-1">
-                Explore Experiences <ChevronRight size={14} />
-              </Link>
-            </div>
-          </div>
-
-          {/* Feature 5: Community Hub & 1-Click Clone */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-purple-500/50 hover:bg-slate-900 transition-all space-y-4">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
-              <Globe2 size={24} />
-            </div>
-            <div>
-              <span className="text-[10px] font-extrabold text-purple-400 uppercase tracking-wider">Feature #11</span>
-              <h3 className="text-lg font-bold text-white mt-1">Community Hub & 1-Click Clone</h3>
-              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                Browse verified public travel itineraries shared by fellow explorers. Copy the full trip into your personal account in one single click.
-              </p>
-            </div>
-            <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-              <Link href="/community" className="text-xs font-bold text-purple-400 group-hover:text-purple-300 flex items-center gap-1">
-                Visit Community <ChevronRight size={14} />
-              </Link>
-            </div>
-          </div>
-
-          {/* Feature 6: Admin Analytics Dashboard */}
-          <div className="group rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-7 shadow-xl hover:border-sky-500/50 hover:bg-slate-900 transition-all space-y-4">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-sky-600/20 text-sky-400 border border-sky-500/30">
-              <BarChart3 size={24} />
-            </div>
-            <div>
-              <span className="text-[10px] font-extrabold text-sky-400 uppercase tracking-wider">Feature #13</span>
-              <h3 className="text-lg font-bold text-white mt-1">Admin Analytics Intelligence</h3>
-              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                4-tab executive dashboard with user management permissions, popular cities ranking, trending activities, and interactive SVG charts.
-              </p>
-            </div>
-            <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-              <Link href="/admin" className="text-xs font-bold text-sky-400 group-hover:text-sky-300 flex items-center gap-1">
-                View Admin Dashboard <ChevronRight size={14} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/* 4. BOTTOM BANNER & CALL TO ACTION                            */}
-      {/* ============================================================ */}
-      <section className="py-16 px-4 sm:px-6 max-w-6xl mx-auto bg-slate-950">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 p-8 sm:p-14 text-center text-white shadow-2xl">
-          <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-            <h2 className="text-3xl sm:text-4xl font-black">
-              Ready to Design Your Personalized Journey?
-            </h2>
-            <p className="text-xs sm:text-sm text-blue-100 leading-relaxed">
-              Join thousands of travelers crafting smart, budget-conscious, multi-city European and global itineraries with GlobeTrotter.
-            </p>
-            <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode('signup');
-                  setShowAuthModal(true);
-                }}
-                className="rounded-full bg-white text-slate-900 hover:bg-slate-100 px-7 py-3 text-xs font-black shadow-lg transition active:scale-95 cursor-pointer"
-              >
-                Create Free Account
-              </button>
-              <button
-                type="button"
-                onClick={handleQuickDemoLogin}
-                className="rounded-full border border-white/30 bg-white/10 hover:bg-white/20 px-6 py-3 text-xs font-bold text-white backdrop-blur-md transition active:scale-95 cursor-pointer"
-              >
-                ⚡ 1-Click Demo Login
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
-      {/* 5. COMPREHENSIVE FOOTER                                      */}
-      {/* ============================================================ */}
-      <footer className="border-t border-white/10 bg-slate-950 pt-14 pb-12 px-4 sm:px-6 lg:px-8 text-white">
-        <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-5 gap-8 mb-12 text-xs">
-          {/* Col 1: Brand */}
-          <div className="md:col-span-2 space-y-3">
-            <div className="flex items-center gap-2.5">
-              <div className="grid h-9 w-9 place-items-center rounded-xl bg-blue-600 text-white">
-                <Globe2 size={20} />
+      <section id="features" className="py-20 bg-slate-50/60 border-t border-slate-200/70">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Left Description & Checklist */}
+            <div className="lg:col-span-5 space-y-6 text-left">
+              <div className="space-y-2">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600">
+                  Plan Your Perfect Trip
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                  Everything you need, <br />
+                  all in one place
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  From inspiration to itinerary, GlobeTrotter makes travel planning simple, smart, and exciting.
+                </p>
               </div>
-              <span className="text-lg font-black text-white">GlobalVista / GlobeTrotter</span>
+
+              {/* Checklist */}
+              <div className="space-y-3 pt-2">
+                {[
+                  'Create & manage unlimited trips',
+                  'Add cities, dates & activities effortlessly',
+                  'Get budget estimates & cost breakdowns (in ₹ INR)',
+                  'Beautiful day-wise itinerary views',
+                  'Share plans with friends or make it public',
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <div className="grid h-5 w-5 place-items-center rounded-full bg-emerald-100 text-emerald-700 flex-shrink-0">
+                      <Check size={12} strokeWidth={3} />
+                    </div>
+                    <span className="text-xs sm:text-sm font-semibold text-slate-800">{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-2">
+                <Link
+                  href="/trips"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-5 py-2.5 text-xs font-bold text-slate-800 shadow-2xs transition"
+                >
+                  Explore All Features <ChevronRight size={14} />
+                </Link>
+              </div>
             </div>
-            <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-              Seamless global travel planning, personalized experiences, and trusted booking — empowering smart journey planning with ₹ INR budget synchronicity.
-            </p>
-            <span className="inline-block text-[11px] font-semibold text-slate-500">
-              Built for ODOO X L.D College Hackathon 2026
+
+            {/* Right UI Showcase Cards (Budget Donut + Itinerary Flow + Activities) */}
+            <div className="lg:col-span-7 relative flex flex-col md:flex-row items-center justify-center gap-4">
+              {/* Mini Card 1: Budget Overview Donut */}
+              <div className="w-full md:w-48 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg space-y-3 flex-shrink-0">
+                <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                  Budget Overview
+                </span>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-medium">Total Budget</span>
+                  <p className="text-base font-black text-slate-900">₹1,52,000</p>
+                </div>
+                {/* SVG Mini Donut */}
+                <div className="relative h-20 w-20 mx-auto">
+                  <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#e2e8f0" strokeWidth="4" />
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#3b82f6" strokeWidth="4" strokeDasharray="35 100" />
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#6366f1" strokeWidth="4" strokeDasharray="32 100" strokeDashoffset="-35" />
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#f97316" strokeWidth="4" strokeDasharray="19 100" strokeDashoffset="-67" />
+                  </svg>
+                </div>
+                <div className="space-y-1 text-[9px] text-slate-600">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Flights</span>
+                    <span className="font-bold">₹54,000</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-indigo-500" /> Stays</span>
+                    <span className="font-bold">₹49,000</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-orange-500" /> Activities</span>
+                    <span className="font-bold">₹29,000</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Card 2: My Europe Trip Itinerary */}
+              <div className="w-full md:w-64 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl space-y-3 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900">My Europe Trip</h4>
+                    <span className="text-[9px] text-slate-400 font-semibold">Sep 10 – Sep 28, 2026 • 18 Days</span>
+                  </div>
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-800">
+                    Published
+                  </span>
+                </div>
+
+                {/* Day stops matching mockup */}
+                <div className="space-y-2 text-[10px]">
+                  <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
+                    <div>
+                      <span className="font-bold text-blue-600 block">Day 1 – 3</span>
+                      <span className="text-slate-700">Paris, France</span>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=100&q=80" alt="Paris" className="h-7 w-9 rounded object-cover" />
+                  </div>
+
+                  <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
+                    <div>
+                      <span className="font-bold text-blue-600 block">Day 4 – 6</span>
+                      <span className="text-slate-700">Rome, Italy</span>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=100&q=80" alt="Rome" className="h-7 w-9 rounded object-cover" />
+                  </div>
+
+                  <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
+                    <div>
+                      <span className="font-bold text-blue-600 block">Day 7 – 9</span>
+                      <span className="text-slate-700">Barcelona, Spain</span>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1583422409516-2895a77efded?w=100&q=80" alt="Barcelona" className="h-7 w-9 rounded object-cover" />
+                  </div>
+
+                  <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
+                    <div>
+                      <span className="font-bold text-blue-600 block">Day 10 – 12</span>
+                      <span className="text-slate-700">Swiss Alps, Switzerland</span>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=100&q=80" alt="Swiss Alps" className="h-7 w-9 rounded object-cover" />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => router.push('/trips')}
+                  className="w-full py-1.5 rounded-lg border border-dashed border-blue-400 text-blue-600 text-[10px] font-bold hover:bg-blue-50 transition"
+                >
+                  + Add New Stop
+                </button>
+              </div>
+
+              {/* Mini Card 3: Top Activities in Rome */}
+              <div className="w-full md:w-48 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-lg space-y-2.5 flex-shrink-0">
+                <span className="text-[10px] font-bold text-slate-900 block">
+                  Top Activities in Rome
+                </span>
+                <div className="space-y-1.5 text-[9px]">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                    <div className="flex items-center gap-1.5">
+                      <img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=50&q=80" className="h-5 w-5 rounded object-cover" />
+                      <div>
+                        <p className="font-bold text-slate-800">Colosseum Tour</p>
+                        <span className="text-[8px] text-slate-400">3 hrs</span>
+                      </div>
+                    </div>
+                    <span className="font-bold text-slate-900">₹3,500</span>
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                    <div className="flex items-center gap-1.5">
+                      <img src="https://images.unsplash.com/photo-1543429776-2782fc8e1acd?w=50&q=80" className="h-5 w-5 rounded object-cover" />
+                      <div>
+                        <p className="font-bold text-slate-800">Vatican Museums</p>
+                        <span className="text-[8px] text-slate-400">4 hrs</span>
+                      </div>
+                    </div>
+                    <span className="font-bold text-slate-900">₹4,200</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <img src="https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=50&q=80" className="h-5 w-5 rounded object-cover" />
+                      <div>
+                        <p className="font-bold text-slate-800">Trevi Fountain</p>
+                        <span className="text-[8px] text-slate-400">1 hr</span>
+                      </div>
+                    </div>
+                    <span className="font-bold text-emerald-600">Free</span>
+                  </div>
+                </div>
+
+                <Link
+                  href="/explore"
+                  className="block text-center w-full py-1.5 rounded-lg bg-[#0b2144] text-white text-[9px] font-bold hover:bg-blue-900 transition"
+                >
+                  Add Activity
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 4. "POPULAR DESTINATIONS: FIND YOUR NEXT ADVENTURE"          */}
+      {/* (Exact Mockup Match: 5 Destination Cards with starting price)*/}
+      {/* ============================================================ */}
+      <section className="py-20 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600 block">
+                Popular Destinations
+              </span>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight mt-1">
+                Find your next adventure
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Explore handpicked destinations loved by travelers worldwide.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Link
+                href="/explore"
+                className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+              >
+                View All Destinations <ChevronRight size={14} />
+              </Link>
+              <div className="flex items-center gap-1">
+                <button className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+                  <ChevronLeft size={16} />
+                </button>
+                <button className="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 5 Destination Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {[
+              { id: 'd-1', name: 'Santorini, Greece', rating: '4.9', price: '₹62,000', img: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=600&q=80' },
+              { id: 'd-2', name: 'Tokyo, Japan', rating: '4.9', price: '₹74,000', img: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80' },
+              { id: 'd-3', name: 'Swiss Alps, Switzerland', rating: '4.9', price: '₹75,000', img: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=600&q=80' },
+              { id: 'd-4', name: 'Bali, Indonesia', rating: '4.7', price: '₹48,000', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80' },
+              { id: 'd-5', name: 'New York, USA', rating: '4.8', price: '₹89,000', img: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&q=80' },
+            ].map((dest) => (
+              <div
+                key={dest.id}
+                onClick={() => router.push('/explore')}
+                className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm hover:shadow-md hover:border-blue-300 transition duration-300 cursor-pointer"
+              >
+                <div className="relative h-44 w-full overflow-hidden rounded-xl bg-slate-100">
+                  <img
+                    src={dest.img}
+                    alt={dest.name}
+                    className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
+                  />
+                  <span className="absolute top-2 right-2 flex items-center gap-1 rounded-md bg-white/90 backdrop-blur-md px-1.5 py-0.5 text-[10px] font-bold text-slate-900 shadow-2xs">
+                    <Star size={10} className="text-amber-500 fill-amber-500" /> {dest.rating}
+                  </span>
+                </div>
+                <div className="mt-2.5 px-1 flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 truncate">{dest.name}</h4>
+                    <span className="text-[10px] text-slate-400">Starting from</span>
+                  </div>
+                  <span className="text-xs font-black text-blue-600">{dest.price}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 5. "PLAN YOUR TRIP IN 4 SIMPLE STEPS" HOW IT WORKS           */}
+      {/* (Exact Mockup Match: Horizontal sequence with 4 step pills)  */}
+      {/* ============================================================ */}
+      <section className="py-18 bg-blue-50/40 border-y border-slate-200/60">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-12">
+          <div>
+            <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600 block">
+              How It Works
             </span>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight mt-1">
+              Plan your trip in 4 simple steps
+            </h2>
           </div>
 
-          {/* Col 2: Navigation */}
+          {/* 4 Step Items */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+            {/* Step 1 */}
+            <div className="relative flex flex-col items-center p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600 mb-3 shadow-2xs">
+                <Compass size={24} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">1. Choose Destinations</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Search and pick the cities you want to visit on your adventure.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="relative flex flex-col items-center p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-indigo-50 text-indigo-600 mb-3 shadow-2xs">
+                <Calendar size={24} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">2. Build Itinerary</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Add dates, activities and organize your trip with drag-to-reorder.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="relative flex flex-col items-center p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 mb-3 shadow-2xs">
+                <Wallet size={24} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">3. Set Budget</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Get real-time ₹ INR cost estimates and manage your daily limits.
+              </p>
+            </div>
+
+            {/* Step 4 */}
+            <div className="relative flex flex-col items-center p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-purple-50 text-purple-600 mb-3 shadow-2xs">
+                <Send size={22} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">4. Share & Go!</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Share your plan with friends and start your personalized journey!
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 6. "TRAVELERS LOVE GLOBETROTTER: WHAT OUR TRAVELERS SAY"     */}
+      {/* (Exact Mockup Match: 3 Testimonial Cards + Rating)           */}
+      {/* ============================================================ */}
+      <section className="py-20 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-10">
+          <div>
+            <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600 block">
+              Travelers Love GlobeTrotter
+            </span>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight mt-1">
+              What our travelers say
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+            {/* Review 1 */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4 hover:border-slate-300 transition">
+              <span className="text-2xl text-blue-600 font-serif leading-none">“</span>
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                GlobeTrotter made planning our Europe trip so easy! The itinerary builder and budget planner are complete game changers.
+              </p>
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"
+                    alt="Sarah"
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">Sarah Johnson</h4>
+                    <span className="text-[10px] text-slate-400">New York, USA</span>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-amber-500">5.0 ★</span>
+              </div>
+            </div>
+
+            {/* Review 2 */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4 hover:border-slate-300 transition">
+              <span className="text-2xl text-blue-600 font-serif leading-none">“</span>
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                I love how I can discover activities and see the total cost upfront in rupees. Super helpful, fast, and beautifully designed!
+              </p>
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80"
+                    alt="Michael"
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">Michael Chen</h4>
+                    <span className="text-[10px] text-slate-400">Toronto, Canada</span>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-amber-500">5.0 ★</span>
+              </div>
+            </div>
+
+            {/* Review 3 */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4 hover:border-slate-300 transition">
+              <span className="text-2xl text-blue-600 font-serif leading-none">“</span>
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                Finally, a travel planner that understands multi-city travelers! Sharing trips with friends in one click is so convenient.
+              </p>
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80"
+                    alt="Priya"
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">Priya Sharma</h4>
+                    <span className="text-[10px] text-slate-400">Mumbai, India</span>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-amber-500">5.0 ★</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Pagination dots */}
+          <div className="flex items-center justify-center gap-1.5">
+            <span className="h-2 w-5 rounded-full bg-blue-600" />
+            <span className="h-2 w-2 rounded-full bg-slate-200" />
+            <span className="h-2 w-2 rounded-full bg-slate-200" />
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 7. TRUSTED PARTNERS STRIP (Exact Mockup Match)               */}
+      {/* ============================================================ */}
+      <section className="py-8 bg-slate-50 border-y border-slate-200/80">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-4">
+          <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
+            Trusted By Travelers & Partners
+          </span>
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-75 grayscale hover:grayscale-0 transition duration-300">
+            <span className="text-base sm:text-lg font-black tracking-tight text-blue-900">Booking.com</span>
+            <span className="text-base sm:text-lg font-black tracking-tight text-amber-600">Expedia</span>
+            <span className="text-base sm:text-lg font-black tracking-tight text-rose-500">airbnb</span>
+            <span className="text-base sm:text-lg font-black tracking-tight text-emerald-600">Tripadvisor</span>
+            <span className="text-base sm:text-lg font-black tracking-tight text-sky-600">Skyscanner</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 8. "READY TO PLAN YOUR DREAM TRIP?" CALL TO ACTION BANNER     */}
+      {/* (Exact Mockup Match: Mountain traveler background banner)    */}
+      {/* ============================================================ */}
+      <section className="py-14 px-4 sm:px-6 max-w-7xl mx-auto">
+        <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-2xl">
+          {/* Background image of mountain traveler */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1600&q=85"
+              alt="Hiker overlooking mountains"
+              className="h-full w-full object-cover opacity-60"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-950/90 via-slate-900/70 to-transparent" />
+          </div>
+
+          <div className="relative z-10 p-8 sm:p-14 max-w-xl text-left space-y-4">
+            <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
+              Ready to plan your dream trip?
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+              Join thousands of travelers who plan smarter, travel better, and turn travel dreams into effortless realities.
+            </p>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => openAuth('signup')}
+                className="inline-flex items-center gap-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 px-6 py-3 text-xs font-black shadow-lg transition active:scale-95 cursor-pointer"
+              >
+                Start Planning Now <ArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 9. DARK FOOTER (Exact Mockup Match)                          */}
+      {/* ============================================================ */}
+      <footer className="bg-[#0b172a] text-white pt-14 pb-8 px-4 sm:px-6 lg:px-8 border-t border-slate-800">
+        <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-5 gap-8 mb-12 text-xs">
+          {/* Brand Col */}
+          <div className="md:col-span-1 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-600 text-white">
+                <Compass size={18} />
+              </div>
+              <span className="text-base font-extrabold text-white">GlobeTrotter</span>
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              Your all-in-one travel planning companion. Plan smarter, travel better, create unforgettable memories.
+            </p>
+            <div className="flex items-center gap-3 text-slate-400 pt-1">
+              <span className="hover:text-white cursor-pointer">f</span>
+              <span className="hover:text-white cursor-pointer">📸</span>
+              <span className="hover:text-white cursor-pointer">🐦</span>
+              <span className="hover:text-white cursor-pointer">▶</span>
+            </div>
+          </div>
+
+          {/* Product Links */}
           <div className="space-y-2.5">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Features</h4>
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Product</h4>
             <ul className="space-y-2 text-slate-400">
-              <li><Link href="/trips" className="hover:text-white transition">Itinerary Builder</Link></li>
-              <li><Link href="/budget" className="hover:text-white transition">₹ INR Budget Tracker</Link></li>
-              <li><Link href="/calendar" className="hover:text-white transition">Calendar Timeline</Link></li>
-              <li><Link href="/explore" className="hover:text-white transition">Activities & Experiences</Link></li>
-              <li><Link href="/community" className="hover:text-white transition">Community Hub</Link></li>
+              <li><Link href="#features" className="hover:text-white transition">Features</Link></li>
+              <li><Link href="/trips" className="hover:text-white transition">Itinerary Planner</Link></li>
+              <li><Link href="/budget" className="hover:text-white transition">Budget Calculator</Link></li>
+              <li><Link href="/explore" className="hover:text-white transition">City Discovery</Link></li>
+              <li><Link href="/budget" className="hover:text-white transition">Pricing</Link></li>
             </ul>
           </div>
 
-          {/* Col 3: Company */}
+          {/* Company Links */}
           <div className="space-y-2.5">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Account</h4>
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Company</h4>
             <ul className="space-y-2 text-slate-400">
-              <li><Link href="/profile" className="hover:text-white transition">Profile & Wishlist</Link></li>
-              <li><Link href="/admin" className="hover:text-white transition">Admin Panel</Link></li>
-              <li><Link href="/login" className="hover:text-white transition">Sign In</Link></li>
-              <li><Link href="/signup" className="hover:text-white transition">Register</Link></li>
+              <li><Link href="/profile" className="hover:text-white transition">About Us</Link></li>
+              <li><span className="hover:text-white cursor-pointer">Careers</span></li>
+              <li><span className="hover:text-white cursor-pointer">Blog</span></li>
+              <li><span className="hover:text-white cursor-pointer">Press Kit</span></li>
+              <li><span className="hover:text-white cursor-pointer">Contact Us</span></li>
             </ul>
           </div>
 
-          {/* Col 4: Newsletter */}
+          {/* Resources Links */}
           <div className="space-y-2.5">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Travel Alerts</h4>
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Resources</h4>
+            <ul className="space-y-2 text-slate-400">
+              <li><Link href="/community" className="hover:text-white transition">Travel Guides</Link></li>
+              <li><span className="hover:text-white cursor-pointer">Help Center</span></li>
+              <li><span className="hover:text-white cursor-pointer">Privacy Policy</span></li>
+              <li><span className="hover:text-white cursor-pointer">Terms of Service</span></li>
+              <li><span className="hover:text-white cursor-pointer">FAQs</span></li>
+            </ul>
+          </div>
+
+          {/* Newsletter Box */}
+          <div className="space-y-2.5">
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Newsletter</h4>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Get weekly curated deals and budget travel tips directly in ₹ INR.
+              Get travel tips & exclusive deals straight to your inbox.
             </p>
             <form
               onSubmit={(e) => {
@@ -732,54 +970,50 @@ export default function LandingPage() {
                   setNewsletterEmail('');
                 }
               }}
-              className="space-y-2"
+              className="relative flex items-center"
             >
               <input
                 type="email"
                 required
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
-                placeholder="Enter your email..."
-                className="h-9 w-full rounded-xl border border-white/15 bg-white/5 px-3 text-xs text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+                placeholder="Enter your email"
+                className="h-10 w-full rounded-xl bg-slate-800/90 border border-slate-700 px-3 pr-10 text-xs text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
               />
               <button
                 type="submit"
-                className="h-8 w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-[11px] font-bold text-white transition"
+                className="absolute right-1.5 grid h-7 w-7 place-items-center rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition"
               >
-                Subscribe
+                <Send size={12} />
               </button>
             </form>
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
-          <span>© 2026 GlobeTrotter & GlobalVista. All rights reserved.</span>
-          <div className="flex items-center gap-4">
-            <span className="hover:text-slate-400 cursor-pointer">Privacy Policy</span>
-            <span className="hover:text-slate-400 cursor-pointer">Terms of Service</span>
-            <span className="hover:text-slate-400 cursor-pointer">Security</span>
-          </div>
+        <div className="border-t border-slate-800/80 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
+          <span>© 2026 GlobeTrotter. All rights reserved.</span>
+          <span>Made with ❤️ for travelers around the world.</span>
         </div>
       </footer>
 
       {/* ============================================================ */}
-      {/* 6. INTERACTIVE SIGN-IN / SIGN-UP MODAL POPUP                 */}
+      {/* 10. INTERACTIVE SIGN-IN / SIGN-UP MODAL POPUP                */}
       {/* ============================================================ */}
       {showAuthModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md animate-in fade-in">
-          <div className="relative w-full max-w-md rounded-3xl border border-white/15 bg-slate-900 p-6 sm:p-8 shadow-2xl text-white space-y-5 animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl text-slate-900 space-y-5 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-xl font-extrabold text-white">
+                <h3 className="text-xl font-extrabold text-slate-900">
                   {authMode === 'login' ? 'Welcome Back 👋' : 'Create Free Account 🌍'}
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   {authMode === 'login' ? 'Access your personalized itineraries' : 'Start planning your multi-city journey in minutes'}
                 </p>
               </div>
               <button
                 onClick={() => setShowAuthModal(false)}
-                className="rounded-full p-1 text-slate-400 hover:bg-white/10 hover:text-white"
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
               >
                 <X size={18} />
               </button>
@@ -789,14 +1023,14 @@ export default function LandingPage() {
             <button
               type="button"
               onClick={handleQuickDemoLogin}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 py-3 text-xs font-black text-white shadow-lg shadow-blue-500/25 transition active:scale-98 cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 py-3 text-xs font-black text-white shadow-md shadow-blue-500/25 transition active:scale-98 cursor-pointer"
             >
               ⚡ Instant 1-Click Demo Sign In
             </button>
 
             <div className="relative flex items-center justify-center">
-              <div className="border-t border-white/10 w-full" />
-              <span className="bg-slate-900 px-3 text-[10px] uppercase font-bold text-slate-500">
+              <div className="border-t border-slate-200 w-full" />
+              <span className="bg-white px-3 text-[10px] uppercase font-bold text-slate-400">
                 Or Continue With Email
               </span>
             </div>
@@ -804,59 +1038,59 @@ export default function LandingPage() {
             <form onSubmit={handleAuthSubmit} className="space-y-3.5">
               {authMode === 'signup' && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Your Full Name:</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Your Full Name:</label>
                   <input
                     type="text"
                     required
                     value={authName}
                     onChange={(e) => setAuthName(e.target.value)}
                     placeholder="e.g. Manthan Saraiya"
-                    className="h-10 w-full rounded-xl border border-white/15 bg-white/5 px-3 text-xs text-white outline-none focus:border-blue-500 focus:bg-white/10"
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Email Address:</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Email Address:</label>
                 <input
                   type="email"
                   required
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
                   placeholder="e.g. traveler@globetrotter.io"
-                  className="h-10 w-full rounded-xl border border-white/15 bg-white/5 px-3 text-xs text-white outline-none focus:border-blue-500 focus:bg-white/10"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Password:</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Password:</label>
                 <input
                   type="password"
                   required
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="h-10 w-full rounded-xl border border-white/15 bg-white/5 px-3 text-xs text-white outline-none focus:border-blue-500 focus:bg-white/10"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={authLoading}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white hover:bg-slate-100 text-slate-950 py-3 text-xs font-black transition active:scale-98 disabled:opacity-50 cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#0f172a] hover:bg-slate-800 text-white py-3 text-xs font-black transition active:scale-98 disabled:opacity-50 cursor-pointer"
               >
                 {authLoading ? 'Signing In...' : authMode === 'login' ? 'Log In to Account' : 'Sign Up Free'}
               </button>
             </form>
 
-            <div className="pt-2 text-center text-xs text-slate-400">
+            <div className="pt-2 text-center text-xs text-slate-500">
               {authMode === 'login' ? (
                 <p>
                   Don&apos;t have an account?{' '}
                   <button
                     type="button"
                     onClick={() => setAuthMode('signup')}
-                    className="font-bold text-blue-400 hover:underline"
+                    className="font-bold text-blue-600 hover:underline"
                   >
                     Sign up free
                   </button>
@@ -867,7 +1101,7 @@ export default function LandingPage() {
                   <button
                     type="button"
                     onClick={() => setAuthMode('login')}
-                    className="font-bold text-blue-400 hover:underline"
+                    className="font-bold text-blue-600 hover:underline"
                   >
                     Log in here
                   </button>
