@@ -39,7 +39,7 @@ interface CategorySummary {
   icon: any;
 }
 
-export function BudgetBreakdown() {
+export function BudgetBreakdown({ tripId }: { tripId?: string } = {}) {
   const {
     masterTrip,
     expenses,

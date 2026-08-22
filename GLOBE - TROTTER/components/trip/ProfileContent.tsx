@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   User,
@@ -128,7 +128,6 @@ const SAVED_DESTINATIONS = [
   { id: 'sd-6', name: 'Barcelona', country: 'Spain', img: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80' },
 ];
 
-import { useState, useRef } from 'react';
 import { useTripSync } from '@/context/TripSyncContext';
 
 export function ProfileContent() {
@@ -294,7 +293,7 @@ export function ProfileContent() {
 
                   <div className="rounded-xl bg-white p-2.5 border border-slate-200">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Saved Spots</span>
-                    <p className="text-xs font-bold text-purple-600 mt-0.5">{savedDests.length} Cities</p>
+                    <p className="text-xs font-bold text-purple-600 mt-0.5">{savedDestinations.length} Cities</p>
                   </div>
                 </div>
               </div>
@@ -318,8 +317,8 @@ export function ProfileContent() {
                     <input
                       type="text"
                       required
-                      value={userName}
-                      onChange={(e) => setUserName(e.target.value)}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 font-bold outline-none focus:border-blue-500 focus:bg-white"
                     />
                   </div>
@@ -329,8 +328,8 @@ export function ProfileContent() {
                     <input
                       type="email"
                       required
-                      value={userEmail}
-                      onChange={(e) => setUserEmail(e.target.value)}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
                     />
                   </div>
@@ -341,8 +340,8 @@ export function ProfileContent() {
                     <label className="block text-xs font-bold text-slate-700 mb-1">Location:</label>
                     <input
                       type="text"
-                      value={userLocation}
-                      onChange={(e) => setUserLocation(e.target.value)}
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
                       className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
                     />
                   </div>
@@ -382,8 +381,8 @@ export function ProfileContent() {
                   <label className="block text-xs font-bold text-slate-700 mb-1">Travel Bio & Preferences:</label>
                   <textarea
                     rows={2}
-                    value={userBio}
-                    onChange={(e) => setUserBio(e.target.value)}
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
                   />
                 </div>

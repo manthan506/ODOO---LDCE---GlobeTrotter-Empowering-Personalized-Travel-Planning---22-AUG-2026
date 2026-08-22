@@ -244,7 +244,7 @@ export function CalendarViewContent() {
               {monthName}
             </h2>
             <span className="text-[11px] font-bold text-blue-600">
-              {MASTER_TRIP.name} (Sep 10 – Sep 28)
+              {masterTrip.name} (Sep 10 – Sep 28)
             </span>
           </div>
 

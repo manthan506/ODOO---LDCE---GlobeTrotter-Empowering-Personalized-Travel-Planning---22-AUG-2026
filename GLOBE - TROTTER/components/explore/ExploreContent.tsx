@@ -399,7 +399,7 @@ export function ExploreContent() {
   // Toggle add/remove
   const handleToggleActivity = (act: ActivityItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    toggleAddActivity(act);
+    toggleAddActivity(act as any);
   };
 
   // Filtered Activities
