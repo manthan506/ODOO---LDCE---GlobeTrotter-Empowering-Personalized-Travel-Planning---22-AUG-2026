@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, ChangeEvent } from 'react';
+import { useState, FormEvent, ChangeEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -17,9 +17,12 @@ import {
   FileText,
   CheckCircle2,
   Sparkles,
+  Upload,
+  Link2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useTripSync } from '@/context/TripSyncContext';
 
 const AVATAR_PRESETS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
@@ -32,6 +35,8 @@ const AVATAR_PRESETS = [
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const router = useRouter();
   const { signIn, signUp } = useAuth();
+  const { updateUserProfile } = useTripSync();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Login & Shared State
   const [email, setEmail] = useState('');
@@ -47,21 +52,69 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [avatar, setAvatar] = useState(AVATAR_PRESETS[0]);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const isSignup = mode === 'signup';
 
   const handlePhotoUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setAvatar(reader.result);
-          toast.success('Profile photo uploaded!');
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file (PNG, JPG, WEBP).');
+      return;
     }
+
+    setUploadingPhoto(true);
+    const reader = new FileReader();
+
+    reader.onload = (readerEvent) => {
+      const img = new Image();
+      img.onload = () => {
+        // Compress and resize image using canvas for instant display and storage
+        const canvas = document.createElement('canvas');
+        const maxSize = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxSize) {
+            height *= maxSize / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width *= maxSize / height;
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          setAvatar(dataUrl);
+          updateUserProfile({ avatar: dataUrl });
+          toast.success('Profile photo uploaded successfully! ✨');
+        }
+        setUploadingPhoto(false);
+      };
+
+      img.onerror = () => {
+        toast.error('Could not process image file.');
+        setUploadingPhoto(false);
+      };
+
+      if (typeof readerEvent.target?.result === 'string') {
+        img.src = readerEvent.target.result;
+      }
+    };
+
+    reader.readAsDataURL(file);
+    // Reset file input value so selecting the same file again triggers onChange
+    e.target.value = '';
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -141,47 +194,93 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
           {/* Wireframe Top Photo Circle */}
           <div className="flex flex-col items-center mb-6">
             <div className="relative group">
-              <div className="h-24 w-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 flex items-center justify-center">
+              <div
+                onClick={() => {
+                  if (isSignup) fileInputRef.current?.click();
+                }}
+                className={`h-24 w-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 flex items-center justify-center relative ${
+                  isSignup ? 'cursor-pointer hover:ring-4 hover:ring-blue-400/40 transition' : ''
+                }`}
+                title={isSignup ? 'Click to upload your profile photo' : 'User Account'}
+              >
                 {isSignup ? (
                   <img
                     src={avatar}
                     alt="User Photo"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />
                 ) : (
                   <div className="h-full w-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white">
                     <UserIcon size={40} strokeWidth={1.75} />
                   </div>
                 )}
+
+                {uploadingPhoto && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white">
+                    <Loader2 size={24} className="animate-spin text-blue-400" />
+                  </div>
+                )}
               </div>
 
               {isSignup && (
-                <label
-                  htmlFor="photo-upload"
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
                   className="absolute bottom-0 right-0 grid h-8 w-8 place-items-center rounded-full bg-blue-600 text-white border-2 border-white shadow-md hover:bg-blue-700 cursor-pointer transition active:scale-95"
-                  title="Upload profile photo"
+                  title="Upload profile photo from computer"
                 >
                   <Camera size={14} />
-                  <input
-                    id="photo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
-                </label>
+                </button>
               )}
+
+              {/* Hidden File Input with explicit ref */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png, image/jpeg, image/jpg, image/webp, image/gif"
+                onChange={handlePhotoUpload}
+                className="hidden"
+              />
             </div>
 
             {isSignup && (
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline cursor-pointer"
+                >
+                  <Upload size={12} />
+                  <span>Upload Photo</span>
+                </button>
+
+                <span className="text-slate-300">•</span>
+
                 <button
                   type="button"
                   onClick={() => setShowAvatarPicker(!showAvatarPicker)}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 underline flex items-center gap-1"
+                  className="text-xs font-semibold text-slate-600 hover:text-blue-600 flex items-center gap-1 hover:underline cursor-pointer"
                 >
                   <Sparkles size={12} />
-                  {showAvatarPicker ? 'Hide Presets' : 'Choose Preset Avatar'}
+                  <span>{showAvatarPicker ? 'Hide Presets' : 'Choose Preset'}</span>
+                </button>
+
+                <span className="text-slate-300">•</span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = prompt('Enter public image URL for your profile photo:', avatar);
+                    if (url && url.trim()) {
+                      setAvatar(url.trim());
+                      updateUserProfile({ avatar: url.trim() });
+                      toast.success('Profile photo updated from URL!');
+                    }
+                  }}
+                  className="text-xs font-semibold text-slate-600 hover:text-blue-600 flex items-center gap-1 hover:underline cursor-pointer"
+                >
+                  <Link2 size={12} />
+                  <span>Image URL</span>
                 </button>
               </div>
             )}
