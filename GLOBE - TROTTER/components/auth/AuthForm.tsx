@@ -2,48 +2,43 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { Mail, Lock, User, ArrowRight, Loader2, Compass, Sparkles } from 'lucide-react';
+import { Compass, Loader2, ArrowRight, Mail, Lock, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 
-interface AuthFormProps {
-  mode: 'login' | 'signup';
-}
-
-export function AuthForm({ mode }: AuthFormProps) {
-  const isSignup = mode === 'signup';
+export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const router = useRouter();
-  const { signIn, signUp, signInDemo } = useAuth();
-
+  const { signIn, signUp } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
+
+  const isSignup = mode === 'signup';
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast.error('Please enter both email and password');
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters');
       return;
     }
-    if (isSignup && !name.trim()) {
-      toast.error('Please enter your full name');
-      return;
-    }
-
     setLoading(true);
     try {
       if (isSignup) {
-        const res = await signUp(name.trim(), email.trim(), password);
+        if (!name.trim()) {
+          toast.error('Please enter your name');
+          setLoading(false);
+          return;
+        }
+        const res = await signUp(name, email, password);
         if (res.error) {
           toast.error(res.error);
           return;
         }
-        toast.success('Account created successfully! Welcome to GlobeTrotter.');
+        toast.success('Account created — welcome to GlobeTrotter!');
       } else {
-        const res = await signIn(email.trim(), password);
+        const res = await signIn(email, password);
         if (res.error) {
           toast.error(res.error);
           return;
@@ -51,131 +46,95 @@ export function AuthForm({ mode }: AuthFormProps) {
         toast.success('Welcome back!');
       }
       router.push('/dashboard');
-    } catch (err: any) {
-      toast.error(err?.message || (isSignup ? 'Signup failed' : 'Invalid email or password'));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Authentication failed';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDemoLogin = async () => {
-    setDemoLoading(true);
-    try {
-      const res = await signInDemo();
-      if (res.error) {
-        toast.error(res.error);
-        return;
-      }
-      toast.success('Logged in with Exhibition Demo Account ✨');
-      router.push('/dashboard');
-    } catch (err: any) {
-      toast.error('Failed to log in with demo account');
-    } finally {
-      setDemoLoading(false);
-    }
-  };
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50/50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-6">
-        {/* Brand */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/25">
-            <Compass size={28} />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50/50 via-white to-slate-50 px-4 py-8">
+      <div className="w-full max-w-[420px]">
+        {/* Header / Brand */}
+        <Link href="/" className="mb-6 flex flex-col items-center justify-center gap-2 group">
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition">
+            <Compass size={26} strokeWidth={2.2} />
           </div>
-          <h2 className="text-2xl font-black tracking-tight text-slate-900">
-            GlobeTrotter
-          </h2>
-          <p className="text-xs text-slate-500 font-medium">
-            Empowering Personalized Travel Planning
-          </p>
-        </div>
+          <span className="text-2xl font-bold tracking-tight text-slate-900">GlobeTrotter</span>
+          <span className="text-xs text-slate-500 font-medium -mt-1">Empowering Personalized Travel Planning</span>
+        </Link>
 
         {/* Card */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm space-y-5">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">
-              {isSignup ? 'Create Your Account ✨' : 'Welcome Back! 👋'}
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+        <div className="rounded-3xl border border-slate-100 bg-white p-7 shadow-xl shadow-slate-200/60">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              {isSignup ? 'Create Account ✨' : 'Welcome Back! 👋'}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
               {isSignup
-                ? 'Sign up for a fresh, personalized travel planner'
-                : 'Login to access your saved trips and workspaces'}
+                ? 'Join thousands of smart travelers worldwide.'
+                : 'Login to continue your adventures.'}
             </p>
-          </div>
-
-          {/* Exhibition / Judges 1-Click Demo Button */}
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={demoLoading || loading}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50/60 hover:bg-blue-50 p-3 text-xs font-bold text-blue-700 transition active:scale-98 disabled:opacity-50"
-          >
-            {demoLoading ? (
-              <Loader2 size={15} className="animate-spin" />
-            ) : (
-              <Sparkles size={15} className="text-blue-600" />
-            )}
-            <span>✨ Exhibition & Judges Demo Account (1-Click)</span>
-          </button>
-
-          <div className="relative flex items-center justify-center text-xs text-slate-400">
-            <div className="w-full border-t border-slate-100" />
-            <span className="bg-white px-2 uppercase tracking-wider text-[10px] font-bold text-slate-400">
-              or use your credentials
-            </span>
-            <div className="w-full border-t border-slate-100" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignup && (
               <div>
-                <label className="mb-1 block text-xs font-bold text-slate-700">Full Name</label>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">Full name</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                    <User size={16} />
+                    <UserIcon size={18} />
                   </div>
                   <input
                     required
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                    placeholder="e.g. Manthan Saraiya"
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                    placeholder="Jane Traveler"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="mb-1 block text-xs font-bold text-slate-700">Email Address</label>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-700">Email address</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                  <Mail size={16} />
+                  <Mail size={18} />
                 </div>
                 <input
                   required
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                   placeholder="name@example.com"
                 />
               </div>
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-bold text-slate-700">Password</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700">Password</label>
+                {!isSignup && (
+                  <a href="#forgot" onClick={(e) => { e.preventDefault(); toast.info('Password reset instructions sent to email (Demo)'); }} className="text-xs font-medium text-blue-600 hover:underline">
+                    Forgot Password?
+                  </a>
+                )}
+              </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                  <Lock size={16} />
+                  <Lock size={18} />
                 </div>
                 <input
                   required
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
                   placeholder={isSignup ? 'At least 6 characters' : 'Enter your password'}
                 />
               </div>
@@ -184,20 +143,78 @@ export function AuthForm({ mode }: AuthFormProps) {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-500/25 transition hover:opacity-95 active:scale-[0.99] disabled:opacity-60"
+              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-sm font-semibold text-white shadow-md shadow-blue-500/25 transition hover:opacity-95 active:scale-[0.99] disabled:opacity-60"
             >
               {loading ? (
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={18} className="animate-spin" />
               ) : (
                 <>
-                  {isSignup ? 'Create Account' : 'Sign In'}
-                  <ArrowRight size={15} />
+                  {isSignup ? 'Get Started' : 'Login'}
+                  <ArrowRight size={16} />
                 </>
               )}
             </button>
           </form>
 
-          <p className="text-center text-xs text-slate-500 pt-2 border-t border-slate-100">
+          {/* Social Auth Mock */}
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs text-slate-400">
+              <span className="bg-white px-2">or continue with</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setName('Alex Nomad');
+                setEmail('alex@globetrotter.io');
+                setPassword('password123');
+                toast.success('Pre-filled demo traveler credentials!');
+              }}
+              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24">
+                <path
+                  fill="#EA4335"
+                  d="M12 5c1.55 0 2.95.55 4.04 1.45l3.03-3.03C17.24 1.7 14.78 1 12 1 7.42 1 3.52 3.61 1.63 7.42l3.67 2.85C6.18 7.37 8.84 5 12 5z"
+                />
+                <path
+                  fill="#4285F4"
+                  d="M23.49 12.28c0-.79-.07-1.54-.19-2.28H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.69 2.86c2.16-1.99 3.41-4.92 3.41-8.67z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.3 14.73c-.22-.67-.35-1.39-.35-2.13s.13-1.46.35-2.13L1.63 7.62C.59 9.69 0 12.02 0 14.5s.59 4.81 1.63 6.88l3.67-2.85c-.23-.6-.35-1.2-.35-1.8z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c3.24 0 5.95-1.08 7.93-2.91l-3.69-2.86c-1.07.72-2.45 1.16-4.24 1.16-3.16 0-5.82-2.37-6.7-5.27L1.63 15.97C3.52 19.79 7.42 22.4 12 22.4z"
+                />
+              </svg>
+              Google
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setName('Sarah Traveler');
+                setEmail('sarah@globetrotter.io');
+                setPassword('password123');
+                toast.success('Pre-filled demo credentials!');
+              }}
+              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              <svg className="h-4 w-4 fill-current text-slate-900" viewBox="0 0 24 24">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 1.01-2.87-.96.04-2.12.64-2.8 1.44-.59.69-1.12 1.77-.98 2.82 1.07.08 2.15-.56 2.77-1.39z" />
+              </svg>
+              Apple
+            </button>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-slate-500">
             {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
             <Link
               href={isSignup ? '/login' : '/signup'}

@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTrips } from '@/hooks/useTrips';
 import { TripCard } from '@/components/trip/TripCard';
-import { FlightDealsCard } from '@/components/trip/FlightDealsCard';
 import {
   MapPin,
   Plus,
@@ -13,10 +12,13 @@ import {
   Loader2,
   Search,
   Mic,
-  MicOff,
+  SlidersHorizontal,
   Luggage,
   Sparkles,
+  Lightbulb,
+  Wallet,
   ArrowRight,
+  TrendingUp,
   Bell,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -26,79 +28,15 @@ export function DashboardContent() {
   const { user } = useAuth();
   const { trips, loading } = useTrips();
   const [search, setSearch] = useState('');
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
 
   const userName = user?.name || user?.email?.split('@')[0] || 'Traveler';
+
   const upcomingTrip = trips.length > 0 ? trips[0] : null;
 
-  // Real Web Speech API implementation
-  const handleToggleVoiceSearch = () => {
-    if (typeof window === 'undefined') return;
-
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      toast.error('Voice search is not supported in this browser. Try Google Chrome.');
-      return;
-    }
-
-    if (isListening) {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      setIsListening(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-
-      recognition.onstart = () => {
-        setIsListening(true);
-        toast.info('🎙️ Listening... Speak your destination or activity!');
-      };
-
-      recognition.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
-          .map((result: any) => result[0])
-          .map((result: any) => result.transcript)
-          .join('');
-
-        setSearch(transcript);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        setIsListening(false);
-        if (event.error === 'not-allowed') {
-          toast.error('Microphone permission denied. Please allow mic access in your browser.');
-        } else {
-          toast.error('Could not hear voice input. Please try speaking again.');
-        }
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (err) {
-      console.error(err);
-      setIsListening(false);
-      toast.error('Error starting voice recognition');
-    }
-  };
-
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 space-y-6">
-      {/* Top Greeting & Notification */}
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+      {/* Top Greeting & Notification matching Screen 3 */}
+      <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Hi, {userName}! 👋
@@ -116,37 +54,28 @@ export function DashboardContent() {
         </Link>
       </div>
 
-      {/* Real Speech Mic Search Bar */}
-      <div className="relative">
+      {/* Search Bar with Mic & Filter */}
+      <div className="relative mb-6">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className={`h-12 w-full rounded-2xl border bg-white pl-11 pr-20 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition shadow-xs ${
-            isListening
-              ? 'border-red-500 ring-2 ring-red-100 bg-red-50/20'
-              : 'border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
-          }`}
-          placeholder={isListening ? '🎙️ Listening... speak destination now' : 'Search destinations, activities...'}
+          className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-20 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-xs"
+          placeholder="Search destinations, activities..."
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-slate-400">
           <button
             type="button"
-            onClick={handleToggleVoiceSearch}
-            className={`p-2 rounded-xl transition ${
-              isListening
-                ? 'bg-red-500 text-white animate-pulse shadow-md shadow-red-500/30'
-                : 'text-slate-400 hover:text-blue-600 hover:bg-slate-100'
-            }`}
-            title="Real Voice Search (Mic)"
+            onClick={() => toast.info('Voice search activated (demo)')}
+            className="p-1 hover:text-blue-600 transition"
           >
-            {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+            <Mic size={17} />
           </button>
         </div>
       </div>
 
-      {/* Quick Action Category Pills */}
-      <div className="grid grid-cols-4 gap-2.5 sm:gap-4">
+      {/* Quick Action Category Pills (Screen 3) */}
+      <div className="grid grid-cols-4 gap-2.5 sm:gap-4 mb-8">
         <Link
           href="/trips"
           className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl bg-blue-50/70 border border-blue-100 hover:border-blue-300 hover:bg-blue-50 transition text-center group"
@@ -154,7 +83,7 @@ export function DashboardContent() {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-600 text-white mb-2 shadow-xs group-hover:scale-105 transition">
             <Luggage size={18} />
           </div>
-          <span className="text-xs font-bold text-slate-800">My Trips</span>
+          <span className="text-xs font-bold text-slate-800">Trips</span>
         </Link>
 
         <Link
@@ -164,69 +93,146 @@ export function DashboardContent() {
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 text-white mb-2 shadow-xs group-hover:scale-105 transition">
             <Sparkles size={18} />
           </div>
-          <span className="text-xs font-bold text-slate-800">Explore</span>
+          <span className="text-xs font-bold text-slate-800">Activities</span>
         </Link>
 
         <Link
           href="/community"
           className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl bg-amber-50/70 border border-amber-100 hover:border-amber-300 hover:bg-amber-50 transition text-center group"
         >
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-amber-600 text-white mb-2 shadow-xs group-hover:scale-105 transition">
-            <Compass size={18} />
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-amber-500 text-white mb-2 shadow-xs group-hover:scale-105 transition">
+            <Lightbulb size={18} />
           </div>
-          <span className="text-xs font-bold text-slate-800">Community</span>
+          <span className="text-xs font-bold text-slate-800">Inspiration</span>
         </Link>
 
         <Link
-          href="/trips/new"
-          className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl bg-rose-50/70 border border-rose-100 hover:border-rose-300 hover:bg-rose-50 transition text-center group"
+          href="/trips"
+          className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100 hover:border-emerald-300 hover:bg-emerald-50 transition text-center group"
         >
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#ff5a36] text-white mb-2 shadow-xs group-hover:scale-105 transition">
-            <Plus size={18} />
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-600 text-white mb-2 shadow-xs group-hover:scale-105 transition">
+            <Wallet size={18} />
           </div>
-          <span className="text-xs font-bold text-slate-800">Plan Trip</span>
+          <span className="text-xs font-bold text-slate-800">Budget</span>
         </Link>
       </div>
 
-      {/* Upcoming Trip Progress Card */}
-      {upcomingTrip && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-              Active Adventure
-            </span>
+      {/* Upcoming Trips Card with Progress Bar (Screen 3) */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold text-slate-900">Upcoming Trips</h2>
+          <Link href="/trips" className="text-xs font-bold text-blue-600 hover:underline">
+            View all
+          </Link>
+        </div>
+
+        {upcomingTrip ? (
+          <Link
+            href={`/trips/${upcomingTrip.id}`}
+            className="group relative block overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1.5 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 uppercase">
+                    Upcoming
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    {upcomingTrip.start_date} – {upcomingTrip.end_date}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
+                  {upcomingTrip.name}
+                </h3>
+                <p className="text-xs text-slate-500">4 Cities • 12 Days Planned</p>
+
+                {/* Progress bar */}
+                <div className="pt-2">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-1">
+                    <span>Itinerary Planning</span>
+                    <span className="text-blue-600">60% Planned</span>
+                  </div>
+                  <div className="h-2 w-full max-w-xs rounded-full bg-slate-100 overflow-hidden">
+                    <div className="h-full w-[60%] rounded-full bg-gradient-to-r from-blue-500 to-indigo-600" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Landmark Graphic Thumbnail */}
+              <div className="relative h-28 w-full sm:w-44 overflow-hidden rounded-2xl bg-slate-100 flex-shrink-0">
+                <img
+                  src={
+                    upcomingTrip.cover_image_url ||
+                    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80'
+                  }
+                  alt={upcomingTrip.name}
+                  className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
+                />
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center shadow-xs">
+            <Compass size={28} className="mx-auto text-blue-600 mb-2" />
+            <h4 className="text-sm font-bold text-slate-900">No active trips yet</h4>
+            <p className="text-xs text-slate-500 mt-0.5">Start creating your personalized travel plan now.</p>
             <Link
-              href={`/trips/${upcomingTrip.id}`}
-              className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900"
+              href="/trips/new"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700"
             >
-              Open Trip <ArrowRight size={14} />
+              <Plus size={14} /> Plan New Trip
             </Link>
           </div>
+        )}
+      </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-black text-slate-900">{upcomingTrip.name}</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {new Date(upcomingTrip.start_date).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })}{' '}
-                -{' '}
-                {new Date(upcomingTrip.end_date).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </p>
-            </div>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200">
-              In Progress
-            </span>
-          </div>
+      {/* Popular Destinations Carousel (Screen 3) */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold text-slate-900">Popular Destinations</h2>
+          <Link href="/explore" className="text-xs font-bold text-blue-600 hover:underline">
+            View all
+          </Link>
         </div>
-      )}
 
-      {/* Flight Deals in INR */}
-      <FlightDealsCard />
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            {
+              name: 'Bali',
+              country: 'Indonesia',
+              image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
+            },
+            {
+              name: 'Paris',
+              country: 'France',
+              image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
+            },
+            {
+              name: 'Tokyo',
+              country: 'Japan',
+              image: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800&q=80',
+            },
+          ].map((dest) => (
+            <Link
+              key={dest.name}
+              href="/explore"
+              className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm hover:border-blue-300 transition"
+            >
+              <div className="relative h-24 w-full overflow-hidden rounded-xl bg-slate-100">
+                <img
+                  src={dest.image}
+                  alt={dest.name}
+                  className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                />
+              </div>
+              <div className="mt-2 text-left">
+                <h4 className="text-xs font-bold text-slate-900 truncate">{dest.name}</h4>
+                <p className="text-[10px] text-slate-500 truncate">{dest.country}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

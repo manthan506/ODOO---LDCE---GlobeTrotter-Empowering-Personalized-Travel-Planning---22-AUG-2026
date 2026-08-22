@@ -14,7 +14,6 @@ type AuthContextValue = {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (name: string, email: string, password: string) => Promise<{ error?: string }>;
-  signInDemo: () => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   refetchUser: () => Promise<void>;
 };
@@ -24,7 +23,6 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   signIn: async () => ({}),
   signUp: async () => ({}),
-  signInDemo: async () => ({}),
   signOut: async () => {},
   refetchUser: async () => {},
 });
@@ -97,27 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const signInDemo = useCallback(async () => {
-    try {
-      const res = await fetch('/api/auth/demo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        return { error: data.error || 'Failed to initialize demo' };
-      }
-
-      setUser(data.user);
-      return {};
-    } catch (err) {
-      console.error('Demo sign in error:', err);
-      return { error: 'Network error during demo login' };
-    }
-  }, []);
-
   const signOut = useCallback(async () => {
     try {
       await fetch('/api/auth/me', {
@@ -140,7 +117,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signIn,
         signUp,
-        signInDemo,
         signOut,
         refetchUser: fetchUser,
       }}
